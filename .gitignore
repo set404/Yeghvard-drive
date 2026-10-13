@@ -1,0 +1,34 @@
+# Godot 4+ specific ignores
+.godot/
+/android/
+
+# Exported builds
+*.exe
+*.pck
+*.apk
+*.aab
+*.x86_64
+*.dmg
+/build/
+/export/
+
+# IDE / editor
+.idea/
+.vscode/
+*.swp
+
+# OS junk
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Map data re-downloaded by tools/fetch_data.ps1
+/data/osm.json
+/data/elev/
+
+# Screenshots written by tools/screenshot.gd
+/data/preview_*.png
+
+# Scratch
+*.tmp
+*.log

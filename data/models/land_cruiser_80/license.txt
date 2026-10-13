@@ -1,0 +1,11 @@
+Model Information:
+* title:	Toyota Land Cruiser 80 and Lexus LX 450
+* source:	https://sketchfab.com/3d-models/toyota-land-cruiser-80-and-lexus-lx-450-97a931e96ad24483ad9f8a8a697fb5e1
+* author:	ZapupaNekra (https://sketchfab.com/ZapupaNekra)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Toyota Land Cruiser 80 and Lexus LX 450" (https://sketchfab.com/3d-models/toyota-land-cruiser-80-and-lexus-lx-450-97a931e96ad24483ad9f8a8a697fb5e1) by ZapupaNekra (https://sketchfab.com/ZapupaNekra) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
