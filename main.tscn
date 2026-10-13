@@ -45,7 +45,7 @@ corner_radius_bottom_left = 5
 
 [node name="Main" type="Node3D" unique_id=1615393304 node_paths=PackedStringArray("start_car")]
 script = ExtResource("1")
-start_car = NodePath("Car3")
+start_car = NodePath("Car4")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=687212331]
 environment = SubResource("env")
@@ -76,7 +76,7 @@ paint_color = Color(0.007280823, 0.3030038, 0.0073056705, 1)
 [node name="Car4" parent="." instance=ExtResource("8")]
 transform = Transform3D(0.7602329, 0, -0.64676505, 0, 1, 0, 0.6482097, 0, 0.7614456, 670.5, 1, 551.5)
 player_controlled = false
-paint_color = Color(0.86, 0.86, 0.83, 1)
+paint_color = Color(0.05, 0.17, 0.52, 1)
 
 [node name="ChaseCamera" type="Camera3D" parent="." unique_id=977752852 node_paths=PackedStringArray("target")]
 fov = 65.0

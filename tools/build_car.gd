@@ -70,8 +70,8 @@ const MODELS := {
 		},
 	},
 	"land_cruiser_80": {
-		"source": "res://data/models/land_cruiser_80/scene.gltf",
-		# This model is a kit: body, spare variants, one wheel and no colours. See _assemble_lc80.
+		"source": "res://data/models/land_cruiser_80/land-cruiser.glb",
+		# This model is a kit put together in Blender: no colours, and the driver's controls loose. See _assemble_lc80.
 		"kit": "lc80",
 		"skip": [],
 		"paint": "paint",
@@ -80,7 +80,8 @@ const MODELS := {
 		"lamps": "lc80",
 		"idle_glow": 0.0,
 		"glow_scale": 0.9,
-		"interior": false,
+		"interior": true,
+		"gauges_shader": "res://car/gauges_lc80.gdshader",
 		"mass": 2260.0, "horsepower": 212.0, "max_drive_force": 9000.0, "drag": 0.95,
 		"driver_view": Vector3(0.38, 1.42, -0.1),
 	},
@@ -103,6 +104,8 @@ func _build_all() -> void:
 		return
 	var wanted := OS.get_cmdline_user_args()
 	var failed := false
+	if wanted.is_empty() or "land_cruiser_80" in wanted:
+		_lc80_dial = await _lc80_paint_dial()
 	for car_name: String in MODELS:
 		if wanted.is_empty() or car_name in wanted:
 			if not _build(car_name, MODELS[car_name]):
@@ -225,7 +228,7 @@ func _build(car_name: String, cfg: Dictionary) -> bool:
 	tris += _count_tris(body.mesh)
 	_add_lamps(car, lamp_zones, cfg)
 	if cfg["interior"]:
-		_add_interior(car, gauge_parts, wheel_surfaces)
+		_add_interior(car, gauge_parts, wheel_surfaces, cfg.get("gauges_shader", "res://car/gauges.gdshader"))
 
 	var front_z := -INF
 	var rear_z := INF
@@ -706,8 +709,10 @@ func _add_lamps(car: Node3D, zones: Dictionary, cfg: Dictionary) -> void:
 # --- cabin ------------------------------------------------------------------
 
 ## The steering wheel is the skinned "Body_Bones" part in front of the driver.
-## The box is measured on the W210 model (left-hand drive).
+## The box is measured on the W210 model (left-hand drive). A kit marks its own.
 func _is_steering_wheel(mi: MeshInstance3D) -> bool:
+	if mi.has_meta("steering_axis"):
+		return true
 	if not String(mi.get_parent().name).contains("Body_Bones"):
 		return false
 	var c := _box(mi).get_center()
@@ -733,7 +738,7 @@ func _ring_axis(points: PackedVector3Array) -> Vector3:
 	return axis
 
 
-func _add_interior(car: Node3D, gauge_parts: Dictionary, wheel_surfaces: Array) -> void:
+func _add_interior(car: Node3D, gauge_parts: Dictionary, wheel_surfaces: Array, gauges_shader: String) -> void:
 	var interior := Node3D.new()
 	interior.name = "Interior"
 	interior.set_script(load("res://car/car_interior.gd"))
@@ -746,7 +751,7 @@ func _add_interior(car: Node3D, gauge_parts: Dictionary, wheel_surfaces: Array) 
 		for s in gauges.mesh.get_surface_count():
 			var painted := gauges.mesh.surface_get_material(s) as BaseMaterial3D
 			var dial := ShaderMaterial.new()
-			dial.shader = load("res://car/gauges.gdshader")
+			dial.shader = load(gauges_shader)
 			dial.set_shader_parameter("dial", painted.albedo_texture)
 			gauges.mesh.surface_set_material(s, dial)
 		gauges.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -767,6 +772,10 @@ func _add_interior(car: Node3D, gauge_parts: Dictionary, wheel_surfaces: Array) 
 	var axis := _ring_axis(points)
 	if axis.z > 0.0:
 		axis = -axis # towards the driver
+	if rim.has_meta("steering_axis"):
+		# A kit knows where it put the wheel.
+		pivot = rim.get_meta("steering_pivot")
+		axis = rim.get_meta("steering_axis")
 	var parts := {}
 	for entry: Array in wheel_surfaces:
 		var mi: MeshInstance3D = entry[0]
@@ -864,7 +873,8 @@ func _with_bulbs(st: SurfaceTool, mat: Material, gap := 0.03) -> ArrayMesh:
 ## The kind is in the name of the part; the first entry whose key it contains wins.
 const LC80_MATERIALS := [
 	["glass", Color(0.04, 0.06, 0.07, 0.3), 0.0, 0.05],
-	["paint", Color(0.85, 0.85, 0.82), 0.3, 0.25],
+	["lightgls", Color(0.85, 0.9, 0.95, 0.12), 0.0, 0.05], # clear covers over the lamps
+	["paint", Color(0.05, 0.17, 0.52), 0.3, 0.25],
 	["intchrome", Color(0.8, 0.8, 0.82), 1.0, 0.25],
 	["chrome", Color(0.82, 0.83, 0.86), 1.0, 0.15],
 	["decals", Color(0.82, 0.83, 0.86), 1.0, 0.2],
@@ -885,6 +895,7 @@ const LC80_MATERIALS := [
 	["seats", Color(0.47, 0.43, 0.37), 0.0, 0.8],
 	["fabric", Color(0.68, 0.66, 0.62), 0.0, 0.95],
 	["carpet", Color(0.2, 0.19, 0.17), 0.0, 1.0],
+	["tuma", Color(0.2, 0.19, 0.17), 0.0, 1.0],
 	["wood", Color(0.3, 0.16, 0.07), 0.0, 0.25],
 	["intkop", Color(0.1, 0.1, 0.1), 0.0, 0.7],
 	["speaker", Color(0.06, 0.06, 0.06), 0.0, 0.8],
@@ -893,62 +904,76 @@ const LC80_MATERIALS := [
 ]
 ## Share of triangles kept for the kinds that are far more detailed than the game can show.
 const LC80_DETAIL := {"under": 0.3, "intplas": 0.4, "leather": 0.4, "seats1": 0.4, "intkop": 0.5, "metalbl": 0.5}
-## Wheel centres: left (+x) and right, front and rear, measured against the hubs.
-const LC80_WHEELS := [Vector3(0.79, 0.41, 1.48), Vector3(-0.79, 0.41, 1.48), Vector3(0.79, 0.41, -1.39), Vector3(-0.79, 0.41, -1.39)]
+## The gear sticks of the manual car, which stand where the automatic's selector goes.
+const LC80_MANUAL_LEVERS := [55, 56, 57, 58, 200, 201]
+## The middle of the end of the steering column, and how far the column leans back, in degrees.
+const LC80_COLUMN_END := Vector3(0.405, 1.178, 0.384)
+const LC80_COLUMN_LEAN := 24.0
 
 
-## Puts the Land Cruiser together. The file holds the body with its spare parts
-## stacked above and below it in steps of 0.43 m (three grilles, three front
-## bumpers, roof racks...), a single wheel at the origin, and one grey material
-## for everything. This keeps the stock Toyota parts, moves the ones that are
-## parked out of place, colours each part by its kind and fits four wheels.
+## Where the driver's controls go, by part number: [transform into place, kind to
+## dress the part as ("" for its own), whether it turns with the steering wheel]. They lie loose around the origin of the
+## file, each kind twice or more (left- and right-hand drive, manual and
+## automatic); these are the ones for a left-hand-drive automatic.
+func _lc80_fittings() -> Dictionary:
+	# The steering wheel lies flat, face up; the underside of its boss goes on the end of the column.
+	var steering := Transform3D(Basis(Vector3.RIGHT, deg_to_rad(LC80_COLUMN_LEAN - 90.0)), LC80_COLUMN_END) \
+			* Transform3D(Basis.IDENTITY, Vector3(0.07, 0.068, -0.27))
+	# The selector stands upright already; its collar goes on the gate in the console.
+	var selector := Transform3D(Basis.IDENTITY, Vector3(0.001, 0.886, 0.37))
+	# The transfer lever lies on its side with its foot at the origin; stand it
+	# beside the selector, leaning back and towards the driver.
+	var transfer := Transform3D(Basis(Vector3.UP, -PI / 2.0) * Basis(Vector3.BACK, PI / 2.0), Vector3(0.095, 0.884, 0.4))
+	# The pedals hang from the origin, the brake already 15 cm to the left of the
+	# accelerator; the pivots go up under the dashboard, ahead of the driver's feet.
+	var pedals := Transform3D(Basis.IDENTITY, Vector3(0.27, 0.93, 0.84))
+	return {
+		37: [steering, "", true],
+		32: [steering, "intchrome", true], # the badge on the boss
+		60: [selector, "leatherblack", false],
+		44: [transfer, "", false],
+		129: [pedals, "", false], # accelerator
+		213: [pedals, "", false], # the automatic's wide brake pedal
+	}
+
+
+## Finishes the Land Cruiser. The file is the kit put together in Blender: body,
+## wheels and trim are in place, but everything shares one grey material and the
+## driver's controls still lie loose at the origin. This colours each part by its
+## kind, fits the controls and leaves out what cannot be seen or is there twice.
 func _assemble_lc80(model: Node3D) -> void:
 	var materials := {}
-	var wheel_parts: Array[MeshInstance3D] = []
-	var steering_fitted := false
+	var fittings := _lc80_fittings()
 	for node in model.find_children("*", "MeshInstance3D", true, false):
 		var mi: MeshInstance3D = node
 		var b := _box(mi)
 		var c := b.get_center()
 		var kind := _lc80_kind(mi)
-		var lift := 0.0
+		var number := _lc80_number(mi)
 		var keep := true
-		if c.y < 0.15 and b.end.y < 0.5 and absf(c.z) < 1.0 and absf(c.x) < 0.5:
-			# The loose parts at the origin; only the wheel is used.
+		if fittings.has(number):
+			mi.global_transform = fittings[number][0] * mi.global_transform
+			if fittings[number][2]:
+				# Kept apart from the body so that it can turn (see _add_interior).
+				var lean := deg_to_rad(LC80_COLUMN_LEAN)
+				mi.set_meta("steering_pivot", LC80_COLUMN_END)
+				mi.set_meta("steering_axis", Vector3(0.0, sin(lean), -cos(lean)))
+			if fittings[number][1] != "":
+				kind = fittings[number][1]
+		elif c.y < 0.2 and b.end.y < 0.5 and absf(c.z) < 1.0 and absf(c.x) < 0.5:
+			# The rest of the loose parts: the other variants of the controls and the gauge needles.
 			keep = false
-			var cap := kind == "chrome" and b.position.x > 0.1 and mi.mesh.get_faces().size() / 3 < 2000
-			if kind == "leather" and b.size.x > 0.3 and not steering_fitted:
-				# The steering wheel lies flat here; stand it on the column in front of the driver.
-				steering_fitted = true
-				mi.global_transform = Transform3D(Basis(Vector3.RIGHT, deg_to_rad(-65.0)), Vector3(0.41, 1.1, 0.47)) * mi.global_transform
-				_dress_lc80(mi, kind, materials)
-				continue
-			if kind == "tire" or kind == "wheel" or cap:
-				wheel_parts.append(mi)
-		elif b.position.y > -0.12 and b.end.y < 2.0:
-			# In place on the car, except the engine and the parts for the Lexus version.
-			var spare_grille := kind == "chrome" and c.z > 2.0 and b.position.y > 1.15
-			spare_grille = spare_grille or (c.z > 1.9 and b.position.y > 1.15) # and what backs them
-			# Wider arch flares stand out to the sides, and a second pair of running boards lies on the ground.
-			var spare_trim := maxf(absf(b.position.x), absf(b.end.x)) > 1.06 or (b.end.y < 0.3 and kind != "under")
+		else:
 			# Number plates come in two shapes on top of each other, and a pair hidden behind the spare wheel.
 			var spare_plate := kind == "none" and absf(c.z) > 2.2 and (mi.mesh.get_faces().size() / 3 == 36 or (c.z < 0.0 and absf(c.x) < 0.1))
-			keep = not (kind == "engine" or spare_grille or spare_trim or spare_plate or kind == "headlightgls1" or kind == "taillightgls_brake")
-		elif b.position.y > 1.8 and b.end.y < 2.12 and c.z > 0.8:
-			lift = -0.86 # bonnet
-		elif c.z > 1.8 and b.position.y > -0.76 and b.end.y < -0.42:
-			lift = 1.29 # stock front bumper
-		elif c.z < -1.8 and b.position.y > -0.32 and b.end.y < -0.07:
-			lift = 0.86 # rear bumper
-		elif kind == "plas" and b.position.y > -0.43 and b.end.y < -0.2 and absf(c.x) > 0.5:
-			lift = 0.86 # running boards
-		else:
-			keep = false
+			# A piece of the right-hand-drive dashboard is still parked above the roof rack.
+			var parked := b.position.y > 2.24
+			keep = not (kind == "engine" or spare_plate or parked or number in LC80_MANUAL_LEVERS or number in LC80_CLUSTER_SHAPES)
 		if not keep:
-			if not mi in wheel_parts:
-				mi.free()
+			mi.free()
 			continue
-		mi.global_position.y += lift
+		if number == 194 and kind == "decals_int":
+			_lc80_cluster(mi, model)
 		# The front wings with their flares are one plastic part; paint them like the body.
 		if kind == "plas" and absf(c.x) > 0.7 and c.z > 1.0 and b.size.y > 0.7 and b.size.z > 1.2:
 			kind = "paint"
@@ -957,25 +982,197 @@ func _assemble_lc80(model: Node3D) -> void:
 			kind = "paint"
 		_dress_lc80(mi, kind, materials)
 
-	for wheel_at: Vector3 in LC80_WHEELS:
-		# The outer face of the wheel looks towards +x; turn it round for the right-hand side.
-		var turn := Basis.IDENTITY if wheel_at.x > 0.0 else Basis(Vector3.UP, PI)
-		for source in wheel_parts:
-			var copy := MeshInstance3D.new()
-			copy.name = "Wheel_" + source.name
-			copy.mesh = source.mesh
-			model.add_child(copy)
-			copy.global_transform = Transform3D(turn, wheel_at) * source.global_transform
-			_dress_lc80(copy, _lc80_kind(source), materials)
-	for source in wheel_parts:
-		source.free()
+	# The slot the selector stands in is open to the gearbox below; close it with a plate.
+	var gate := MeshInstance3D.new()
+	gate.name = "gate"
+	var plate := PlaneMesh.new()
+	plate.size = Vector2(0.08, 0.2)
+	gate.mesh = plate
+	model.add_child(gate)
+	gate.global_position = Vector3(0.001, 0.884, 0.373)
+	_dress_lc80(gate, "plas", materials)
+
+
+## The instrument cluster's face: its middle, the direction up it (it leans
+## back) and its size in metres. The dial texture is stretched over this.
+const LC80_DIAL_CENTRE := Vector3(0.4075, 1.278, 0.604)
+const LC80_DIAL_UP := Vector3(0.0, 0.855, 0.519)
+const LC80_DIAL_SIZE := Vector2(0.36, 0.144)
+## Size of the dial texture; car/gauges_lc80.gdshader places its needles in these pixels.
+const LC80_DIAL_PIXELS := Vector2i(1280, 512)
+## Lettering and lamps of the cluster that the kit has as loose shapes; the dial texture has them painted on.
+const LC80_CLUSTER_SHAPES := [125, 126, 127, 128, 191, 192]
+
+var _lc80_dial: ImageTexture
+
+
+## Takes the instrument cluster out of the dashboard's markings. The kit has no
+## pictures, so the face of the cluster is blank and the sheet in front of it
+## came out as a mirror; the sheet goes, and the face becomes a part of its own
+## with the painted dials on it.
+func _lc80_cluster(markings: MeshInstance3D, model: Node3D) -> void:
+	var a: Array = markings.mesh.surface_get_arrays(0)
+	var verts: PackedVector3Array = a[Mesh.ARRAY_VERTEX]
+	var normals: PackedVector3Array = a[Mesh.ARRAY_NORMAL]
+	var uvs: PackedVector2Array = a[Mesh.ARRAY_TEX_UV]
+	var idx: PackedInt32Array = a[Mesh.ARRAY_INDEX]
+	var xf := markings.global_transform
+	var facing := LC80_DIAL_UP.cross(Vector3.LEFT) # towards the driver
+	var rest := SurfaceTool.new()
+	rest.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var face := SurfaceTool.new()
+	face.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for t in range(0, idx.size(), 3):
+		var p0 := xf * verts[idx[t]]
+		var p1 := xf * verts[idx[t + 1]]
+		var p2 := xf * verts[idx[t + 2]]
+		var c := (p0 + p1 + p2) / 3.0
+		var in_cluster := c.x > 0.2 and c.x < 0.62 and c.y > 1.2 and c.y < 1.36 and c.z > 0.5
+		if in_cluster and (p1 - p0).cross(p2 - p0).length() > 0.02:
+			continue # the sheet in front
+		# The face is the part that had a picture laid over it once; the cluster's sides repeat a pattern.
+		var painted := in_cluster
+		for k in 3:
+			var uv := uvs[idx[t + k]]
+			if uv.x < -0.01 or uv.x > 1.01 or uv.y < -0.01 or uv.y > 1.01:
+				painted = false
+		if in_cluster and not painted and c.x > 0.23 and c.x < 0.585:
+			continue # the odometer's number drums, which are painted on the dial instead
+		for k in 3:
+			var i := idx[t + k]
+			if painted:
+				var d := xf * verts[i] - LC80_DIAL_CENTRE
+				face.set_normal(facing)
+				face.set_uv(Vector2(0.5 + d.dot(Vector3.LEFT) / LC80_DIAL_SIZE.x, 0.5 - d.dot(LC80_DIAL_UP) / LC80_DIAL_SIZE.y))
+				face.add_vertex(xf * verts[i])
+			else:
+				rest.set_normal(normals[i])
+				rest.set_uv(uvs[i])
+				rest.add_vertex(verts[i])
+	# The odometer's windows are holes in the face; a sheet just behind it carries the picture on across them.
+	for corner: Vector2 in [Vector2(-1, -1), Vector2(1, -1), Vector2(1, 1), Vector2(-1, -1), Vector2(1, 1), Vector2(-1, 1)]:
+		var across := corner * 0.49
+		face.set_normal(facing)
+		face.set_uv(Vector2(0.5 + across.x, 0.5 - across.y))
+		face.add_vertex(LC80_DIAL_CENTRE - facing * 0.006 + Vector3.LEFT * across.x * LC80_DIAL_SIZE.x + LC80_DIAL_UP * across.y * LC80_DIAL_SIZE.y)
+	rest.index()
+	markings.mesh = rest.commit()
+	face.index()
+	var dials := MeshInstance3D.new()
+	dials.name = "cluster"
+	dials.mesh = face.commit()
+	# By this name _build hands it to the cabin (see _add_interior).
+	var paint := StandardMaterial3D.new()
+	paint.resource_name = "Dashboard"
+	paint.albedo_texture = _lc80_dial
+	dials.set_surface_override_material(0, paint)
+	model.add_child(dials)
+
+
+## Paints the Land Cruiser's dial texture: rev counter, speedometer, fuel and
+## temperature gauges, the gear letters and the turn arrows.
+func _lc80_paint_dial() -> ImageTexture:
+	var viewport := SubViewport.new()
+	viewport.size = LC80_DIAL_PIXELS
+	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	var canvas := Control.new()
+	canvas.size = LC80_DIAL_PIXELS
+	canvas.draw.connect(_lc80_draw_dial.bind(canvas))
+	viewport.add_child(canvas)
+	root.add_child(viewport)
+	for _i in 3:
+		await process_frame
+	await RenderingServer.frame_post_draw
+	var image := viewport.get_texture().get_image()
+	viewport.queue_free()
+	image.convert(Image.FORMAT_RGB8)
+	image.generate_mipmaps()
+	return ImageTexture.create_from_image(image)
+
+
+func _lc80_draw_dial(canvas: Control) -> void:
+	var white := Color(0.92, 0.92, 0.88)
+	var grey := Color(0.5, 0.5, 0.48)
+	var red := Color(0.85, 0.12, 0.05)
+	var needle := Color(0.85, 0.2, 0.03)
+	canvas.draw_rect(Rect2(Vector2.ZERO, LC80_DIAL_PIXELS), Color(0.012, 0.012, 0.016))
+	# The hubs and arrows are where car/gauges_lc80.gdshader expects them.
+	var rev_hub := Vector2(397, 280)
+	var speed_hub := Vector2(883, 280)
+	# Rev counter: 0 to 7 (thousand), red from 6.
+	_lc80_draw_scale(canvas, rev_hub, 205.0, 210.0, -30.0, 7, 4, white, 6)
+	for n in 8:
+		_lc80_draw_text(canvas, rev_hub + _lc80_spoke(210.0 - 240.0 * n / 7.0) * 152.0, str(n), 40, red if n >= 6 else white)
+	_lc80_draw_text(canvas, rev_hub + Vector2(0, 84), "x1000 r/min", 20, grey)
+	# Speedometer: 0 to 200 km/h.
+	_lc80_draw_scale(canvas, speed_hub, 205.0, 210.0, -30.0, 10, 4, white, 99)
+	for n in 11:
+		_lc80_draw_text(canvas, speed_hub + _lc80_spoke(210.0 - 24.0 * n) * 150.0, str(n * 20), 28, white)
+	_lc80_draw_text(canvas, speed_hub + Vector2(0, 62), "km/h", 20, grey)
+	canvas.draw_rect(Rect2(speed_hub + Vector2(-58, 84), Vector2(116, 34)), Color(0.07, 0.07, 0.07))
+	_lc80_draw_text(canvas, speed_hub + Vector2(0, 101), "186420", 24, white)
+	# Fuel on the far left, temperature on the far right; their needles do not move.
+	var gauges := [[Vector2(100, 310), "E", "F", 0.7], [Vector2(1180, 310), "C", "H", 0.45]]
+	for gauge: Array in gauges:
+		var hub: Vector2 = gauge[0]
+		_lc80_draw_scale(canvas, hub, 80.0, 140.0, 40.0, 4, 2, white, 99)
+		_lc80_draw_text(canvas, hub + _lc80_spoke(140.0) * 50.0, gauge[1], 20, white)
+		_lc80_draw_text(canvas, hub + _lc80_spoke(40.0) * 50.0, gauge[2], 20, white)
+		canvas.draw_line(hub, hub + _lc80_spoke(140.0 - 100.0 * gauge[3]) * 70.0, needle, 4.0, true)
+		canvas.draw_circle(hub, 9.0, Color(0.03, 0.03, 0.03))
+	# Gear letters down the middle.
+	var letters := "PRND2L"
+	for n in letters.length():
+		_lc80_draw_text(canvas, Vector2(640, 185 + 38 * n), letters[n], 26, white if letters[n] == "D" else grey)
+	# Turn arrows, dark until the shader lights them.
+	for side: float in [-1.0, 1.0]:
+		var at := Vector2(640 + 71 * side, 66)
+		var arrow := PackedVector2Array()
+		for corner: Vector2 in [Vector2(28, 0), Vector2(4, -22), Vector2(4, -10), Vector2(-26, -10), Vector2(-26, 10), Vector2(4, 10), Vector2(4, 22)]:
+			arrow.append(at + Vector2(corner.x * side, corner.y))
+		canvas.draw_colored_polygon(arrow, Color(0.0, 0.1, 0.015))
+
+
+## Unit vector at an angle in degrees, anticlockwise from the right, in texture pixels (y down).
+func _lc80_spoke(degrees: float) -> Vector2:
+	return Vector2(cos(deg_to_rad(degrees)), -sin(deg_to_rad(degrees)))
+
+
+## The ticks of a dial from one angle round to another: `steps` numbered
+## divisions of `parts` small ones each, red from division `red_from` on.
+func _lc80_draw_scale(canvas: Control, hub: Vector2, radius: float, from: float, to: float, steps: int, parts: int, colour: Color, red_from: int) -> void:
+	for n in steps * parts + 1:
+		var spoke := _lc80_spoke(lerpf(from, to, float(n) / (steps * parts)))
+		var numbered := n % parts == 0
+		var ink := Color(0.85, 0.12, 0.05) if n >= red_from * parts else colour
+		canvas.draw_line(hub + spoke * (radius - (20.0 if numbered else 10.0)), hub + spoke * radius, ink, 5.0 if numbered else 2.5, true)
+
+
+## Text with its middle at the given point.
+func _lc80_draw_text(canvas: Control, at: Vector2, text: String, size: int, colour: Color) -> void:
+	var font := ThemeDB.fallback_font
+	var box := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, size)
+	canvas.draw_string(font, at + Vector2(-box.x * 0.5, font.get_ascent(size) - box.y * 0.5), text, HORIZONTAL_ALIGNMENT_LEFT, -1, size, colour)
 
 
 ## The kind of a kit part, from its name ("mesh_018_J80KEN_tire_0" is a "tire").
 func _lc80_kind(mi: MeshInstance3D) -> String:
 	var part := String(mi.name)
 	var at := part.find("J80KEN_")
-	return part.substr(at + 7).trim_suffix("_0") if at >= 0 else "none"
+	if at < 0:
+		return "none"
+	var kind := part.substr(at + 7)
+	# Copies made in Blender carry a counter after the name ("tire_0_001").
+	var counter := kind.rfind("_")
+	if kind.length() - counter == 4 and kind.substr(counter + 1).is_valid_int():
+		kind = kind.left(counter)
+	return kind.trim_suffix("_0")
+
+
+## The number of a kit part ("mesh_018_J80KEN_tire_0" is part 18; the first part has none).
+func _lc80_number(mi: MeshInstance3D) -> int:
+	var number := String(mi.name).get_slice("_", 1)
+	return number.to_int() if number.is_valid_int() else 0
 
 
 ## Gives a kit part the material of its kind, and thins it if it is over-detailed.
