@@ -108,8 +108,10 @@ const WINDOW_SPACING := 3.2
 ##   stone        "pink_tuff" for walls of Armenian pink tuff blocks
 ##   garage_near  a spot (x, z) in world metres; the ground-floor window nearest
 ##                to it becomes a garage door
+##   replaced     left out: the building is modelled by hand elsewhere (the house
+##                where the game starts: tools/build_house.gd, world/house.scn)
 const BUILDING_FIXES := {
-	293496245: {"floors": 2, "garage_near": Vector2(662.9, 545.2), "stone": "pink_tuff"},
+	293496245: {"floors": 2, "garage_near": Vector2(662.9, 545.2), "stone": "pink_tuff", "replaced": true},
 }
 
 ## Garages cut into buildings by BUILDING_FIXES (metres).
@@ -861,6 +863,8 @@ func _build_buildings(root: Node3D) -> void:
 	for b in buildings:
 		var poly: PackedVector2Array = b["poly"]
 		var tags: Dictionary = b["tags"]
+		if BUILDING_FIXES.get(b["id"], {}).get("replaced", false):
+			continue
 		rng.seed = b["id"]
 		var height := _building_height(tags, b["area"], rng)
 		var n := poly.size()

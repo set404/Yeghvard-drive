@@ -6,8 +6,10 @@
 [ext_resource type="Script" uid="uid://d07lppn3u53rm" path="res://car/chase_camera.gd" id="4"]
 [ext_resource type="Script" uid="uid://dxjdv0l7d0nug" path="res://hud/minimap.gd" id="5"]
 [ext_resource type="PackedScene" path="res://car/e55_amg.scn" id="6"]
-[ext_resource type="PackedScene" path="res://car/volga_3102.scn" id="7"]
+[ext_resource type="PackedScene" uid="uid://bkq3ls4p02w6s" path="res://car/volga_3102.scn" id="7"]
 [ext_resource type="PackedScene" path="res://car/land_cruiser_80.scn" id="8"]
+[ext_resource type="Script" uid="uid://c6ia3ryykea3r" path="res://player/player.gd" id="9"]
+[ext_resource type="PackedScene" path="res://world/house.scn" id="10"]
 
 [sub_resource type="ProceduralSkyMaterial" id="sky_mat"]
 sky_top_color = Color(0.22, 0.42, 0.72, 1)
@@ -59,24 +61,34 @@ directional_shadow_max_distance = 350.0
 
 [node name="World" parent="." unique_id=1365850736 instance=ExtResource("2")]
 
+[node name="House" parent="." unique_id=126796058 instance=ExtResource("10")]
+
 [node name="Car" parent="." unique_id=2085411645 instance=ExtResource("3")]
 transform = Transform3D(-0.74989367, -0.03650205, 0.66055053, -0.027390908, 0.99933356, 0.024127528, -0.6609911, 0, -0.75039375, 657.481, 0.81311536, 552.27185)
 paint_color = Color(0.043137256, 0.09411765, 0.14901961, 1)
+starter_seconds = 0.45
 
 [node name="Car2" parent="." unique_id=1300135129 instance=ExtResource("6")]
 transform = Transform3D(0.7602329, -0.06117464, -0.64676505, 0.043261614, 0.99811393, -0.043555934, 0.6482097, 0.0051325336, 0.7614456, 662.89667, 0.9793341, 545.1871)
 player_controlled = false
 paint_color = Color(0.22745098, 0.23137255, 0.23137255, 1)
+starter_seconds = 0.35
 
 [node name="Car3" parent="." unique_id=27463107 instance=ExtResource("7")]
 transform = Transform3D(0.9203444, 0, -0.38696748, 0, 1, 0, 0.3887106, 0, 0.921065, 592.3656, 17.791372, -416.78333)
 player_controlled = false
 paint_color = Color(0.007280823, 0.3030038, 0.0073056705, 1)
+starter_seconds = 2.2
+start_fail_chance = 0.5
 
-[node name="Car4" parent="." instance=ExtResource("8")]
+[node name="Car4" parent="." unique_id=669761671 instance=ExtResource("8")]
 transform = Transform3D(0.7602329, 0, -0.64676505, 0, 1, 0, 0.6482097, 0, 0.7614456, 670.5, 1, 551.5)
 player_controlled = false
 paint_color = Color(0.05, 0.17, 0.52, 1)
+starter_seconds = 1.1
+
+[node name="Player" type="CharacterBody3D" parent="." unique_id=1187892447]
+script = ExtResource("9")
 
 [node name="ChaseCamera" type="Camera3D" parent="." unique_id=977752852 node_paths=PackedStringArray("target")]
 fov = 65.0
@@ -92,7 +104,7 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -260.0
+offset_left = -400.0
 offset_top = -90.0
 offset_right = -30.0
 offset_bottom = -30.0
@@ -106,8 +118,9 @@ horizontal_alignment = 2
 offset_left = 20.0
 offset_top = 16.0
 offset_right = 600.0
-offset_bottom = 96.0
-text = "W/S or arrows: drive   A/D: steer   Space: handbrake   R: reset car   M: zoom map   K: camera   E: switch car   G: garage gate
+offset_bottom = 116.0
+text = "W/S or arrows: drive   A/D: steer   Space: handbrake   R: reset car   M: zoom map   K: camera   F: get in / out   E: start / stop engine   G: gate   P: park
+On foot: W/A/S/D walk   Shift: run   Space: jump
 Z / C / X: left, right, hazard signals   L: lights (park, low, high)
 Mouse: look around (click to grab, Esc to release)   Wheel: zoom"
 
@@ -185,5 +198,5 @@ grow_vertical = 0
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 8
 theme_override_font_sizes/font_size = 26
-text = "Press E to switch car"
+text = "Press F to get in"
 horizontal_alignment = 1

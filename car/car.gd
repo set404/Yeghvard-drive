@@ -14,10 +14,23 @@ const WATTS_PER_HP := 745.7
 @export var steer_speed := 3.0
 ## Whether the keyboard drives this car. Parked cars have it off.
 @export var player_controlled := true
+## In park (P): the transmission is locked, so the car holds still and the
+## engine will not drive it, with or without a driver. Out of park, a car with
+## nobody in it rolls freely. P only goes into park at walking pace or slower.
+@export var parked := false
+@export var park_speed := 1.5 ## m/s; fastest the car may be going for P to engage
 ## Body colour. Only cars built with a "Paint" material (see tools/build_car.gd) use it.
 @export var paint_color := Color(0.66, 0.68, 0.68)
 ## Where the driver's eyes are, for the cabin camera (+X left, +Y up, +Z forward).
 @export var driver_view := Vector3(0.37, 1.13, 0.1)
+
+@export_group("Starter")
+## How long the starter turns the engine over before it catches, in seconds.
+@export var starter_seconds := 1.0
+## Chance (0 to 1) that a try to start fails: the starter cranks for a while and
+## the engine does not catch, so you have to try again. The try after a failed
+## one always works.
+@export var start_fail_chance := 0.0
 
 @export_group("Grip and drifting")
 ## Tyre grip. The rear has less than the front so that power or the handbrake can break it loose.
@@ -47,18 +60,35 @@ const ACTIONS := {
 	"steer_right": [KEY_D, KEY_RIGHT],
 	"handbrake": [KEY_SPACE],
 	"reset_car": [KEY_R],
+	"park": [KEY_P],
+	"starter": [KEY_E],
 }
+
+## Pulses per second of the engine being turned over by the starter.
+const CRANK_PULSES := 4.5
 
 ## True while the driver is on the brake pedal (not the handbrake); the brake lights follow it.
 var braking := false
 ## Power the engine is delivering right now, in hp.
 var output_hp := 0.0
+## Whether the engine is running. Off, the car will not drive itself (the
+## brakes, lights and parking lock still work). E starts it, or stops it.
+var engine_running := false
+## True while the starter is turning the engine over.
+var cranking := false
+## True when the last try to start did not catch.
+var start_failed := false
+var _crank_time := 0.0
+var _crank_for := 0.0
+var _will_catch := true
 ## Engine speed, for the rev counter and the engine note. There is no real
 ## gearbox; it is worked out from road speed as an automatic would shift.
 var rpm := 800.0
 var gear := 1
 var _gas := 0.0
 var _handbrake_on := false
+## Where the car is held while it is in park; INF when it is not.
+var _park_spot := Vector3.INF
 var _engine_sound: AudioStreamPlayer3D
 var _skid_sound: AudioStreamPlayer3D
 var spawn_transform := Transform3D.IDENTITY
@@ -123,6 +153,7 @@ func slip_angle() -> float:
 
 
 func place(xf: Transform3D) -> void:
+	_park_spot = Vector3.INF
 	spawn_transform = xf
 	global_transform = xf
 	linear_velocity = Vector3.ZERO
@@ -131,9 +162,30 @@ func place(xf: Transform3D) -> void:
 
 func _physics_process(delta: float) -> void:
 	var speed := forward_speed()
-	# A car nobody is driving ignores the keys and holds itself on the brakes.
-	var gas := Input.get_action_strength("accelerate") if player_controlled else 0.0
-	var back := Input.get_action_strength("brake") if player_controlled else 0.0
+	if player_controlled and Input.is_action_just_pressed("park"):
+		if parked or absf(speed) <= park_speed:
+			parked = not parked
+	if player_controlled and Input.is_action_just_pressed("starter"):
+		if engine_running:
+			engine_running = false
+		elif cranking:
+			cranking = false
+		else:
+			_crank()
+	if cranking:
+		_crank_time += delta
+		if _crank_time >= _crank_for:
+			cranking = false
+			engine_running = _will_catch
+			start_failed = not _will_catch
+			if engine_running:
+				# It catches with a little flare of revs before settling to idle.
+				rpm = idle_rpm * 1.8
+	# A car nobody is driving ignores the keys; one in park ignores the pedals.
+	# Without the engine there is no drive, but the brake pedal still works.
+	var pedals := player_controlled and not parked
+	var gas := Input.get_action_strength("accelerate") if pedals and engine_running else 0.0
+	var back := Input.get_action_strength("brake") if pedals else 0.0
 	var handbrake := Input.is_action_pressed("handbrake") if player_controlled else false
 	var steer_input := Input.get_axis("steer_right", "steer_left") if player_controlled else 0.0
 	_gas = gas
@@ -148,13 +200,23 @@ func _physics_process(delta: float) -> void:
 			# Constant power: force = power / speed, limited by grip when slow.
 			drive = minf(max_drive_force, horsepower * WATTS_PER_HP / maxf(speed, 1.0)) * gas
 	if back > 0.0:
-		if speed > 1.0:
+		if speed > 1.0 or not engine_running:
 			brake = brake_power * back
 		else:
 			drive = -reverse_force * back * clampf(1.0 + speed / max_reverse_speed, 0.0, 1.0)
 	braking = brake > 0.0
-	if not player_controlled:
-		brake = brake_power * 0.5
+	if parked:
+		# The parking lock holds the wheels. Locked tyres still slide slowly down
+		# a slope in the physics engine, so the car is also held to the spot where
+		# it stopped. A hard enough knock moves it, and it is held there instead.
+		brake = brake_power * 3.0
+		if _park_spot == Vector3.INF or global_position.distance_to(_park_spot) > 0.5:
+			_park_spot = global_position
+		var off := (global_position - _park_spot).slide(Vector3.UP)
+		var drift := linear_velocity.slide(Vector3.UP)
+		apply_central_force(-(off * 80.0 + drift * 18.0) * mass)
+	else:
+		_park_spot = Vector3.INF
 	var slip := slip_angle()
 	# Throttle in a corner loosens the rear to start a slide and keeps one going.
 	# The grip comes back as the angle grows, so the slide settles instead of
@@ -203,6 +265,19 @@ func _physics_process(delta: float) -> void:
 		place(spawn_transform)
 
 
+## Turns the starter: the engine catches after about starter_seconds, unless
+## this is one of the tries that fail.
+func _crank() -> void:
+	_will_catch = start_failed or randf() >= start_fail_chance
+	start_failed = false
+	cranking = true
+	_crank_time = 0.0
+	if _will_catch:
+		_crank_for = starter_seconds * randf_range(0.85, 1.2)
+	else:
+		_crank_for = starter_seconds * 1.5 + 0.8
+
+
 func _apply_paint() -> void:
 	var body := get_node_or_null("Body") as MeshInstance3D
 	if body == null:
@@ -240,16 +315,28 @@ func _process(delta: float) -> void:
 	if engine_force != 0.0:
 		# Pulling away, the engine revs before the car has picked up speed.
 		wanted = maxf(wanted, 2400.0)
+	# The starter turns the engine over slowly, in pulses; stopped, it winds down.
+	var pulse := sin(_crank_time * TAU * CRANK_PULSES)
+	if cranking:
+		wanted = 220.0 + 70.0 * pulse
+	elif not engine_running:
+		wanted = 0.0
 	rpm = lerpf(rpm, wanted, 1.0 - exp(-6.0 * delta))
 
 	if _engine_sound:
-		# The engine only runs in the car being driven. The recording is at
-		# 1500 rpm, so its speed follows the revs; it is louder under load.
-		if player_controlled != _engine_sound.playing:
-			_engine_sound.playing = player_controlled
-		_engine_sound.pitch_scale = clampf(rpm / 1500.0, 0.4, 4.5)
-		var effort := clampf(_gas * 0.6 + output_hp / horsepower * 0.4, 0.0, 1.0)
-		_engine_sound.volume_db = engine_volume_db + lerpf(-12.0, 0.0, effort)
+		# Heard while the engine runs, whoever is driving (or nobody). The
+		# recording is at 1500 rpm, so its speed follows the revs; it is louder
+		# under load.
+		var audible := engine_running or cranking
+		if audible != _engine_sound.playing:
+			_engine_sound.playing = audible
+		if cranking:
+			_engine_sound.pitch_scale = 0.3 + 0.05 * pulse
+			_engine_sound.volume_db = engine_volume_db - 9.0 + 5.0 * pulse
+		else:
+			_engine_sound.pitch_scale = clampf(rpm / 1500.0, 0.4, 4.5)
+			var effort := clampf(_gas * 0.6 + output_hp / horsepower * 0.4, 0.0, 1.0)
+			_engine_sound.volume_db = engine_volume_db + lerpf(-12.0, 0.0, effort)
 
 	if _skid_sound:
 		# Tyres complain under hard braking, with the handbrake on and in a slide.

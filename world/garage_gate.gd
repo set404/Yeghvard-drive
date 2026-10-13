@@ -1,8 +1,11 @@
 extends Node3D
-## A garage gate built by tools/build_world.gd: two leaves that swing outwards.
-## G opens or closes it when the car being driven is close enough.
+## A steel gate built by tools/build_house.gd (the garage and the yard gate):
+## two leaves that swing out towards its +Z. G opens or closes the nearest gate
+## within reach of the car being driven, or of you on foot.
 
 @export var reach := 14.0 ## metres
+## What the on-screen hint calls it: "Press G to open the <label>".
+@export var label := "garage"
 @export var open_angle := 105.0 ## degrees
 @export var seconds := 1.8 ## time to swing fully open or shut
 
@@ -13,7 +16,8 @@ var _sound: AudioStreamPlayer3D
 
 @onready var _left: Node3D = $LeafL
 @onready var _right: Node3D = $LeafR
-@onready var _blocker_shape: CollisionShape3D = $Blocker/CollisionShape3D
+## Every piece of what stops a car (a gate with a door for people has several).
+@onready var _blocker_shapes: Array[Node] = $Blocker.find_children("*", "CollisionShape3D", false, false)
 
 
 func _ready() -> void:
@@ -28,12 +32,30 @@ func _ready() -> void:
 		add_child(_sound)
 
 
-## Whether the car the player is driving is near enough to work the gate.
+## How far the car being driven, or you on foot, is from the gate.
+func driver_distance() -> float:
+	var tree := get_tree()
+	var best := INF
+	for who: Node3D in tree.get_nodes_in_group("cars") + tree.get_nodes_in_group("walkers"):
+		if who.get("player_controlled"):
+			best = minf(best, who.global_position.distance_to(global_position))
+	return best
+
+
+## Whether the car the player is driving, or the player on foot, is near enough to work the gate.
 func driver_in_reach() -> bool:
-	for car: Node3D in get_tree().get_nodes_in_group("cars"):
-		if car.get("player_controlled") and car.global_position.distance_to(global_position) < reach:
-			return true
-	return false
+	return driver_distance() < reach
+
+
+## Whether G works this gate now: it is in reach and no other gate in reach is nearer.
+func is_nearest() -> bool:
+	var mine := driver_distance()
+	if mine >= reach:
+		return false
+	for gate in get_tree().get_nodes_in_group("gates"):
+		if gate != self and gate.driver_in_reach() and gate.driver_distance() < mine:
+			return false
+	return true
 
 
 func toggle() -> void:
@@ -44,7 +66,7 @@ func toggle() -> void:
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	var key := event as InputEventKey
-	if key and key.pressed and not key.echo and key.physical_keycode == KEY_G and driver_in_reach():
+	if key and key.pressed and not key.echo and key.physical_keycode == KEY_G and is_nearest():
 		toggle()
 
 
@@ -59,4 +81,5 @@ func _process(delta: float) -> void:
 	_right.rotation.y = angle
 	# The leaves are not solid while they move or stand open, so a car parked in
 	# front of them is not thrown aside; shut, the gate blocks the doorway.
-	_blocker_shape.disabled = _swing > 0.05
+	for shape: CollisionShape3D in _blocker_shapes:
+		shape.disabled = _swing > 0.05
