@@ -1,6 +1,7 @@
 extends Node3D
 ## Moving parts of the cabin of a car built by tools/build_car.gd: the steering
-## wheel follows the front wheels and the speedometer and rev counter needles move.
+## wheel follows the front wheels, the speedometer and rev counter needles move
+## and, on dials that have them, the turn arrows blink.
 
 ## Turns of the steering wheel per turn of the road wheels.
 @export var steering_ratio := 5.0
@@ -8,6 +9,7 @@ extends Node3D
 @onready var _car := get_parent() as VehicleBody3D
 @onready var _wheel := get_node_or_null("SteeringWheel") as Node3D
 @onready var _gauges := get_node_or_null("Gauges") as MeshInstance3D
+@onready var _lamps := _car.get_node_or_null("Lamps")
 var _wheel_axis := Vector3.BACK
 var _dial: ShaderMaterial
 
@@ -28,3 +30,7 @@ func _process(_delta: float) -> void:
 	if _dial:
 		_dial.set_shader_parameter("speed_kmh", absf(_car.forward_speed()) * 3.6)
 		_dial.set_shader_parameter("rpm", _car.rpm)
+		if _lamps:
+			var blink: bool = _lamps.blink_on()
+			_dial.set_shader_parameter("signal_left", 1.0 if _lamps.signal_left and blink else 0.0)
+			_dial.set_shader_parameter("signal_right", 1.0 if _lamps.signal_right and blink else 0.0)
