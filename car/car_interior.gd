@@ -30,6 +30,8 @@ func _process(_delta: float) -> void:
 	if _dial:
 		_dial.set_shader_parameter("speed_kmh", absf(_car.forward_speed()) * 3.6)
 		_dial.set_shader_parameter("rpm", _car.rpm)
+		# Only dials that have a live fuel needle take this (see gauges_lc80.gdshader).
+		_dial.set_shader_parameter("fuel", _car.fuel_level())
 		if _lamps:
 			var blink: bool = _lamps.blink_on()
 			_dial.set_shader_parameter("signal_left", 1.0 if _lamps.signal_left and blink else 0.0)

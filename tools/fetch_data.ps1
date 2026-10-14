@@ -43,4 +43,15 @@ foreach ($x in 5106..5109) {
         if ($LASTEXITCODE -ne 0) { throw "Elevation tile $x/$y failed" }
     }
 }
+# Coarse tiles ~100 km around the town for the mountains on the horizon
+# (Ararat, Aragats); must match the constants in build_horizon.gd.
+New-Item -ItemType Directory -Force (Join-Path $data "elev_far") | Out-Null
+foreach ($x in 317..321) {
+    foreach ($y in 191..195) {
+        curl.exe -sS -f -m 60 -o (Join-Path $data "elev_far\9_${x}_${y}.png") `
+            "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/9/$x/$y.png"
+        if ($LASTEXITCODE -ne 0) { throw "Elevation tile 9/$x/$y failed" }
+    }
+}
 Write-Host "Done. Now run: godot --path . --script res://tools/build_world.gd"
+Write-Host "and:          godot --path . --script res://tools/build_horizon.gd"

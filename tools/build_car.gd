@@ -20,7 +20,7 @@ const MODELS := {
 		"lamps": "w210",
 		"idle_glow": 0.3,
 		"interior": true,
-		"mass": 1680.0, "horsepower": 347.0, "max_drive_force": 9500.0, "drag": 0.62,
+		"mass": 1680.0, "horsepower": 347.0, "max_drive_force": 9500.0, "drag": 0.62, "fuel_capacity": 80.0,
 	},
 	"e55_amg": {
 		"source": "res://data/models/2003_mercedes-benz_e55_amg_w211.glb",
@@ -35,7 +35,7 @@ const MODELS := {
 		"idle_glow": 0.0,
 		"glow_scale": 0.9,
 		"interior": false,
-		"mass": 1835.0, "horsepower": 476.0, "max_drive_force": 11000.0, "drag": 0.62,
+		"mass": 1835.0, "horsepower": 476.0, "max_drive_force": 11000.0, "drag": 0.62, "fuel_capacity": 80.0,
 	},
 	"volga_3102": {
 		"source": "res://data/models/volga_gaz_3102/scene.gltf",
@@ -53,7 +53,7 @@ const MODELS := {
 		"idle_glow": 0.0,
 		"glow_scale": 0.9,
 		"interior": false,
-		"mass": 1470.0, "horsepower": 105.0, "max_drive_force": 5200.0, "drag": 0.75,
+		"mass": 1470.0, "horsepower": 105.0, "max_drive_force": 5200.0, "drag": 0.75, "fuel_capacity": 55.0,
 		"driver_view": Vector3(0.36, 1.0, -0.12),
 		# The model was made for another kind of renderer; on import its window glass
 		# came out solid black and its chrome and gold lost their metal.
@@ -82,7 +82,7 @@ const MODELS := {
 		"glow_scale": 0.9,
 		"interior": true,
 		"gauges_shader": "res://car/gauges_lc80.gdshader",
-		"mass": 2260.0, "horsepower": 212.0, "max_drive_force": 9000.0, "drag": 0.95,
+		"mass": 2260.0, "horsepower": 212.0, "max_drive_force": 9000.0, "drag": 0.95, "fuel_capacity": 95.0,
 		"driver_view": Vector3(0.38, 1.42, -0.1),
 	},
 }
@@ -187,6 +187,9 @@ func _build(car_name: String, cfg: Dictionary) -> bool:
 	car.set("horsepower", cfg["horsepower"])
 	car.set("max_drive_force", cfg["max_drive_force"])
 	car.set("drag", cfg["drag"])
+	# Built with a full tank; main.tscn says how much each car starts with.
+	car.set("fuel_capacity", cfg["fuel_capacity"])
+	car.set("fuel", cfg["fuel_capacity"])
 	if cfg.has("driver_view"):
 		car.set("driver_view", cfg["driver_view"])
 

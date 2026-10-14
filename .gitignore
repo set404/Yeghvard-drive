@@ -25,6 +25,7 @@ desktop.ini
 # Map data re-downloaded by tools/fetch_data.ps1
 /data/osm.json
 /data/elev/
+/data/elev_far/
 
 # Screenshots written by tools/screenshot.gd
 /data/preview_*.png

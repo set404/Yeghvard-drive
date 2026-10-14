@@ -32,6 +32,18 @@ const WATTS_PER_HP := 745.7
 ## one always works.
 @export var start_fail_chance := 0.0
 
+@export_group("Fuel")
+## Size of the tank, in litres.
+@export var fuel_capacity := 70.0
+## What is in the tank now, in litres. The engine dies when it runs dry and
+## will not start again until the car is refuelled (refuel() or fill_up()).
+@export var fuel := 70.0
+## Litres an hour the engine burns ticking over.
+@export var idle_consumption := 1.0
+## How much faster than a real engine this one drinks, so that a tank lasts
+## an evening's driving rather than a week's. 1 is true to life.
+@export var fuel_use_scale := 20.0
+
 @export_group("Grip and drifting")
 ## Tyre grip. The rear has less than the front so that power or the handbrake can break it loose.
 @export var front_grip := 2.0
@@ -66,6 +78,13 @@ const ACTIONS := {
 
 ## Pulses per second of the engine being turned over by the starter.
 const CRANK_PULSES := 4.5
+## Litres of fuel an engine burns per hour for each horsepower it delivers.
+const FUEL_PER_HP_HOUR := 0.25
+## Below this share of the tank the engine is running on the dregs and coughs.
+const FUEL_RESERVE := 0.04
+
+## Sent when the engine dies because the tank has run dry.
+signal fuel_empty
 
 ## True while the driver is on the brake pedal (not the handbrake); the brake lights follow it.
 var braking := false
@@ -81,6 +100,9 @@ var start_failed := false
 var _crank_time := 0.0
 var _crank_for := 0.0
 var _will_catch := true
+## On the reserve the engine cuts out for moments at a time.
+var _cough := false
+var _cough_time := 0.0
 ## Engine speed, for the rev counter and the engine note. There is no real
 ## gearbox; it is worked out from road speed as an automatic would shift.
 var rpm := 800.0
@@ -188,6 +210,13 @@ func _physics_process(delta: float) -> void:
 	var back := Input.get_action_strength("brake") if pedals else 0.0
 	var handbrake := Input.is_action_pressed("handbrake") if player_controlled else false
 	var steer_input := Input.get_axis("steer_right", "steer_left") if player_controlled else 0.0
+	if engine_running and on_reserve():
+		_cough_time -= delta
+		if _cough_time <= 0.0:
+			_cough = randf() < 0.3
+			_cough_time = randf_range(0.1, 0.4)
+		if _cough:
+			gas *= 0.2
 	_gas = gas
 	_handbrake_on = handbrake
 
@@ -235,6 +264,12 @@ func _physics_process(delta: float) -> void:
 	# engine_force is applied at every driven wheel.
 	engine_force = drive / maxi(_traction_wheels, 1)
 	output_hp = absf(drive * speed) / WATTS_PER_HP
+	if engine_running:
+		var litres_per_hour := idle_consumption + output_hp * FUEL_PER_HP_HOUR
+		fuel = maxf(fuel - litres_per_hour / 3600.0 * fuel_use_scale * delta, 0.0)
+		if fuel <= 0.0:
+			engine_running = false
+			fuel_empty.emit()
 
 	# Air and rolling resistance are what set the top speed for a given power.
 	var v := linear_velocity
@@ -265,10 +300,32 @@ func _physics_process(delta: float) -> void:
 		place(spawn_transform)
 
 
+## Puts up to `litres` of fuel in the tank and returns how much went in.
+func refuel(litres: float) -> float:
+	var added := clampf(litres, 0.0, fuel_capacity - fuel)
+	fuel += added
+	return added
+
+
+## Fills the tank to the brim and returns how many litres that took.
+func fill_up() -> float:
+	return refuel(fuel_capacity)
+
+
+## How full the tank is, 0 to 1.
+func fuel_level() -> float:
+	return fuel / fuel_capacity if fuel_capacity > 0.0 else 0.0
+
+
+## Whether the car is down to the last few litres (or none).
+func on_reserve() -> bool:
+	return fuel_level() < FUEL_RESERVE
+
+
 ## Turns the starter: the engine catches after about starter_seconds, unless
-## this is one of the tries that fail.
+## this is one of the tries that fail, or the tank is dry.
 func _crank() -> void:
-	_will_catch = start_failed or randf() >= start_fail_chance
+	_will_catch = fuel > 0.0 and (start_failed or randf() >= start_fail_chance)
 	start_failed = false
 	cranking = true
 	_crank_time = 0.0

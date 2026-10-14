@@ -7,6 +7,13 @@ extends SceneTree
 ##
 ## Run:  godot --path . --script res://tools/build_world.gd
 ## (not --headless: the headless renderer drops the tree instance data)
+##
+## The buildings and walls can be edited by hand in world/map/map.tscn. Once that
+## file exists they come from it instead of from OpenStreetMap and the yard
+## layout, so a rebuild keeps your edits. To start the map afresh from the data:
+##       godot --path . --script res://tools/build_world.gd -- export
+## which makes the buildings and walls again and writes them to world/map/map.tscn
+## (overwriting it) as well as building the world.
 
 const LAT0 := 40.322
 const LON0 := 44.4815
@@ -33,6 +40,14 @@ const MAX_TREES := 45000
 const OUT_DIR := "res://world"
 const OUT_PATH := "res://world/yeghvard.scn"
 const MAP_PATH := "res://world/minimap.res"
+## The editable map (see the top of this file), and the terrain heights its preview stands on.
+const EDIT_MAP_PATH := "res://world/map/map.tscn"
+const HEIGHTS_PATH := "res://world/map/terrain_height.res"
+const MAP_BUILDING := preload("res://world/map/map_building.gd")
+const MAP_WALL := preload("res://world/map/map_wall.gd")
+const MAP_ROOT := preload("res://world/map/map_root.gd")
+## The editable map groups its buildings and walls in squares this big (metres).
+const DISTRICT := 768.0
 const MAP_N := 2304
 
 const MASK_BUILDING := 1
@@ -85,6 +100,21 @@ const AREA_COLORS := [
 	Color(0.20, 0.34, 0.44), # 9 water
 	Color(0.46, 0.49, 0.30), # 10 scrub
 ]
+## How far the garden around a house reaches past the house itself (metres).
+const GARDEN_REACH := 14.0
+## Fields only start this far from the nearest house (metres).
+const TOWN_REACH := 60.0
+const GARDEN_GREEN := Color(0.38, 0.47, 0.23)
+const TILLED := Color(0.42, 0.33, 0.25)
+## Fields outside the town (metres across, along) and what they look like.
+const FIELD_SIZE := Vector2(70.0, 150.0)
+const FIELD_COLORS := [
+	Color(0.68, 0.60, 0.36), # wheat stubble
+	Color(0.44, 0.35, 0.26), # ploughed
+	Color(0.40, 0.50, 0.24), # alfalfa
+	Color(0.56, 0.52, 0.34), # fallow
+	Color(0.62, 0.56, 0.32), # dry hay
+]
 # trees per square metre, by class id
 const AREA_TREES := {3: 1.0 / 50.0, 4: 1.0 / 45.0, 5: 1.0 / 260.0, 7: 1.0 / 350.0, 10: 1.0 / 400.0}
 
@@ -120,6 +150,39 @@ const TRANSOM_HEIGHT := 0.5
 const GARAGE_DEPTH := 7.5
 const GARAGE_MARGIN := 0.3 ## how much wider the room is than its door, each side
 const GARAGE_RAMP := 1.6
+
+## Walls round the yards (metres). OpenStreetMap has next to none mapped here,
+## so they are made up from the houses and roads (see _make_walls).
+const FENCED_BUILDINGS := ["yes", "house", "detached", "semidetached_house", "residential", "farm"]
+const FENCED_AREA := Vector2(35.0, 400.0) ## houses outside this footprint range get no yard
+const YARD_CELL := 1.5 ## the grid the yards are worked out on
+const YARD_REACH := 35.0 ## how far a yard reaches from its house at most
+const YARD_SIMPLIFY := 1.6 ## how far a wall may cut across the grid's smoothed staircase
+## Grid values besides a house's yard: unclaimed, a road (or water), and spots
+## kept clear, which no wall borders.
+const YARD_FREE := -1
+const YARD_ROAD := -2
+const YARD_CLEAR := -3
+const FENCE_ROAD_GAP := 1.2 ## between a road's edge and the street wall
+const FENCE_PIECE := 2.5 ## the longest stretch laid over the ground as one piece
+const FENCE_GATE := 3.4
+## Spots kept clear of fences (x, z, radius): the hand-built house and its yard
+## (world/house.scn), and the cars parked in main.tscn.
+const FENCE_CLEAR := [Vector3(655.0, 548.0, 42.0), Vector3(592.4, -416.8, 8.0)]
+## Paint for metal sheet fences and gates.
+const FENCE_PAINT := [
+	Color(0.24, 0.40, 0.30), Color(0.22, 0.34, 0.52), Color(0.44, 0.30, 0.20),
+	Color(0.55, 0.56, 0.55), Color(0.52, 0.24, 0.18), Color(0.30, 0.48, 0.52),
+]
+## Most walls are stone; these shares are painted sheet (on the street) and chain-link (between yards).
+const SHEET_STREET := 0.12
+const MESH_PARTY := 0.08
+## Kinds for fence.gdshader.
+const FENCE_STONE := 0
+const FENCE_SHEET := 1
+const FENCE_MESH := 2
+const FENCE_POST := 3
+const FENCE_MESH_COLOR := Color(0.58, 0.6, 0.58)
 
 const PLAIN_BUILDINGS := ["garage", "garages", "shed", "hut", "roof", "greenhouse", "barn",
 	"ruins", "carport", "cowshed", "sty", "stable", "kiosk", "service", "transformer_tower"]
@@ -185,6 +248,7 @@ var tree_nodes: Array[Vector2] = []
 
 var cls := PackedByteArray()
 var mask := PackedByteArray()
+var garden := PackedByteArray()
 var trees := {} # Vector3i(cx, cz, type) -> Array of [Vector2 pos, scale, tint]
 var tree_count := 0
 
@@ -199,9 +263,15 @@ func _initialize() -> void:
 	mz = 111132.92 - 559.82 * cos(2.0 * p) + 1.175 * cos(4.0 * p)
 	mx = 111412.84 * cos(p) - 93.5 * cos(3.0 * p)
 
+	var export_map := "export" in OS.get_cmdline_user_args()
+	var from_map := not export_map and ResourceLoader.exists(EDIT_MAP_PATH)
+	var map_walls: Array[Dictionary] = []
+
 	_load_elev()
 	_make_grid()
 	_parse_osm()
+	if from_map:
+		map_walls = _load_map()
 	_pair_carriageways()
 	_level_roads()
 	_rasterize()
@@ -216,6 +286,8 @@ func _initialize() -> void:
 	_build_roads(root)
 	_build_water(root)
 	_build_buildings(root)
+	var walls: Array[Dictionary] = map_walls if from_map else _make_walls()
+	_build_walls(root, walls)
 	_build_trees(root)
 	_build_spawn(root)
 	_build_minimap()
@@ -230,6 +302,10 @@ func _initialize() -> void:
 		push_error("Saving %s failed: %s" % [OUT_PATH, error_string(err)])
 	else:
 		print("Saved %s in %.1f s" % [OUT_PATH, (Time.get_ticks_msec() - t0) / 1000.0])
+	if err == OK:
+		err = _save_heights()
+	if err == OK and export_map:
+		err = _export_map(walls)
 	root.free()
 	quit(0 if err == OK else 1)
 
@@ -605,8 +681,41 @@ func _rasterize() -> void:
 	for w in waters:
 		for p in w:
 			_stamp(p, 1.5, MASK_WATER, mask)
+	# The plot around each house: in Yeghvard almost every one is a garden.
+	# 1 = garden, 2 = elsewhere in town (no fields there).
+	garden.resize(TEX_N * TEX_N)
+	var centres := PackedVector2Array()
+	var radii := PackedFloat32Array()
+	for b in buildings:
+		if b["tags"].get("building", "") in PLAIN_BUILDINGS:
+			continue
+		var c := Vector2.ZERO
+		for p: Vector2 in b["poly"]:
+			c += p
+		centres.append(c / b["poly"].size())
+		radii.append(sqrt(b["area"]) * 0.5)
+	for i in centres.size():
+		_stamp(centres[i], radii[i] + TOWN_REACH, 2, garden)
+	for i in centres.size():
+		_stamp(centres[i], radii[i] + GARDEN_REACH, 1, garden)
 	for b in buildings:
 		_fill_poly(b["poly"], mask, MASK_BUILDING)
+
+
+## The ground colour for a spot that is a field outside the town: rectangular
+## fields at a slant, each one stubble, ploughed earth, alfalfa, fallow or hay.
+func _field_color(x: int, y: int) -> Color:
+	var p := Vector2(x, y) * TEX_PX
+	var r := p.rotated(deg_to_rad(23.0))
+	var row := floorf(r.y / FIELD_SIZE.y)
+	var col := floorf((r.x + _hash2(row, 7.0) * FIELD_SIZE.x) / FIELD_SIZE.x)
+	var h := _hash2(col, row)
+	var kind := int(h * FIELD_COLORS.size())
+	return FIELD_COLORS[kind] * (0.92 + 0.16 * _hash2(row, col + 3.0))
+
+
+func _hash2(a: float, b: float) -> float:
+	return fposmod(sin(a * 127.1 + b * 311.7) * 43758.5453, 1.0)
 
 
 func _ground_texture() -> ImageTexture:
@@ -614,6 +723,17 @@ func _ground_texture() -> ImageTexture:
 	noise.seed = 7
 	noise.frequency = 0.02
 	noise.fractal_octaves = 4
+	# Which parts of the open land are farmed and which are steppe.
+	var farmed := FastNoiseLite.new()
+	farmed.seed = 21
+	farmed.frequency = 0.006
+	farmed.fractal_octaves = 3
+	# One value per garden plot, to choose what grows in it.
+	var plots := FastNoiseLite.new()
+	plots.seed = 5
+	plots.noise_type = FastNoiseLite.TYPE_CELLULAR
+	plots.cellular_return_type = FastNoiseLite.RETURN_CELL_VALUE
+	plots.frequency = 0.12
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 11
 	var yard := Color(0.50, 0.47, 0.42)
@@ -623,7 +743,18 @@ func _ground_texture() -> ImageTexture:
 	for y in TEX_N:
 		for x in TEX_N:
 			var k := y * TEX_N + x
-			var col: Color = AREA_COLORS[cls[k]]
+			var c := cls[k]
+			var col: Color = AREA_COLORS[c]
+			if c == 2 or (c == 0 and garden[k] == 0 and farmed.get_noise_2d(x, y) > 0.05):
+				col = _field_color(x, y)
+			elif garden[k] == 1 and c in [0, 1] and mask[k] == 0:
+				var v := plots.get_noise_2d(x, y)
+				if v > 0.1:
+					col = GARDEN_GREEN.lerp(AREA_COLORS[3], (v - 0.1) * 0.6)
+				elif v < -0.5:
+					col = TILLED
+				else:
+					col = col.lerp(GARDEN_GREEN, 0.35)
 			match mask[k]:
 				MASK_BUILDING: col = col.lerp(yard, 0.6)
 				MASK_ROAD: col = col.lerp(shoulder, 0.5)
@@ -685,8 +816,8 @@ func _build_terrain(root: Node3D) -> void:
 
 # --- roads & water ----------------------------------------------------------
 
-func _chunk_buf(chunks: Dictionary, p: Vector2) -> MeshBuf:
-	var key := Vector2i(int(floor(p.x / OBJ_CHUNK)), int(floor(p.y / OBJ_CHUNK)))
+func _chunk_buf(chunks: Dictionary, p: Vector2, size := OBJ_CHUNK) -> MeshBuf:
+	var key := Vector2i(int(floor(p.x / size)), int(floor(p.y / size)))
 	if not chunks.has(key):
 		chunks[key] = MeshBuf.new()
 	return chunks[key]
@@ -852,6 +983,34 @@ func _building_height(tags: Dictionary, area: float, rng: RandomNumberGenerator)
 	return 3.6 if rng.randf() < 0.55 else 6.6
 
 
+## How a building looks: {height (m above its highest ground), wall, roof (linear
+## colours; the wall's alpha says plain or with windows, see building.gdshader),
+## stone (pink tuff)}. Buildings from the editable map say so themselves; the
+## rest are made up from their tags, the same every time for the same building.
+func _building_look(b: Dictionary, rng: RandomNumberGenerator) -> Dictionary:
+	if b.has("height"):
+		var w: Color = (b["wall"] as Color).srgb_to_linear()
+		w.a = 0.5 if b["plain"] else 1.0
+		var r: Color = (b["roof"] as Color).srgb_to_linear()
+		r.a = 0.0
+		return {"height": b["height"], "wall": w, "roof": r, "stone": b["stone"]}
+	rng.seed = b["id"]
+	var tags: Dictionary = b["tags"]
+	var height := _building_height(tags, b["area"], rng)
+	var plain: bool = tags["building"] in PLAIN_BUILDINGS or height < 3.2
+	var wall: Color = WALL_COLORS[rng.randi() % WALL_COLORS.size()].srgb_to_linear()
+	wall = wall * rng.randf_range(0.88, 1.06)
+	wall.a = 0.5 if plain else 1.0
+	# Hand-made corrections for single buildings.
+	var fix: Dictionary = BUILDING_FIXES.get(b["id"], {})
+	if fix.has("floors"):
+		height = fix["floors"] * FLOOR_HEIGHT + 0.6
+		wall.a = 1.0
+	var roof: Color = ROOF_COLORS[rng.randi() % ROOF_COLORS.size()].srgb_to_linear()
+	roof.a = 0.0
+	return {"height": height, "wall": wall, "roof": roof, "stone": fix.get("stone", "") == "pink_tuff"}
+
+
 func _build_buildings(root: Node3D) -> void:
 	var body := StaticBody3D.new()
 	body.name = "Buildings"
@@ -862,11 +1021,10 @@ func _build_buildings(root: Node3D) -> void:
 	var rng := RandomNumberGenerator.new()
 	for b in buildings:
 		var poly: PackedVector2Array = b["poly"]
-		var tags: Dictionary = b["tags"]
 		if BUILDING_FIXES.get(b["id"], {}).get("replaced", false):
 			continue
-		rng.seed = b["id"]
-		var height := _building_height(tags, b["area"], rng)
+		var look := _building_look(b, rng)
+		var height: float = look["height"]
 		var n := poly.size()
 		var ymin := INF
 		var ymax := -INF
@@ -878,16 +1036,8 @@ func _build_buildings(root: Node3D) -> void:
 			centre += p / n
 		var base := ymin - 0.6
 		var top := ymax + height
-		var plain: bool = tags["building"] in PLAIN_BUILDINGS or height < 3.2
-		var wall: Color = WALL_COLORS[rng.randi() % WALL_COLORS.size()].srgb_to_linear()
-		wall = wall * rng.randf_range(0.88, 1.06)
-		wall.a = 0.5 if plain else 1.0
-		# Hand-made corrections for single buildings.
+		var wall: Color = look["wall"]
 		var fix: Dictionary = BUILDING_FIXES.get(b["id"], {})
-		if fix.has("floors"):
-			height = fix["floors"] * FLOOR_HEIGHT + 0.6
-			top = ymax + height
-			wall.a = 1.0
 		var garage_wall := -1
 		var garage_column := 0
 		if fix.has("garage_near"):
@@ -902,8 +1052,7 @@ func _build_buildings(root: Node3D) -> void:
 					var length := poly[k].distance_to(poly[(k + 1) % n])
 					var columns := maxi(1, int(length / WINDOW_SPACING))
 					garage_column = clampi(int(poly[k].distance_to(q) / length * columns), 0, columns - 1)
-		var roof: Color = ROOF_COLORS[rng.randi() % ROOF_COLORS.size()].srgb_to_linear()
-		roof.a = 0.0
+		var roof: Color = look["roof"]
 		var buf := _chunk_buf(chunks, centre)
 		for k in n:
 			var a := poly[k]
@@ -914,7 +1063,7 @@ func _build_buildings(root: Node3D) -> void:
 				continue
 			var nrm := Vector3(d.y, 0.0, -d.x) / length
 			# A negative height tells building.gdshader the wall is tuff masonry.
-			var dims := Vector2(length, -height if fix.get("stone", "") == "pink_tuff" else height)
+			var dims := Vector2(length, -height if look["stone"] else height)
 			if k != garage_wall:
 				_wall_piece(buf, a, d / length, 0.0, length, base, top, top, wall, dims)
 				continue
@@ -934,6 +1083,659 @@ func _build_buildings(root: Node3D) -> void:
 		_add_trimesh(body, _commit_chunks(one, body, mat, "Buildings"), "CollisionShape3D_%d" % k)
 		k += 1
 
+
+
+# --- fences -----------------------------------------------------------------
+
+const FENCE_CELL := 40.0
+## Fences are cut into small pieces that are not drawn beyond FENCE_DRAW metres,
+## where a fence is less than a pixel thick anyway.
+const FENCE_CHUNK := 160.0
+const FENCE_DRAW := 600.0
+
+
+func _fence_cell(p: Vector2) -> Vector2i:
+	return Vector2i(int(floor(p.x / FENCE_CELL)), int(floor(p.y / FENCE_CELL)))
+
+
+## Everything in the cells within `reach` of p.
+func _fence_near(grid: Dictionary, p: Vector2, reach: float) -> Array:
+	var out := []
+	var lo := _fence_cell(p - Vector2(reach, reach))
+	var hi := _fence_cell(p + Vector2(reach, reach))
+	for cy in range(lo.y, hi.y + 1):
+		for cx in range(lo.x, hi.x + 1):
+			out.append_array(grid.get(Vector2i(cx, cy), []))
+	return out
+
+
+## Walls round the yards. Fences are next to never mapped here, so the yards are
+## made up: every house gets the land nearest to it (up to YARD_REACH away), up to
+## a strip kept clear along the roads. Where two yards meet there is one wall
+## between them; where a yard meets a road the wall runs along the road, with
+## the house's gate in it. In a built-up street the walls join up, so you can
+## only drive along the road. Returns the walls for _build_walls.
+func _make_walls() -> Array[Dictionary]:
+	var t0 := Time.get_ticks_msec()
+	var houses := PackedInt32Array()
+	var lo := Vector2(INF, INF)
+	var hi := Vector2(-INF, -INF)
+	for i in buildings.size():
+		var b := buildings[i]
+		if not b["tags"].get("building", "") in FENCED_BUILDINGS or BUILDING_FIXES.has(b["id"]):
+			continue
+		if b["area"] < FENCED_AREA.x or b["area"] > FENCED_AREA.y:
+			continue
+		houses.append(i)
+		for p: Vector2 in b["poly"]:
+			lo = lo.min(p)
+			hi = hi.max(p)
+	if houses.is_empty():
+		return []
+	lo = (lo - Vector2.ONE * (YARD_REACH + 10.0)).max(Vector2(-HALF, -HALF))
+	hi = (hi + Vector2.ONE * (YARD_REACH + 10.0)).min(Vector2(HALF, HALF))
+	var w := int(ceil((hi.x - lo.x) / YARD_CELL))
+	var h := int(ceil((hi.y - lo.y) / YARD_CELL))
+
+	# The grid: a house's index in `houses` for its yard, or one of the YARD_ values.
+	var lab := PackedInt32Array()
+	lab.resize(w * h)
+	lab.fill(YARD_FREE)
+	var roadside := {} # road points by cell, to tell street walls from the rest
+	for road in roads:
+		var clear: float = road["hw"] + FENCE_ROAD_GAP
+		for p: Vector2 in road["pts"]:
+			_yard_stamp(lab, lo, w, h, p, clear, YARD_ROAD)
+			roadside.get_or_add(_fence_cell(p), []).append([p, clear])
+	for wtr in waters:
+		for p in wtr:
+			_yard_stamp(lab, lo, w, h, p, 2.5, YARD_ROAD)
+	for s: Vector3 in FENCE_CLEAR:
+		_yard_stamp(lab, lo, w, h, Vector2(s.x, s.y), s.z, YARD_CLEAR)
+	# Other buildings big enough not to stand in someone's yard (flats, the school)
+	# are left out of the yards; their own walls are the boundary.
+	var house_set := {}
+	for i in houses:
+		house_set[i] = true
+	for i in buildings.size():
+		var b := buildings[i]
+		if not house_set.has(i) and b["area"] >= FENCED_AREA.y:
+			_yard_fill(lab, lo, w, h, b["poly"], YARD_CLEAR, null)
+
+	# Grow the yards out from the houses, nearest house first (the distance is
+	# to the house cell each yard cell was reached from, so the result is close
+	# to a true nearest-house split), never across a road.
+	var n := w * h
+	var best := PackedFloat32Array()
+	best.resize(n)
+	best.fill(INF)
+	var sx := PackedInt32Array()
+	sx.resize(n)
+	var sy := PackedInt32Array()
+	sy.resize(n)
+	var done := PackedByteArray()
+	done.resize(n)
+	var reach := YARD_REACH / YARD_CELL
+	var buckets := []
+	for k in int(reach * 2.0) + 2:
+		buckets.append([])
+	for k in houses.size():
+		var seeds: Array = buckets[0]
+		_yard_fill(lab, lo, w, h, buildings[houses[k]]["poly"], k, seeds)
+	for c: int in buckets[0]:
+		best[c] = 0.0
+		sx[c] = c % w
+		sy[c] = c / w
+	var owned := PackedInt32Array()
+	var step_x := PackedInt32Array([1, -1, 0, 0])
+	var step_y := PackedInt32Array([0, 0, 1, -1])
+	for bi in buckets.size():
+		var list: Array = buckets[bi]
+		var j := 0
+		while j < list.size():
+			var c: int = list[j]
+			j += 1
+			if done[c] == 1:
+				continue
+			done[c] = 1
+			owned.append(c)
+			var cx := c % w
+			var cy := c / w
+			for k in 4:
+				var nx := cx + step_x[k]
+				var ny := cy + step_y[k]
+				if nx < 0 or ny < 0 or nx >= w or ny >= h:
+					continue
+				var m := ny * w + nx
+				if done[m] == 1 or lab[m] == YARD_ROAD or lab[m] == YARD_CLEAR:
+					continue
+				var dx := float(nx - sx[c])
+				var dy := float(ny - sy[c])
+				var d := sqrt(dx * dx + dy * dy)
+				if d > reach or d >= best[m]:
+					continue
+				best[m] = d
+				lab[m] = lab[c]
+				sx[m] = sx[c]
+				sy[m] = sy[c]
+				buckets[int(d * 2.0)].append(m)
+
+	# The boundaries between cells of different yards, or a yard and the outside,
+	# as edges between grid corners. A pair is (lower, higher) label, with roads
+	# and unclaimed land both counted as outside (-1); nothing borders a spot kept clear.
+	var ea := PackedInt32Array()
+	var eb := PackedInt32Array()
+	var epair := PackedInt32Array()
+	var cw := w + 1
+	for c in owned:
+		var a := lab[c]
+		var cx := c % w
+		var cy := c / w
+		for k in 4:
+			var nx := cx + step_x[k]
+			var ny := cy + step_y[k]
+			var bl := YARD_FREE
+			if nx >= 0 and ny >= 0 and nx < w and ny < h:
+				bl = lab[ny * w + nx]
+			if bl == a or bl == YARD_CLEAR or (bl >= 0 and bl < a):
+				continue # the same yard, nothing to wall off, or found from the other side
+			if bl < 0:
+				bl = -1
+			match k:
+				0:
+					ea.append(cy * cw + cx + 1)
+					eb.append((cy + 1) * cw + cx + 1)
+				1:
+					ea.append(cy * cw + cx)
+					eb.append((cy + 1) * cw + cx)
+				2:
+					ea.append((cy + 1) * cw + cx)
+					eb.append((cy + 1) * cw + cx + 1)
+				3:
+					ea.append(cy * cw + cx)
+					eb.append(cy * cw + cx + 1)
+			epair.append((mini(a, bl) + 1) * 65536 + maxi(a, bl) + 1)
+
+	# Join the edges into lines that run between junctions, one pair of yards
+	# each, and straighten out the grid's staircase.
+	var adj := {}
+	for e in ea.size():
+		adj.get_or_add(ea[e], []).append(e)
+		adj.get_or_add(eb[e], []).append(e)
+	var used := PackedByteArray()
+	used.resize(ea.size())
+	var lines: Array[PackedVector2Array] = []
+	var pairs := PackedInt32Array()
+	for pass_ in 2:
+		for e in ea.size():
+			if used[e] == 1:
+				continue
+			# First from junctions and loose ends, then whatever is left (closed loops).
+			var start := ea[e]
+			if pass_ == 0 and adj[start].size() == 2:
+				start = eb[e]
+				if adj[start].size() == 2:
+					continue
+			var pts := PackedVector2Array([lo + _corner(start, cw) * YARD_CELL])
+			var cur := start
+			var edge := e
+			while true:
+				used[edge] = 1
+				cur = eb[edge] if ea[edge] == cur else ea[edge]
+				pts.append(lo + _corner(cur, cw) * YARD_CELL)
+				var at: Array = adj[cur]
+				if at.size() != 2:
+					break
+				var next: int = at[1] if at[0] == edge else at[0]
+				if used[next] == 1 or epair[next] != epair[edge]:
+					break
+				edge = next
+			lines.append(_simplify(_smooth(pts), YARD_SIMPLIFY))
+			pairs.append(epair[e])
+
+	# Each house's gate: on its street wall, at the point nearest the house.
+	var gates := {} # house -> [line, segment, metres along it]
+	var gate_best := {}
+	var street := [] # per line: which segments run along a road
+	for li in lines.size():
+		var pts := lines[li]
+		var marks := PackedByteArray()
+		marks.resize(pts.size() - 1)
+		var a := pairs[li] / 65536 - 1
+		var b := pairs[li] % 65536 - 1
+		if a == -1:
+			for s in pts.size() - 1:
+				var mid := (pts[s] + pts[s + 1]) * 0.5
+				for o: Array in _fence_near(roadside, mid, 10.0):
+					if mid.distance_to(o[0]) < o[1] + YARD_CELL * 1.5:
+						marks[s] = 1
+						break
+				var seg := pts[s].distance_to(pts[s + 1])
+				if marks[s] == 1 and seg > FENCE_GATE + 1.6:
+					var centre := _centroid(buildings[houses[b]]["poly"])
+					var q := Geometry2D.get_closest_point_to_segment(centre, pts[s], pts[s + 1])
+					var d := q.distance_to(centre)
+					if d < gate_best.get(b, INF):
+						gate_best[b] = d
+						var along := clampf(pts[s].distance_to(q), FENCE_GATE * 0.5 + 0.8, seg - FENCE_GATE * 0.5 - 0.8)
+						gates[b] = [li, s, along]
+		street.append(marks)
+
+	# Each line becomes walls: one per stretch along a road and one per stretch
+	# between yards, each with one look.
+	var walls: Array[Dictionary] = []
+	var rng := RandomNumberGenerator.new()
+	for li in lines.size():
+		var pts := lines[li]
+		var a := pairs[li] / 65536 - 1
+		var b := pairs[li] % 65536 - 1
+		# The look comes from the house on the higher side, so every wall of a yard matches.
+		rng.seed = buildings[houses[b]]["id"] + 7
+		var stone: Color = (WALL_COLORS[[0, 1, 2, 3, 6][rng.randi() % 5]].srgb_to_linear() * rng.randf_range(0.85, 1.0)).linear_to_srgb()
+		var paint: Color = FENCE_PAINT[rng.randi() % FENCE_PAINT.size()]
+		var street_kind := FENCE_SHEET if rng.randf() < SHEET_STREET else FENCE_STONE
+		var street_height := rng.randf_range(2.0, 2.3)
+		var inner_kind := FENCE_MESH if rng.randf() < MESH_PARTY else FENCE_STONE
+		var inner_height := rng.randf_range(1.8, 2.0)
+		var marks: PackedByteArray = street[li]
+		var gate: Array = gates.get(b, [])
+		var s := 0
+		while s < pts.size() - 1:
+			var on_street := a == -1 and marks[s] == 1
+			var run := PackedVector2Array([pts[s]])
+			var along := 0.0
+			var gate_at := -1.0
+			while s < pts.size() - 1 and (a == -1 and marks[s] == 1) == on_street:
+				if a == -1 and not gate.is_empty() and gate[0] == li and gate[1] == s:
+					gate_at = along + gate[2]
+				along += pts[s].distance_to(pts[s + 1])
+				run.append(pts[s + 1])
+				s += 1
+			var kind := street_kind if on_street else inner_kind
+			var col: Color = stone if kind == FENCE_STONE else (paint if kind == FENCE_SHEET else FENCE_MESH_COLOR)
+			walls.append({"pts": run, "kind": kind, "color": col, "height": street_height if on_street else inner_height,
+				"gate": gate_at, "gate_color": paint})
+	print("Walls: %d yards, %d gates, %d walls worked out in %.1f s" % [
+		houses.size(), gates.size(), walls.size(), (Time.get_ticks_msec() - t0) / 1000.0])
+	return walls
+
+
+## Lays the walls (as from _make_walls, or the editable map) into the world:
+## each {pts, kind, color, height, gate, gate_color}, colours in sRGB, the gate
+## in metres along the wall (-1 for none). world/map/map_kit.gd draws the same
+## for the editor; keep the two in step.
+func _build_walls(root: Node3D, walls: Array) -> void:
+	var footprints := {} # cell -> building indices, to keep walls out of buildings
+	for i in buildings.size():
+		for p: Vector2 in buildings[i]["poly"]:
+			var list: Array = footprints.get_or_add(_fence_cell(p), [])
+			if list.is_empty() or list[list.size() - 1] != i:
+				list.append(i)
+	var mat := ShaderMaterial.new()
+	mat.shader = load("res://world/shaders/fence.gdshader")
+	var chunks := {}
+	var obstacles := {} # _fence_blocked only needs the buildings here
+	var total := 0.0
+	for wall: Dictionary in walls:
+		var pts: PackedVector2Array = wall["pts"]
+		var kind: int = wall["kind"]
+		var height: float = wall["height"]
+		var col: Color = (wall["color"] as Color).srgb_to_linear()
+		var gate_col: Color = (wall["gate_color"] as Color).srgb_to_linear()
+		var gate_at: float = wall["gate"]
+		var pillar := col * 0.92
+		var along := 0.0
+		for s in pts.size() - 1:
+			var seg := pts[s].distance_to(pts[s + 1])
+			if seg < 0.01:
+				continue
+			var dir := (pts[s + 1] - pts[s]) / seg
+			var gaps: Array[Vector2] = []
+			if gate_at >= along and gate_at < along + seg:
+				var at := clampf(gate_at - along, FENCE_GATE * 0.5, maxf(seg - FENCE_GATE * 0.5, FENCE_GATE * 0.5))
+				gaps.append(Vector2(at - FENCE_GATE * 0.5, at + FENCE_GATE * 0.5))
+			_fence_run(pts[s], pts[s + 1], kind, height, col, gaps, obstacles, footprints, chunks)
+			total += seg
+			for g in gaps:
+				var g0 := pts[s] + dir * g.x
+				var g1 := pts[s] + dir * minf(g.y, seg)
+				_fence_run(g0, g1, FENCE_SHEET, 2.2, gate_col, [], obstacles, footprints, chunks)
+				for p: Vector2 in [g0, g1]:
+					if not _fence_blocked(p, obstacles, footprints):
+						_fence_box(p, 0.25, height + 0.15, pillar, FENCE_STONE, chunks)
+			# A pillar where the wall turns hides the joint between straight runs.
+			var turn := s > 0 and (pts[s] - pts[s - 1]).normalized().dot(dir) < 0.96
+			if kind == FENCE_STONE and (s == 0 or turn) and not _fence_blocked(pts[s], obstacles, footprints):
+				_fence_box(pts[s], 0.22, height + 0.1, pillar, FENCE_STONE, chunks)
+			along += seg
+		var last := pts[pts.size() - 1]
+		if kind == FENCE_STONE and not _fence_blocked(last, obstacles, footprints):
+			_fence_box(last, 0.22, height + 0.1, pillar, FENCE_STONE, chunks)
+
+	var body := StaticBody3D.new()
+	body.name = "Fences"
+	root.add_child(body)
+	var k := 0
+	for key: Vector2i in chunks:
+		var one := {key: chunks[key]}
+		_add_trimesh(body, _commit_chunks(one, body, mat, "Fences"), "CollisionShape3D_%d" % k)
+		k += 1
+	for child in body.get_children():
+		if child is MeshInstance3D:
+			child.visibility_range_end = FENCE_DRAW
+			child.visibility_range_end_margin = 60.0
+	print("Walls: %d, %.1f km" % [walls.size(), total / 1000.0])
+
+
+func _corner(id: int, cw: int) -> Vector2:
+	return Vector2(id % cw, id / cw)
+
+
+func _centroid(poly: PackedVector2Array) -> Vector2:
+	var c := Vector2.ZERO
+	for p in poly:
+		c += p / poly.size()
+	return c
+
+
+## Sets every grid cell within r of p to val.
+func _yard_stamp(lab: PackedInt32Array, lo: Vector2, w: int, h: int, p: Vector2, r: float, val: int) -> void:
+	var q := (p - lo) / YARD_CELL
+	var rc := r / YARD_CELL
+	for y in range(maxi(0, int(q.y - rc)), mini(h - 1, int(q.y + rc)) + 1):
+		for x in range(maxi(0, int(q.x - rc)), mini(w - 1, int(q.x + rc)) + 1):
+			var dx := x + 0.5 - q.x
+			var dy := y + 0.5 - q.y
+			if dx * dx + dy * dy <= rc * rc:
+				lab[y * w + x] = val
+
+
+## Sets the free cells inside poly to val, and lists them in `cells` if given.
+func _yard_fill(lab: PackedInt32Array, lo: Vector2, w: int, h: int, poly: PackedVector2Array, val: int,
+		cells: Variant) -> void:
+	var pp := PackedVector2Array()
+	var ymin := INF
+	var ymax := -INF
+	for p in poly:
+		var q := (p - lo) / YARD_CELL
+		pp.append(q)
+		ymin = minf(ymin, q.y)
+		ymax = maxf(ymax, q.y)
+	for y in range(maxi(0, int(floor(ymin))), mini(h - 1, int(ceil(ymax))) + 1):
+		var yc := y + 0.5
+		var xs := PackedFloat32Array()
+		for k in pp.size():
+			var a := pp[k]
+			var b := pp[(k + 1) % pp.size()]
+			if (a.y <= yc) != (b.y <= yc):
+				xs.append(a.x + (yc - a.y) / (b.y - a.y) * (b.x - a.x))
+		xs.sort()
+		for s in range(0, xs.size() - 1, 2):
+			for x in range(maxi(0, int(ceil(xs[s] - 0.5))), mini(w - 1, int(floor(xs[s + 1] - 0.5))) + 1):
+				if lab[y * w + x] == YARD_FREE:
+					lab[y * w + x] = val
+					if cells != null:
+						cells.append(y * w + x)
+
+
+## Evens out the grid's staircase: each point moves to the mean of its neighbours
+## within two steps; the ends stay put.
+func _smooth(pts: PackedVector2Array) -> PackedVector2Array:
+	var n := pts.size()
+	if n < 5:
+		return pts
+	var closed := pts[0].is_equal_approx(pts[n - 1])
+	var out := pts.duplicate()
+	for _pass in 2:
+		var src := out.duplicate()
+		for i in range(1, n - 1):
+			var sum := Vector2.ZERO
+			var count := 0
+			for k in range(i - 2, i + 3):
+				var j := k
+				if closed:
+					j = posmod(k, n - 1)
+				elif k < 0 or k >= n:
+					continue
+				sum += src[j]
+				count += 1
+			out[i] = sum / count
+	return out
+
+
+## Douglas-Peucker: drops points that lie within tol of the line through their neighbours.
+func _simplify(pts: PackedVector2Array, tol: float) -> PackedVector2Array:
+	var keep := PackedByteArray()
+	keep.resize(pts.size())
+	keep[0] = 1
+	keep[pts.size() - 1] = 1
+	var stack := [Vector2i(0, pts.size() - 1)]
+	while not stack.is_empty():
+		var span: Vector2i = stack.pop_back()
+		var worst := -1.0
+		var at := -1
+		for i in range(span.x + 1, span.y):
+			var q := Geometry2D.get_closest_point_to_segment(pts[i], pts[span.x], pts[span.y])
+			var d := q.distance_to(pts[i])
+			if d > worst:
+				worst = d
+				at = i
+		if at >= 0 and worst > tol:
+			keep[at] = 1
+			stack.append(Vector2i(span.x, at))
+			stack.append(Vector2i(at, span.y))
+	var out := PackedVector2Array()
+	for i in pts.size():
+		if keep[i] == 1:
+			out.append(pts[i])
+	return out
+
+
+## One straight run of fence from a to b, laid over the ground in pieces, with
+## the stretches in `gaps` (metres from a) left open. Pieces that would stand in
+## a building or on a road are left out.
+func _fence_run(a: Vector2, b: Vector2, kind: int, height: float, col: Color, gaps: Array,
+		obstacles: Dictionary, footprints: Dictionary, chunks: Dictionary) -> void:
+	var run := a.distance_to(b)
+	var dir := (b - a) / run
+	var nrm := Vector2(dir.y, -dir.x)
+	var steps := maxi(1, int(ceil(run / FENCE_PIECE)))
+	var half := 0.15 if kind == FENCE_STONE else 0.0
+	for s in steps:
+		var t0 := run * s / steps
+		var t1 := run * (s + 1) / steps
+		for g: Vector2 in gaps:
+			if t0 < g.y and t1 > g.x:
+				if t0 >= g.x and t1 <= g.y:
+					t0 = t1 # wholly in the gap
+				elif t0 < g.x:
+					t1 = g.x
+				else:
+					t0 = g.y
+		if t1 - t0 < 0.05 or _fence_blocked(a + dir * (t0 + t1) * 0.5, obstacles, footprints):
+			continue
+		var p0 := a + dir * t0
+		var p1 := a + dir * t1
+		var y0 := _h(p0.x, p0.y)
+		var y1 := _h(p1.x, p1.y)
+		var buf := _chunk_buf(chunks, (p0 + p1) * 0.5, FENCE_CHUNK)
+		var extra := Vector2(kind, 0.0)
+		for side: float in ([-1.0, 1.0] if half > 0.0 else [0.0]):
+			var o := nrm * half * side
+			var n3 := Vector3(nrm.x, 0.0, nrm.y) * (side if side != 0.0 else 1.0)
+			_quad(buf, Vector3(p0.x + o.x, y0 - 0.3, p0.y + o.y), Vector3(p1.x + o.x, y1 - 0.3, p1.y + o.y),
+				Vector3(p1.x + o.x, y1 + height, p1.y + o.y), Vector3(p0.x + o.x, y0 + height, p0.y + o.y), n3, col,
+				Vector2(t0, -0.3), Vector2(t1, -0.3), Vector2(t1, height), Vector2(t0, height), extra)
+		if half > 0.0:
+			var l := nrm * half
+			_quad(buf, Vector3(p0.x - l.x, y0 + height, p0.y - l.y), Vector3(p1.x - l.x, y1 + height, p1.y - l.y),
+				Vector3(p1.x + l.x, y1 + height, p1.y + l.y), Vector3(p0.x + l.x, y0 + height, p0.y + l.y), Vector3.UP,
+				col * 0.9, Vector2(t0, 0.0), Vector2(t1, 0.0), Vector2(t1, 0.3), Vector2(t0, 0.3), extra)
+		if kind != FENCE_STONE:
+			_fence_box(p0, 0.04, height + 0.05, Color(0.2, 0.2, 0.2), FENCE_POST, chunks)
+			if s == steps - 1:
+				_fence_box(p1, 0.04, height + 0.05, Color(0.2, 0.2, 0.2), FENCE_POST, chunks)
+
+
+func _fence_blocked(p: Vector2, obstacles: Dictionary, footprints: Dictionary) -> bool:
+	for i: int in _fence_near(footprints, p, 1.0):
+		if Geometry2D.is_point_in_polygon(p, buildings[i]["poly"]):
+			return true
+	for o: Array in _fence_near(obstacles, p, 1.0):
+		if o[2] < 0 and p.distance_to(o[0]) < o[1] - FENCE_ROAD_GAP + 0.3:
+			return true
+	return false
+
+
+## A square post or pillar of half width `half` standing on the ground at p.
+func _fence_box(p: Vector2, half: float, height: float, col: Color, kind: int, chunks: Dictionary) -> void:
+	var y0 := _h(p.x, p.y) - 0.3
+	var y1 := _h(p.x, p.y) + height
+	var buf := _chunk_buf(chunks, p, FENCE_CHUNK)
+	var extra := Vector2(kind, 0.0)
+	var corners := [Vector2(-half, -half), Vector2(half, -half), Vector2(half, half), Vector2(-half, half)]
+	for k in 4:
+		var q0: Vector2 = p + corners[k]
+		var q1: Vector2 = p + corners[(k + 1) % 4]
+		var mid: Vector2 = (corners[k] + corners[(k + 1) % 4]).normalized()
+		_quad(buf, Vector3(q0.x, y0, q0.y), Vector3(q1.x, y0, q1.y), Vector3(q1.x, y1, q1.y), Vector3(q0.x, y1, q0.y),
+			Vector3(mid.x, 0.0, mid.y), col, Vector2(0.0, -0.3), Vector2(half * 2.0, -0.3),
+			Vector2(half * 2.0, height), Vector2(0.0, height), extra)
+	_quad(buf, Vector3(p.x - half, y1, p.y - half), Vector3(p.x + half, y1, p.y - half),
+		Vector3(p.x + half, y1, p.y + half), Vector3(p.x - half, y1, p.y + half), Vector3.UP, col,
+		Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, extra)
+
+
+# --- the editable map -------------------------------------------------------
+
+## Takes the buildings from the editable map in place of OpenStreetMap's, and
+## returns its walls (as for _build_walls).
+func _load_map() -> Array[Dictionary]:
+	var map: Node = (load(EDIT_MAP_PATH) as PackedScene).instantiate()
+	# Buildings modelled by hand elsewhere are not in the map, but their footprints
+	# still count (the ground, the minimap, no trees growing through them).
+	buildings = buildings.filter(func(b: Dictionary) -> bool:
+		return BUILDING_FIXES.get(b["id"], {}).get("replaced", false))
+	var walls: Array[Dictionary] = []
+	var made := 0
+	for node in map.find_children("*", "", true, false):
+		var script: Script = node.get_script()
+		if script == MAP_BUILDING:
+			var poly: PackedVector2Array = node.world_footprint()
+			var area := _signed_area(poly)
+			if area < 0.0:
+				poly.reverse()
+				area = -area
+			if poly.size() < 3 or area < 1.0:
+				continue
+			var id: int = node.osm_id
+			if id == 0:
+				made += 1
+				id = -made # one added by hand
+			buildings.append({"poly": poly, "id": id, "area": area,
+				"tags": {"building": "shed" if node.plain else "yes"},
+				"height": node.height, "wall": node.wall_color, "roof": node.roof_color,
+				"plain": node.plain, "stone": node.tuff})
+		elif script == MAP_WALL:
+			var pts: PackedVector2Array = node.world_points()
+			if pts.size() < 2:
+				continue
+			walls.append({"pts": pts, "kind": node.kind, "color": node.color, "height": node.height,
+				"gate": node.gate_at, "gate_color": node.gate_color})
+	map.free()
+	print("Map: %d buildings, %d walls from %s" % [buildings.size(), walls.size(), EDIT_MAP_PATH])
+	return walls
+
+
+## Saves the terrain heights for the editable map's preview (world/map/map_kit.gd).
+func _save_heights() -> Error:
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(HEIGHTS_PATH.get_base_dir()))
+	var img := Image.create_from_data(GRID_N, GRID_N, false, Image.FORMAT_RF, hgt.to_byte_array())
+	img.set_meta("cell", CELL)
+	var err := ResourceSaver.save(img, HEIGHTS_PATH)
+	if err != OK:
+		push_error("Saving %s failed: %s" % [HEIGHTS_PATH, error_string(err)])
+	return err
+
+
+## Writes the buildings and walls to the editable map, one node each, grouped
+## by district.
+func _export_map(walls: Array[Dictionary]) -> Error:
+	var root := Node3D.new()
+	root.name = "Map"
+	root.set_script(MAP_ROOT)
+	var groups := {}
+	for part in ["Buildings", "Walls"]:
+		var node := Node3D.new()
+		node.name = part
+		root.add_child(node)
+		node.owner = root
+		groups[part] = node
+	var districts := {}
+	var district := func(part: String, p: Vector2) -> Node3D:
+		var key := Vector2i(int(floor((p.x + HALF) / DISTRICT)), int(floor((p.y + HALF) / DISTRICT)))
+		var name := "%s_%s%d" % [part, char(65 + key.y), key.x + 1]
+		if not districts.has(name):
+			var node := Node3D.new()
+			node.name = name
+			groups[part].add_child(node)
+			node.owner = root
+			districts[name] = node
+		return districts[name]
+	var rng := RandomNumberGenerator.new()
+	for b in buildings:
+		if BUILDING_FIXES.get(b["id"], {}).get("replaced", false):
+			continue
+		var poly: PackedVector2Array = b["poly"]
+		var c := _centroid(poly)
+		var look := _building_look(b, rng)
+		var node := Node3D.new()
+		node.set_script(MAP_BUILDING)
+		node.name = "Building_%d" % absi(b["id"])
+		node.position = Vector3(c.x, 0.0, c.y)
+		var local := PackedVector2Array()
+		for p in poly:
+			local.append(p - c)
+		node.set("footprint", local)
+		node.set("height", look["height"])
+		var wall: Color = look["wall"]
+		var plain := wall.a < 0.75
+		wall.a = 1.0
+		node.set("wall_color", wall.linear_to_srgb())
+		var roof: Color = look["roof"]
+		roof.a = 1.0
+		node.set("roof_color", roof.linear_to_srgb())
+		node.set("plain", plain)
+		node.set("tuff", look["stone"])
+		node.set("osm_id", b["id"])
+		district.call("Buildings", c).add_child(node, true)
+		node.owner = root
+	for i in walls.size():
+		var w := walls[i]
+		var pts: PackedVector2Array = w["pts"]
+		var node := Path3D.new()
+		node.set_script(MAP_WALL)
+		node.name = "Wall_%d" % (i + 1)
+		node.position = Vector3(pts[0].x, 0.0, pts[0].y)
+		var curve := Curve3D.new()
+		for p in pts:
+			curve.add_point(Vector3(p.x - pts[0].x, 0.0, p.y - pts[0].y))
+		node.curve = curve
+		for key in ["kind", "color", "height", "gate_color"]:
+			node.set(key, w[key])
+		node.set("gate_at", w["gate"])
+		district.call("Walls", _centroid(pts)).add_child(node, true)
+		node.owner = root
+	var scene := PackedScene.new()
+	var err := scene.pack(root)
+	if err == OK:
+		err = ResourceSaver.save(scene, EDIT_MAP_PATH)
+	if err != OK:
+		push_error("Saving %s failed: %s" % [EDIT_MAP_PATH, error_string(err)])
+	else:
+		print("Exported %d buildings and %d walls to %s" % [buildings.size(), walls.size(), EDIT_MAP_PATH])
+	root.free()
+	return err
 
 
 # --- garages ----------------------------------------------------------------

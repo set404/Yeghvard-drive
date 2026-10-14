@@ -1,6 +1,11 @@
 extends Node3D
 
 const BEAM_NAMES := ["", "PARK", "LOW", "HIGH"]
+## The fuel gauge turns amber below this share of the tank, and blinks red on the reserve.
+const LOW_FUEL := 0.15
+const FUEL_OK := Color(0.3, 0.75, 0.35)
+const FUEL_LOW := Color(0.95, 0.65, 0.1)
+const FUEL_EMPTY := Color(0.9, 0.15, 0.1)
 
 ## How close (metres, to the middle of the car) you have to stand for F to get you in.
 @export var enter_distance := 4.5
@@ -19,6 +24,8 @@ const BEAM_NAMES := ["", "PARK", "LOW", "HIGH"]
 @onready var speed_label: Label = $HUD/Speed
 @onready var power_bar: ProgressBar = $HUD/Power
 @onready var power_label: Label = $HUD/Power/Label
+@onready var fuel_bar: ProgressBar = $HUD/Fuel
+@onready var fuel_label: Label = $HUD/Fuel/Label
 @onready var lights_label: Label = $HUD/Lights
 @onready var prompt_label: Label = $HUD/Prompt
 ## Only cars built with lamps have this node. Null while on foot.
@@ -69,6 +76,7 @@ func _drive(next: VehicleBody3D, jump_camera := false) -> void:
 	lights_label.visible = lamps != null
 	speed_label.visible = true
 	power_bar.visible = true
+	fuel_bar.visible = true
 	minimap.target = car
 	camera.follow(car, jump_camera)
 
@@ -83,6 +91,7 @@ func _get_out() -> void:
 	lights_label.visible = false
 	speed_label.visible = false
 	power_bar.visible = false
+	fuel_bar.visible = false
 	minimap.target = player
 	camera.follow(player)
 
@@ -174,12 +183,15 @@ func _process(_delta: float) -> void:
 		speed_label.text = "%s   %d km/h" % [_gear_letter(), absf(car.forward_speed() * 3.6)]
 		power_bar.value = car.output_hp / car.horsepower * 100.0
 		power_label.text = "%d / %d hp" % [car.output_hp, car.horsepower]
+		_show_fuel()
 		if car.cranking:
 			power_label.text = "starting..."
 			hints.append("Starting...")
 		elif not car.engine_running:
 			power_label.text = "engine off"
-			if car.start_failed:
+			if car.fuel <= 0.0:
+				hints.append("Out of fuel")
+			elif car.start_failed:
 				hints.append("It didn't start. Press E to try again")
 			else:
 				hints.append("Press E to start the engine")
@@ -199,6 +211,21 @@ func _process(_delta: float) -> void:
 			"<<" if lamps.signal_left and blink else "    ",
 			BEAM_NAMES[lamps.beam],
 			">>" if lamps.signal_right and blink else "    "]
+
+
+## The fuel gauge: litres left, green, amber when low, blinking red on the reserve.
+func _show_fuel() -> void:
+	var level: float = car.fuel_level()
+	fuel_bar.value = level * 100.0
+	fuel_label.text = "FUEL  %d / %d L" % [ceili(car.fuel), roundi(car.fuel_capacity)]
+	var fill := fuel_bar.get_theme_stylebox("fill") as StyleBoxFlat
+	if car.on_reserve():
+		var blink := fmod(Time.get_ticks_msec() / 1000.0, 0.8) < 0.4
+		fill.bg_color = FUEL_EMPTY if blink or level <= 0.0 else FUEL_LOW
+	elif level < LOW_FUEL:
+		fill.bg_color = FUEL_LOW
+	else:
+		fill.bg_color = FUEL_OK
 
 
 ## Stands a car on whatever ground is at its position, keeping the way it faces.
