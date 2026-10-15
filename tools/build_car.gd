@@ -21,6 +21,11 @@ const MODELS := {
 		"idle_glow": 0.3,
 		"interior": true,
 		"mass": 1680.0, "horsepower": 347.0, "max_drive_force": 9500.0, "drag": 0.62, "fuel_capacity": 80.0,
+		# Engine note: recordings held at steady revs, [name in audio/layers, rpm] (see
+		# tools/build_sounds.gd). A Mercedes AMG V8 idling, and made from it the way an
+		# engine revs (tools/engine_layers/pulses.js); higher up, the E55's.
+		"engine_layers": [["e50_0890", 890.0], ["e50_1300", 1300.0], ["e50_1800", 1800.0],
+			["e55_2600", 2600.0], ["e55_3300", 3300.0], ["e55_4200", 4200.0], ["e55_5300", 5300.0]],
 	},
 	"e55_amg": {
 		"source": "res://data/models/2003_mercedes-benz_e55_amg_w211.glb",
@@ -36,6 +41,10 @@ const MODELS := {
 		"glow_scale": 0.9,
 		"interior": false,
 		"mass": 1835.0, "horsepower": 476.0, "max_drive_force": 11000.0, "drag": 0.62, "fuel_capacity": 80.0,
+		# A big-block V8 idling, and made from it the way an engine revs
+		# (tools/engine_layers/pulses.js).
+		"engine_layers": [["e55_1120", 1120.0], ["e55_1500", 1500.0], ["e55_2000", 2000.0],
+			["e55_2600", 2600.0], ["e55_3300", 3300.0], ["e55_4200", 4200.0], ["e55_5300", 5300.0]],
 	},
 	"volga_3102": {
 		"source": "res://data/models/volga_gaz_3102/scene.gltf",
@@ -55,6 +64,13 @@ const MODELS := {
 		"interior": false,
 		"mass": 1470.0, "horsepower": 105.0, "max_drive_force": 5200.0, "drag": 0.75, "fuel_capacity": 55.0,
 		"driver_view": Vector3(0.36, 1.0, -0.12),
+		# A four pulling hard (an old Mazda's), over a modern four's idle.
+		"engine_layers": [["compass_0810", 810.0], ["volga_1700", 1700.0], ["volga_2100", 2100.0],
+			["volga_2500", 2500.0], ["volga_2900", 2900.0], ["volga_3300", 3300.0],
+			# Above the recording, made from its top the way an engine revs.
+			["volga_4000", 4000.0], ["volga_4800", 4800.0], ["volga_5600", 5600.0]],
+		# An old, slow-turning starter.
+		"starter_pitch": 0.85,
 		# The model was made for another kind of renderer; on import its window glass
 		# came out solid black and its chrome and gold lost their metal.
 		"material_fixes": {
@@ -84,6 +100,32 @@ const MODELS := {
 		"gauges_shader": "res://car/gauges_lc80.gdshader",
 		"mass": 2260.0, "horsepower": 212.0, "max_drive_force": 9000.0, "drag": 0.95, "fuel_capacity": 95.0,
 		"driver_view": Vector3(0.38, 1.42, -0.1),
+		# A straight six (an E-type Jaguar's).
+		"engine_layers": [["landcruiser_1400", 1400.0], ["landcruiser_1520", 1520.0],
+			["landcruiser_1900", 1900.0], ["landcruiser_2300", 2300.0],
+			["landcruiser_2900", 2900.0], ["landcruiser_3600", 3600.0], ["landcruiser_4500", 4500.0]],
+	},
+	"jeep_compass": {
+		"source": "res://data/models/jeep_compass_2022/jeep_compass_2022_lowpoly.glb",
+		"skip": [],
+		# The teal bodywork; the roof is black with a panoramic glass roof in it.
+		# Other materials share the start of its name, so only the exact name is the paint.
+		"paint": "Jeep_Compass_mat_13_1",
+		"paint_exact": true,
+		"tyre": "Teana",
+		# Each tyre and rim mesh holds both wheels of one side of the car.
+		"wheels_are_nodes": false,
+		"wheels_in_tyres": true,
+		"lamps": "none",
+		"idle_glow": 0.0,
+		"interior": false,
+		"mass": 1600.0, "horsepower": 177.0, "max_drive_force": 6500.0, "drag": 0.8, "fuel_capacity": 60.0,
+		# It sits higher than the saloons; their eye point looks into the steering wheel.
+		"driver_view": Vector3(0.37, 1.33, -0.3),
+		# A modern turbocharged four (an Audi 2.0 TFSI's).
+		"engine_layers": [["compass_0810", 810.0], ["compass_1900", 1900.0], ["compass_2200", 2200.0],
+			["compass_2500", 2500.0], ["compass_2750", 2750.0],
+			["compass_3400", 3400.0], ["compass_4200", 4200.0], ["compass_5200", 5200.0]],
 	},
 }
 
@@ -153,11 +195,14 @@ func _build(car_name: String, cfg: Dictionary) -> bool:
 	# Wheels: found by their tyres. The tyre's middle is the axle.
 	var wheels: Array[Dictionary] = []
 	var in_wheel := {} # MeshInstance3D -> true
+	var body_parts := {}
 	if cfg.get("wheels_on_axles", false):
 		wheels = _axle_wheels(meshes, cfg, in_wheel)
+	elif cfg.get("wheels_in_tyres", false):
+		wheels = _tyre_wheels(meshes, cfg, in_wheel, body_parts)
 	for mi in meshes:
 		var tyre := _box(mi)
-		if cfg.get("wheels_on_axles", false) or not _material_name(mi, 0).contains(cfg["tyre"]) or tyre.size.y < 0.4:
+		if cfg.get("wheels_on_axles", false) or cfg.get("wheels_in_tyres", false) or not _material_name(mi, 0).contains(cfg["tyre"]) or tyre.size.y < 0.4:
 			continue
 		var members: Array[MeshInstance3D] = []
 		for other in meshes:
@@ -192,9 +237,23 @@ func _build(car_name: String, cfg: Dictionary) -> bool:
 	car.set("fuel", cfg["fuel_capacity"])
 	if cfg.has("driver_view"):
 		car.set("driver_view", cfg["driver_view"])
+	# The engine note and starter (tools/build_sounds.gd); the rest share the default ones.
+	if cfg.has("engine_sound"):
+		car.set("engine_sound", cfg["engine_sound"])
+	if cfg.has("engine_sound_rpm"):
+		car.set("engine_sound_rpm", cfg["engine_sound_rpm"])
+	if cfg.has("engine_layers"):
+		var streams: Array[AudioStream] = []
+		var rpms := PackedFloat32Array()
+		for layer: Array in cfg["engine_layers"]:
+			streams.append(load("res://audio/layers/%s.res" % layer[0]))
+			rpms.append(layer[1])
+		car.set("engine_layers", streams)
+		car.set("engine_layer_rpms", rpms)
+	if cfg.has("starter_pitch"):
+		car.set("starter_pitch", cfg["starter_pitch"])
 
 	# Body: everything that is not a wheel, merged into one mesh per material.
-	var body_parts := {}
 	var lamp_zones := {} # zone name -> [SurfaceTool, source material]
 	var lamp_rest := {} # lamp housing that never lights up
 	var gauge_parts := {} # instrument cluster faces
@@ -218,6 +277,9 @@ func _build(car_name: String, cfg: Dictionary) -> bool:
 				_append(body_parts, mi, s, mi.global_transform)
 			var part := _box(mi)
 			box = part if box.size == Vector3.ZERO else box.merge(part)
+	if box.size == Vector3.ZERO:
+		# The body was cut out of the same meshes as the wheels.
+		box = _bounds(meshes)
 	var body := MeshInstance3D.new()
 	body.name = "Body"
 	body.mesh = _commit(body_parts)
@@ -225,7 +287,7 @@ func _build(car_name: String, cfg: Dictionary) -> bool:
 	# Name the bodywork paint so car.gd can recolour it.
 	for s in body.mesh.get_surface_count():
 		var paint := body.mesh.surface_get_material(s)
-		if paint.resource_name.contains(cfg["paint"]):
+		if paint.resource_name == cfg["paint"] or (not cfg.get("paint_exact", false) and paint.resource_name.contains(cfg["paint"])):
 			paint.resource_name = "Paint"
 	car.add_child(body)
 	tris += _count_tris(body.mesh)
@@ -366,6 +428,79 @@ func _axle_wheels(meshes: Array[MeshInstance3D], cfg: Dictionary, in_wheel: Dict
 			for mat: Material in side["parts"]:
 				side["parts"][mat].index()
 			wheels.append({"at": side["tyre"].get_center(), "tyre": side["tyre"], "parts": side["parts"]})
+	return wheels
+
+
+## Wheels of a model whose tyres and rims are one mesh for several wheels (a side
+## of the car, or all of it). The tyres say where the four wheels are; every
+## triangle of the model inside a tyre's outline turns with that wheel, and the
+## rest goes to the body (`body_parts`, by material).
+func _tyre_wheels(meshes: Array[MeshInstance3D], cfg: Dictionary, in_wheel: Dictionary,
+		body_parts: Dictionary) -> Array[Dictionary]:
+	var tyre_points := PackedVector3Array()
+	for mi in meshes:
+		if _material_name(mi, 0).contains(cfg["tyre"]):
+			for p: Vector3 in mi.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]:
+				tyre_points.append(mi.global_transform * p)
+	var mid_z := 0.0
+	for p in tyre_points:
+		mid_z += p.z / tyre_points.size()
+	# One tyre per side and end of the car.
+	var tyres := {}
+	for p in tyre_points:
+		var key := Vector2i(1 if p.x > 0.0 else -1, 1 if p.z > mid_z else -1)
+		tyres[key] = (tyres[key] as AABB).expand(p) if tyres.has(key) else AABB(p, Vector3.ZERO)
+	var wheels: Array[Dictionary] = []
+	for key: Vector2i in tyres:
+		wheels.append({"at": (tyres[key] as AABB).get_center(), "tyre": tyres[key], "parts": {}})
+
+	for mi in meshes:
+		in_wheel[mi] = true
+		var xf := mi.global_transform
+		var turn := xf.basis.orthonormalized()
+		for s in mi.mesh.get_surface_count():
+			if _skipped(_material_name(mi, s), cfg["skip"]):
+				continue
+			var mat := mi.get_active_material(s)
+			var a: Array = mi.mesh.surface_get_arrays(s)
+			var verts: PackedVector3Array = a[Mesh.ARRAY_VERTEX]
+			var normals: PackedVector3Array = a[Mesh.ARRAY_NORMAL]
+			var uvs := PackedVector2Array()
+			if a[Mesh.ARRAY_TEX_UV] != null:
+				uvs = a[Mesh.ARRAY_TEX_UV]
+			var idx := PackedInt32Array()
+			if a[Mesh.ARRAY_INDEX] != null:
+				idx = a[Mesh.ARRAY_INDEX]
+			else:
+				for k in verts.size():
+					idx.append(k)
+			for t in range(0, idx.size(), 3):
+				var mid := xf * ((verts[idx[t]] + verts[idx[t + 1]] + verts[idx[t + 2]]) / 3.0)
+				var parts := body_parts
+				var at := Vector3.ZERO
+				for w in wheels:
+					var tyre: AABB = w["tyre"]
+					var c := tyre.get_center()
+					if mid.x >= tyre.position.x - 0.02 and mid.x <= tyre.end.x + 0.02 \
+							and Vector2(mid.y - c.y, mid.z - c.z).length() <= tyre.size.y * 0.5 + 0.01:
+						parts = w["parts"]
+						at = c
+						break
+				if not parts.has(mat):
+					parts[mat] = SurfaceTool.new()
+					parts[mat].begin(Mesh.PRIMITIVE_TRIANGLES)
+				var st: SurfaceTool = parts[mat]
+				for k in 3:
+					var i := idx[t + k]
+					st.set_normal(turn * normals[i])
+					if not uvs.is_empty():
+						st.set_uv(uvs[i])
+					st.add_vertex(xf * verts[i] - at)
+	for w in wheels:
+		for mat: Material in w["parts"]:
+			w["parts"][mat].index()
+	for mat: Material in body_parts:
+		body_parts[mat].index()
 	return wheels
 
 

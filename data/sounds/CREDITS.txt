@@ -1,0 +1,21 @@
+Big block V8 rev (big_block_v8_rev.mp3; big_block_v8_idle_loop.wav is cut from it)
+Author:  freesound_community
+Source:  Pixabay, sound 90919 ("big-block-v8-rev")
+License: Pixabay Content License - https://pixabay.com/service/license-summary/
+         (check the sound's own page for its exact terms)
+
+Starting (starting.mp3; starter_engage.wav and starter_loop.wav are cut from it)
+Author:  freesound_community
+Source:  Pixabay, sound 90449 ("starting")
+License: Pixabay Content License - https://pixabay.com/service/license-summary/
+         (check the sound's own page for its exact terms)
+
+Engine layers (layers/*.wav are cut from these; see tools/engine_layers)
+S63 AMG V8 Engine Revs (s63_amg_v8_revs.mp3) - marcelweiss, https://freesound.org/people/marcelweiss/sounds/505321/
+         License: CC0
+E-type Jaguar, car engine, rev, mono (etype_jaguar_i6_rev.mp3) - Dan_AudioFile, https://freesound.org/people/Dan_AudioFile/sounds/614698/
+         License: CC BY 4.0 - http://creativecommons.org/licenses/by/4.0/
+audi a4 allroad 20TFSI engine rpm ramp fast mono (audi_a4_20tfsi_rpm_ramp.mp3) - Soundholder, https://freesound.org/s/425384/
+         License: CC BY 3.0 - http://creativecommons.org/licenses/by/3.0/
+Car acceleration (mazda323_acceleration.mp3) - han1, https://freesound.org/people/han1/sounds/19024/
+         License: CC BY 4.0 - http://creativecommons.org/licenses/by/4.0/

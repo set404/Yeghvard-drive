@@ -54,8 +54,18 @@ func _ready() -> void:
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	var key := event as InputEventKey
+	if key == null or not key.pressed or key.echo:
+		return
+	# For testing: 1, 2, 3... put you straight into that car, wherever it is,
+	# in the order the cars come in this scene.
+	var number := key.physical_keycode - KEY_1
+	if number >= 0 and number < 9:
+		var cars := get_tree().get_nodes_in_group("cars")
+		if number < cars.size():
+			_drive(cars[number], true)
+		return
 	# F gets you in or out; E (the starter) belongs to the car, see car.gd.
-	if key == null or not key.pressed or key.echo or key.physical_keycode != KEY_F:
+	if key.physical_keycode != KEY_F:
 		return
 	if on_foot:
 		var other := _car_in_reach()
@@ -231,12 +241,18 @@ func _show_fuel() -> void:
 ## Stands a car on whatever ground is at its position, keeping the way it faces.
 func _set_on_ground(body: VehicleBody3D) -> void:
 	var at := body.global_position
-	var query := PhysicsRayQueryParameters3D.create(at + Vector3.UP * 400.0, at + Vector3.DOWN * 400.0)
 	var exclude: Array[RID] = []
 	for other: VehicleBody3D in get_tree().get_nodes_in_group("cars"):
 		exclude.append(other.get_rid())
-	query.exclude = exclude
-	var hit := get_world_3d().direct_space_state.intersect_ray(query)
+	# First from a little above where it was put, so the roof over a car in a
+	# garage does not count; from high up if it was put under the ground.
+	var hit := {}
+	for above: float in [1.5, 400.0]:
+		var query := PhysicsRayQueryParameters3D.create(at + Vector3.UP * above, at + Vector3.DOWN * 400.0)
+		query.exclude = exclude
+		hit = get_world_3d().direct_space_state.intersect_ray(query)
+		if hit:
+			break
 	if hit:
 		at.y = hit["position"].y + 0.4
 	var nose := body.global_basis.z.slide(Vector3.UP).normalized()

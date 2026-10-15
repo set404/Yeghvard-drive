@@ -84,9 +84,26 @@ func _queue_draw() -> void:
 
 func _draw_preview() -> void:
 	_queued = false
+	_keep_on_ground()
 	if _preview == null:
 		_preview = MeshInstance3D.new()
 		_preview.visibility_range_end = 700.0
 		add_child(_preview, false, INTERNAL_MODE_FRONT)
 	_preview.mesh = MapKit.building_mesh(world_footprint(), height, wall_color, roof_color, plain, tuff,
 		global_transform.affine_inverse())
+	# Clicking it in the viewport hits its gizmo (addons/map_editing), which takes its shape from this mesh.
+	update_gizmos()
+
+
+## Puts the node on the ground under it, so its move handles are where the
+## building stands rather than deep underground. Only x and z count for the
+## building itself.
+func _keep_on_ground() -> void:
+	var ground := MapKit.height_at(global_position.x, global_position.z)
+	if absf(global_position.y - ground) > 0.05:
+		global_position.y = ground
+
+
+## The editor's preview of it, in its own space; null outside the editor.
+func preview_mesh() -> Mesh:
+	return _preview.mesh if _preview else null

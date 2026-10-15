@@ -1,12 +1,13 @@
 shader_type spatial;
 render_mode cull_disabled;
 
-// Old industrial garage gate, drawn without textures: red painted steel leaves
-// with ribs, seams, handles, chipped paint and rust, under a strip of small
-// greenish window panes.
+// Old industrial garage gate, drawn without textures: painted steel leaves (red
+// unless told otherwise) with ribs, seams, handles, chipped paint and rust, under
+// a strip of small greenish window panes.
 // UV: 0..1 across the whole gate and bottom to top. UV2: size of the part in metres.
 
 uniform int part = 0; // 0 the leaves, 1 the glazed strip above them
+uniform vec3 paint = vec3(0.30, 0.028, 0.022); // of the leaves, linear
 
 const float PANELS = 4.0;
 const float ROWS = 4.0;
@@ -46,7 +47,7 @@ void fragment() {
 
 		// Paint, a little different on every sheet.
 		float tone = hash(vec2(panel, row));
-		col = vec3(0.30, 0.028, 0.022) * (0.84 + 0.28 * tone);
+		col = paint * (0.84 + 0.28 * tone);
 		// Sun-faded and streaked top to bottom.
 		col *= 0.9 + 0.2 * fbm(vec2(m.x * 1.3, m.y * 0.35));
 

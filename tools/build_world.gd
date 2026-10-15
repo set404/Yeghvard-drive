@@ -138,14 +138,27 @@ const WINDOW_SPACING := 3.2
 ##   stone        "pink_tuff" for walls of Armenian pink tuff blocks
 ##   garage_near  a spot (x, z) in world metres; the ground-floor window nearest
 ##                to it becomes a garage door
+##   gate_paint   colour of the garage gate (red if not given)
+##   transom      false for a garage gate with wall above it instead of panes
+##   doors_near   spots (x, z) in world metres; a shut door goes in the wall at
+##                the point nearest each, for rooms that are not built inside
 ##   replaced     left out: the building is modelled by hand elsewhere (the house
 ##                where the game starts: tools/build_house.gd, world/house.scn)
 const BUILDING_FIXES := {
 	293496245: {"floors": 2, "garage_near": Vector2(662.9, 545.2), "stone": "pink_tuff", "replaced": true},
+	# The garage south of house 293497114 on Abovyan street, seen from the street:
+	# its gate at the left end (by the house), two store rooms on the right with
+	# their doors on the yard side.
+	293497094: {"garage_near": Vector2(588.9, -398.5), "gate_paint": Color(0.55, 0.56, 0.55), "transom": false,
+		"doors_near": [Vector2(596.68, -391.0), Vector2(596.40, -387.5)]},
 }
 
 ## Garages cut into buildings by BUILDING_FIXES (metres).
 const GATE_HEIGHT := 2.3
+const GATE_RED := Color(0.30, 0.028, 0.022) ## linear, gate.gdshader's own paint
+## Doors put in by BUILDING_FIXES: width and height (metres), and the steel's paint.
+const DOOR_SIZE := Vector2(0.9, 2.05)
+const DOOR_PAINT := Color(0.55, 0.56, 0.55)
 const TRANSOM_HEIGHT := 0.5
 const GARAGE_DEPTH := 7.5
 const GARAGE_MARGIN := 0.3 ## how much wider the room is than its door, each side
@@ -1067,10 +1080,14 @@ func _build_buildings(root: Node3D) -> void:
 			if k != garage_wall:
 				_wall_piece(buf, a, d / length, 0.0, length, base, top, top, wall, dims)
 				continue
-			# A wall with a garage carries the column of its door in the alpha (see building.gdshader).
+			# A wall with windows and a garage carries the column of its door in the
+			# alpha (see building.gdshader); a plain one stays plain.
 			var face := wall
-			face.a = 0.78 + 0.02 * garage_column
-			_add_garage(root, buf, b["id"], a, d / length, length, garage_column, base, top, face, dims)
+			if face.a > 0.75:
+				face.a = 0.78 + 0.02 * garage_column
+			_add_garage(root, buf, b["id"], a, d / length, length, garage_column, base, top, face, dims, fix)
+		for spot: Vector2 in fix.get("doors_near", []):
+			_add_door(root, poly, spot)
 		var tris := Geometry2D.triangulate_polygon(poly)
 		var first := buf.v.size()
 		for p in poly:
@@ -1376,6 +1393,7 @@ func _build_walls(root: Node3D, walls: Array) -> void:
 	var chunks := {}
 	var obstacles := {} # _fence_blocked only needs the buildings here
 	var total := 0.0
+	var yard_gates := 0
 	for wall: Dictionary in walls:
 		var pts: PackedVector2Array = wall["pts"]
 		var kind: int = wall["kind"]
@@ -1383,6 +1401,7 @@ func _build_walls(root: Node3D, walls: Array) -> void:
 		var col: Color = (wall["color"] as Color).srgb_to_linear()
 		var gate_col: Color = (wall["gate_color"] as Color).srgb_to_linear()
 		var gate_at: float = wall["gate"]
+		var swing: int = wall.get("swing", 0)
 		var pillar := col * 0.92
 		var along := 0.0
 		for s in pts.size() - 1:
@@ -1399,7 +1418,16 @@ func _build_walls(root: Node3D, walls: Array) -> void:
 			for g in gaps:
 				var g0 := pts[s] + dir * g.x
 				var g1 := pts[s] + dir * minf(g.y, seg)
-				_fence_run(g0, g1, FENCE_SHEET, 2.2, gate_col, [], obstacles, footprints, chunks)
+				if swing == 0:
+					_fence_run(g0, g1, FENCE_SHEET, 2.2, gate_col, [], obstacles, footprints, chunks)
+				else:
+					# Leaves hung between the pillars that swing open to the wall's left (1) or right (2).
+					var side := Vector2(dir.y, -dir.x) * (1.0 if swing == 1 else -1.0)
+					var to3 := Vector3(side.x, 0.0, side.y)
+					var mid := (g0 + g1) * 0.5
+					yard_gates += 1
+					_add_gate(root, "YardGate_%d" % yard_gates, mid, _h(mid.x, mid.y), to3.cross(Vector3.UP), to3,
+						g0.distance_to(g1) - 0.5, gate_col, false, "yard gate")
 				for p: Vector2 in [g0, g1]:
 					if not _fence_blocked(p, obstacles, footprints):
 						_fence_box(p, 0.25, height + 0.15, pillar, FENCE_STONE, chunks)
@@ -1641,7 +1669,7 @@ func _load_map() -> Array[Dictionary]:
 			if pts.size() < 2:
 				continue
 			walls.append({"pts": pts, "kind": node.kind, "color": node.color, "height": node.height,
-				"gate": node.gate_at, "gate_color": node.gate_color})
+				"gate": node.gate_at, "gate_color": node.gate_color, "swing": node.gate_swing})
 	map.free()
 	print("Map: %d buildings, %d walls from %s" % [buildings.size(), walls.size(), EDIT_MAP_PATH])
 	return walls
@@ -1692,7 +1720,8 @@ func _export_map(walls: Array[Dictionary]) -> Error:
 		var node := Node3D.new()
 		node.set_script(MAP_BUILDING)
 		node.name = "Building_%d" % absi(b["id"])
-		node.position = Vector3(c.x, 0.0, c.y)
+		# On the ground, where the editor keeps it (only x and z count).
+		node.position = Vector3(c.x, _h(c.x, c.y), c.y)
 		var local := PackedVector2Array()
 		for p in poly:
 			local.append(p - c)
@@ -1716,7 +1745,7 @@ func _export_map(walls: Array[Dictionary]) -> Error:
 		var node := Path3D.new()
 		node.set_script(MAP_WALL)
 		node.name = "Wall_%d" % (i + 1)
-		node.position = Vector3(pts[0].x, 0.0, pts[0].y)
+		node.position = Vector3(pts[0].x, _h(pts[0].x, pts[0].y), pts[0].y)
 		var curve := Curve3D.new()
 		for p in pts:
 			curve.add_point(Vector3(p.x - pts[0].x, 0.0, p.y - pts[0].y))
@@ -1724,6 +1753,7 @@ func _export_map(walls: Array[Dictionary]) -> Error:
 		for key in ["kind", "color", "height", "gate_color"]:
 			node.set(key, w[key])
 		node.set("gate_at", w["gate"])
+		node.set("gate_swing", w.get("swing", 0))
 		district.call("Walls", _centroid(pts)).add_child(node, true)
 		node.owner = root
 	var scene := PackedScene.new()
@@ -1775,8 +1805,9 @@ func _quad(buf: MeshBuf, p0: Vector3, p1: Vector3, p2: Vector3, p3: Vector3, nrm
 
 ## Builds the wall around a garage doorway, the room behind it, a ramp up to its
 ## floor and the gate itself. The doorway takes the place of one window column.
+## `fix` is the building's BUILDING_FIXES entry (the gate's paint and transom).
 func _add_garage(root: Node3D, buf: MeshBuf, id: int, a: Vector2, along: Vector2, length: float, column: int,
-		base: float, top: float, face: Color, dims: Vector2) -> void:
+		base: float, top: float, face: Color, dims: Vector2, fix: Dictionary) -> void:
 	var out := Vector2(along.y, -along.x)
 	var out3 := Vector3(out.x, 0.0, out.y)
 	var along3 := Vector3(along.x, 0.0, along.y)
@@ -1793,7 +1824,8 @@ func _add_garage(root: Node3D, buf: MeshBuf, id: int, a: Vector2, along: Vector2
 			var p := a + along * u - out * depth
 			floor_y = maxf(floor_y, _h(p.x, p.y))
 	floor_y += 0.04
-	var lintel := floor_y + GATE_HEIGHT + TRANSOM_HEIGHT
+	var transom: bool = fix.get("transom", true)
+	var lintel := floor_y + GATE_HEIGHT + (TRANSOM_HEIGHT if transom else 0.0)
 
 	# The wall, with the doorway left open.
 	_wall_piece(buf, a, along, 0.0, u0, base, top, top, face, dims)
@@ -1825,20 +1857,24 @@ func _add_garage(root: Node3D, buf: MeshBuf, id: int, a: Vector2, along: Vector2
 	r1.y = _h(r1.x, r1.z) + 0.03
 	_quad(buf, corner.call(u0 - 0.3, 0.0, floor_y), corner.call(u1 + 0.3, 0.0, floor_y), r1, r0, Vector3.UP, concrete)
 
-	_add_gate(root, id, a + along * ((u0 + u1) * 0.5), floor_y, along3, out3, u1 - u0)
+	var paint := (fix["gate_paint"] as Color).srgb_to_linear() if fix.has("gate_paint") else GATE_RED
+	_add_gate(root, "Gate_%d" % id, a + along * ((u0 + u1) * 0.5), floor_y, along3, out3, u1 - u0, paint, transom, "garage")
 
 
-## The gate in a garage doorway: two leaves that swing outwards under a fixed
-## glazed transom. `at` is the middle of the threshold.
-func _add_gate(root: Node3D, id: int, at: Vector2, floor_y: float, along3: Vector3, out3: Vector3, width: float) -> void:
+## A steel gate of two leaves that swing out towards `out3` (world/garage_gate.gd),
+## under a fixed glazed transom if `transom`. `at` is the middle of the threshold,
+## `paint` the leaves' colour (linear) and `label` what the on-screen hint calls it.
+func _add_gate(root: Node3D, gate_name: String, at: Vector2, floor_y: float, along3: Vector3, out3: Vector3,
+		width: float, paint: Color, transom: bool, label: String) -> void:
 	var gates := root.get_node_or_null("Gates")
 	if gates == null:
 		gates = Node3D.new()
 		gates.name = "Gates"
 		root.add_child(gates)
 	var gate := Node3D.new()
-	gate.name = "Gate_%d" % id
+	gate.name = gate_name
 	gate.set_script(load("res://world/garage_gate.gd"))
+	gate.set("label", label)
 	# Seen from outside: +X to the right, +Z towards the viewer.
 	gate.transform = Transform3D(Basis(-along3, Vector3.UP, out3), Vector3(at.x, floor_y, at.y) + out3 * 0.02)
 	gates.add_child(gate)
@@ -1847,9 +1883,7 @@ func _add_gate(root: Node3D, id: int, at: Vector2, floor_y: float, along3: Vecto
 	var painted := ShaderMaterial.new()
 	painted.shader = shader
 	painted.set_shader_parameter("part", 0)
-	var glazed := ShaderMaterial.new()
-	glazed.shader = shader
-	glazed.set_shader_parameter("part", 1)
+	painted.set_shader_parameter("paint", Vector3(paint.r, paint.g, paint.b))
 
 	var half := width * 0.5
 	var size := Vector2(width, GATE_HEIGHT)
@@ -1869,15 +1903,19 @@ func _add_gate(root: Node3D, id: int, at: Vector2, floor_y: float, along3: Vecto
 		visual.mesh = leaf.commit(painted)
 		pivot.add_child(visual)
 
-	var glass := MeshBuf.new()
-	var y0 := GATE_HEIGHT
-	var y1 := GATE_HEIGHT + TRANSOM_HEIGHT
-	_quad(glass, Vector3(-half, y0, 0.0), Vector3(half, y0, 0.0), Vector3(half, y1, 0.0), Vector3(-half, y1, 0.0),
-		Vector3.BACK, Color.WHITE, Vector2(0.0, 0.0), Vector2(1.0, 0.0), Vector2(1.0, 1.0), Vector2(0.0, 1.0), Vector2(width, TRANSOM_HEIGHT))
-	var transom := MeshInstance3D.new()
-	transom.name = "Transom"
-	transom.mesh = glass.commit(glazed)
-	gate.add_child(transom)
+	if transom:
+		var glazed := ShaderMaterial.new()
+		glazed.shader = shader
+		glazed.set_shader_parameter("part", 1)
+		var glass := MeshBuf.new()
+		var y0 := GATE_HEIGHT
+		var y1 := GATE_HEIGHT + TRANSOM_HEIGHT
+		_quad(glass, Vector3(-half, y0, 0.0), Vector3(half, y0, 0.0), Vector3(half, y1, 0.0), Vector3(-half, y1, 0.0),
+			Vector3.BACK, Color.WHITE, Vector2(0.0, 0.0), Vector2(1.0, 0.0), Vector2(1.0, 1.0), Vector2(0.0, 1.0), Vector2(width, TRANSOM_HEIGHT))
+		var strip := MeshInstance3D.new()
+		strip.name = "Transom"
+		strip.mesh = glass.commit(glazed)
+		gate.add_child(strip)
 
 	# What stops a car while the gate is shut.
 	var blocker := StaticBody3D.new()
@@ -1890,6 +1928,53 @@ func _add_gate(root: Node3D, id: int, at: Vector2, floor_y: float, along3: Vecto
 	cs.position = Vector3(0.0, GATE_HEIGHT * 0.5, 0.0)
 	blocker.add_child(cs)
 	gate.add_child(blocker)
+
+
+## A shut steel door in its frame, standing in the building's wall at the point
+## of `poly` nearest to `spot`. The room behind it is not built.
+func _add_door(root: Node3D, poly: PackedVector2Array, spot: Vector2) -> void:
+	var n := poly.size()
+	var nearest := INF
+	var at := Vector2.ZERO
+	var along := Vector2.ZERO
+	for k in n:
+		var q := Geometry2D.get_closest_point_to_segment(spot, poly[k], poly[(k + 1) % n])
+		if spot.distance_to(q) < nearest:
+			nearest = spot.distance_to(q)
+			at = q
+			along = (poly[(k + 1) % n] - poly[k]).normalized()
+	var out := Vector2(along.y, -along.x)
+	var out3 := Vector3(out.x, 0.0, out.y)
+	var y := _h(at.x, at.y) + 0.03
+	# Corner `u` metres along the wall from the door's middle, `lift` up, `off` out of the wall.
+	var corner := func(u: float, lift: float, off: float) -> Vector3:
+		var p := at + along * u + out * off
+		return Vector3(p.x, y + lift, p.y)
+	var buf := MeshBuf.new()
+	var half := DOOR_SIZE.x * 0.5
+	var frame := Color(0.12, 0.12, 0.12).srgb_to_linear()
+	var steel := DOOR_PAINT.srgb_to_linear()
+	_quad(buf, corner.call(-half - 0.06, 0.0, 0.02), corner.call(half + 0.06, 0.0, 0.02),
+		corner.call(half + 0.06, DOOR_SIZE.y + 0.06, 0.02), corner.call(-half - 0.06, DOOR_SIZE.y + 0.06, 0.02), out3, frame)
+	_quad(buf, corner.call(-half, 0.0, 0.04), corner.call(half, 0.0, 0.04),
+		corner.call(half, DOOR_SIZE.y, 0.04), corner.call(-half, DOOR_SIZE.y, 0.04), out3, steel)
+	# The handle, on the side away from the hinges.
+	_quad(buf, corner.call(half - 0.16, 0.98, 0.06), corner.call(half - 0.06, 0.98, 0.06),
+		corner.call(half - 0.06, 1.02, 0.06), corner.call(half - 0.16, 1.02, 0.06), out3, frame)
+	var mat := StandardMaterial3D.new()
+	mat.vertex_color_use_as_albedo = true
+	mat.roughness = 0.6
+	mat.metallic = 0.3
+	var doors := root.get_node_or_null("Doors")
+	if doors == null:
+		doors = Node3D.new()
+		doors.name = "Doors"
+		root.add_child(doors)
+	var door := MeshInstance3D.new()
+	door.name = "Door_%d" % doors.get_child_count()
+	door.mesh = buf.commit(mat)
+	door.visibility_range_end = 300.0
+	doors.add_child(door)
 
 # --- trees ------------------------------------------------------------------
 

@@ -62,8 +62,23 @@ const WATTS_PER_HP := 745.7
 @export var redline_rpm := 6200.0
 ## Speed in km/h at which each gear reaches the redline.
 @export var gear_top_speeds: Array[float] = [55.0, 95.0, 145.0, 200.0, 270.0]
+## Revs at which the automatic changes up when you are easy on the pedal. The
+## further down the pedal, the later it changes, up to near the redline flat out.
+@export var shift_up_rpm := 2300.0
 @export var engine_volume_db := -6.0
 @export var skid_volume_db := -10.0
+## This car's engine note, a loop (see tools/build_sounds.gd), when it has no engine_layers.
+@export_file("*.res") var engine_sound := "res://audio/engine.res"
+## The revs engine_sound was recorded at; it is played faster or slower from there.
+@export var engine_sound_rpm := 1500.0
+## Recordings of this engine held at steady revs, lowest first (see
+## tools/build_sounds.gd). The engine note blends between the two nearest the
+## revs, each played a little faster or slower to match them.
+@export var engine_layers: Array[AudioStream] = []
+## The revs each of engine_layers was recorded at, in the same order.
+@export var engine_layer_rpms: PackedFloat32Array = []
+## How fast its starter motor spins; below 1 for a slow, old one.
+@export var starter_pitch := 1.0
 
 const ACTIONS := {
 	"accelerate": [KEY_W, KEY_UP],
@@ -76,8 +91,9 @@ const ACTIONS := {
 	"starter": [KEY_E],
 }
 
-## Pulses per second of the engine being turned over by the starter.
-const CRANK_PULSES := 4.5
+## Pulses per second of the engine being turned over by the starter, as in the
+## recording of it (audio/starter.res).
+const CRANK_PULSES := 7.7
 ## Litres of fuel an engine burns per hour for each horsepower it delivers.
 const FUEL_PER_HP_HOUR := 0.25
 ## Below this share of the tank the engine is running on the dregs and coughs.
@@ -107,12 +123,21 @@ var _cough_time := 0.0
 ## gearbox; it is worked out from road speed as an automatic would shift.
 var rpm := 800.0
 var gear := 1
+## The pedal as the gearbox sees it: following the real one, but slowly, so a
+## quick dab does not make it change down.
+var _shift_gas := 0.0
+## Seconds until the gearbox may change again.
+var _shift_wait := 0.0
 var _gas := 0.0
 var _handbrake_on := false
 ## Where the car is held while it is in park; INF when it is not.
 var _park_spot := Vector3.INF
 var _engine_sound: AudioStreamPlayer3D
+## One player for each of engine_layers.
+var _layers: Array[AudioStreamPlayer3D] = []
 var _skid_sound: AudioStreamPlayer3D
+var _starter_sound: AudioStreamPlayer3D
+var _starter_click: AudioStreamPlayer3D
 var spawn_transform := Transform3D.IDENTITY
 var _front_wheels: Array[VehicleWheel3D] = []
 var _rear_wheels: Array[VehicleWheel3D] = []
@@ -125,8 +150,20 @@ func _ready() -> void:
 	# A sleeping body ignores the engine, so a parked car would never pull away.
 	can_sleep = false
 	_apply_paint()
-	_engine_sound = _add_sound("res://audio/engine.res")
+	for stream in engine_layers:
+		var layer := AudioStreamPlayer3D.new()
+		layer.stream = stream
+		layer.unit_size = 9.0
+		layer.max_distance = 120.0
+		add_child(layer)
+		_layers.append(layer)
+	if _layers.is_empty():
+		_engine_sound = _add_sound(engine_sound)
+		if _engine_sound == null:
+			_engine_sound = _add_sound("res://audio/engine.res")
 	_skid_sound = _add_sound("res://audio/skid.res")
+	_starter_sound = _add_sound("res://audio/starter.res")
+	_starter_click = _add_sound("res://audio/starter_click.res")
 	var front := -INF
 	var rear := INF
 	var wheels: Array[VehicleWheel3D] = []
@@ -329,6 +366,11 @@ func _crank() -> void:
 	start_failed = false
 	cranking = true
 	_crank_time = 0.0
+	if _starter_click:
+		# The starter engaging; the cranking loop follows once it is over.
+		_starter_click.volume_db = engine_volume_db
+		_starter_click.pitch_scale = starter_pitch
+		_starter_click.play()
 	if _will_catch:
 		_crank_for = starter_seconds * randf_range(0.85, 1.2)
 	else:
@@ -348,7 +390,7 @@ func _apply_paint() -> void:
 			body.set_surface_override_material(s, own)
 
 
-## A looping sound that travels with the car; silent until played. Null if the
+## A sound that travels with the car; silent until played. Null if the
 ## sound has not been made yet (see tools/build_sounds.gd).
 func _add_sound(path: String) -> AudioStreamPlayer3D:
 	if not ResourceLoader.exists(path):
@@ -361,17 +403,71 @@ func _add_sound(path: String) -> AudioStreamPlayer3D:
 	return player
 
 
+## Revs in the given gear at this road speed (the gears reach the redline at gear_top_speeds).
+func _gear_rpm(kmh: float, in_gear: int) -> float:
+	return kmh / gear_top_speeds[in_gear - 1] * redline_rpm
+
+
+## Picks the gear as an automatic would. Easy on the pedal it changes up at
+## shift_up_rpm and keeps the revs low; the further down the pedal, the later it
+## changes, up to near the redline flat out, and pressing hard makes it change
+## down. It changes down once the gear below would be well under the change-up
+## revs, so it does not hunt between two gears, and waits a moment between changes.
+func _shift_gear(kmh: float, delta: float) -> void:
+	_shift_gas = move_toward(_shift_gas, _gas, delta * 1.5)
+	_shift_wait = maxf(_shift_wait - delta, 0.0)
+	var top := gear_top_speeds.size()
+	gear = clampi(gear, 1, top)
+	if kmh < 3.0:
+		gear = 1
+		return
+	if _shift_wait > 0.0:
+		return
+	# Squared, so light and middling pedal still change up early.
+	var up_at := lerpf(shift_up_rpm, redline_rpm * 0.93, _shift_gas * _shift_gas)
+	if gear < top and _gear_rpm(kmh, gear) > up_at:
+		gear += 1
+		_shift_wait = 0.6
+	elif gear > 1 and _gear_rpm(kmh, gear - 1) < up_at * 0.8:
+		gear -= 1
+		_shift_wait = 0.6
+
+
+## Plays the two engine_layers nearest the revs, each a little faster or slower
+## to match them, crossfading from one to the next as the revs pass between.
+## Below the first and above the last, that one alone is slowed or sped up.
+func _mix_layers(level_db: float) -> void:
+	var n := _layers.size()
+	var k := 0
+	while k < n - 1 and engine_layer_rpms[k + 1] <= rpm:
+		k += 1
+	var blend := 0.0
+	if k < n - 1 and rpm > engine_layer_rpms[k]:
+		blend = (rpm - engine_layer_rpms[k]) / (engine_layer_rpms[k + 1] - engine_layer_rpms[k])
+	for i in n:
+		# Equal-power crossfade, so the blend is no quieter halfway.
+		var share := 0.0
+		if i == k:
+			share = cos(blend * PI * 0.5)
+		elif i == k + 1:
+			share = sin(blend * PI * 0.5)
+		var layer := _layers[i]
+		var on := engine_running and share > 0.001
+		if on != layer.playing:
+			layer.playing = on
+		if on:
+			layer.pitch_scale = clampf(rpm / engine_layer_rpms[i], 0.3, 4.0)
+			layer.volume_db = level_db + linear_to_db(share)
+
+
 func _process(delta: float) -> void:
 	var kmh := absf(forward_speed()) * 3.6
-	gear = gear_top_speeds.size()
-	for i in gear_top_speeds.size():
-		if kmh < gear_top_speeds[i] * 0.93:
-			gear = i + 1
-			break
-	var wanted := maxf(idle_rpm, kmh / gear_top_speeds[gear - 1] * redline_rpm)
-	if engine_force != 0.0:
-		# Pulling away, the engine revs before the car has picked up speed.
-		wanted = maxf(wanted, 2400.0)
+	_shift_gear(kmh, delta)
+	var wanted := maxf(idle_rpm, _gear_rpm(kmh, gear))
+	if engine_force != 0.0 and kmh < 25.0:
+		# Pulling away, the engine revs before the car has picked up speed, the
+		# more so the harder you press.
+		wanted = maxf(wanted, lerpf(idle_rpm * 1.5, 3000.0, _gas))
 	# The starter turns the engine over slowly, in pulses; stopped, it winds down.
 	var pulse := sin(_crank_time * TAU * CRANK_PULSES)
 	if cranking:
@@ -380,20 +476,27 @@ func _process(delta: float) -> void:
 		wanted = 0.0
 	rpm = lerpf(rpm, wanted, 1.0 - exp(-6.0 * delta))
 
-	if _engine_sound:
-		# Heard while the engine runs, whoever is driving (or nobody). The
-		# recording is at 1500 rpm, so its speed follows the revs; it is louder
-		# under load.
-		var audible := engine_running or cranking
-		if audible != _engine_sound.playing:
-			_engine_sound.playing = audible
-		if cranking:
-			_engine_sound.pitch_scale = 0.3 + 0.05 * pulse
-			_engine_sound.volume_db = engine_volume_db - 9.0 + 5.0 * pulse
-		else:
-			_engine_sound.pitch_scale = clampf(rpm / 1500.0, 0.4, 4.5)
-			var effort := clampf(_gas * 0.6 + output_hp / horsepower * 0.4, 0.0, 1.0)
-			_engine_sound.volume_db = engine_volume_db + lerpf(-12.0, 0.0, effort)
+	# The engine is heard while it runs, whoever is driving (or nobody); while it
+	# is cranked, the starter's recording has the engine in it. It is louder
+	# under load.
+	var effort := clampf(_gas * 0.6 + output_hp / horsepower * 0.4, 0.0, 1.0)
+	var level := engine_volume_db + lerpf(-12.0, 0.0, effort)
+	if not _layers.is_empty():
+		_mix_layers(level)
+	elif _engine_sound:
+		# One recording at engine_sound_rpm, its speed following the revs.
+		if engine_running != _engine_sound.playing:
+			_engine_sound.playing = engine_running
+		_engine_sound.pitch_scale = clampf(rpm / engine_sound_rpm, 0.4, 4.5)
+		_engine_sound.volume_db = level
+
+	if _starter_sound:
+		# The recording has the engine's compression strokes in it already.
+		var turning := cranking and not (_starter_click and _starter_click.playing)
+		if turning != _starter_sound.playing:
+			_starter_sound.playing = turning
+		_starter_sound.pitch_scale = starter_pitch
+		_starter_sound.volume_db = engine_volume_db
 
 	if _skid_sound:
 		# Tyres complain under hard braking, with the handbrake on and in a slide.

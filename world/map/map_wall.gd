@@ -29,6 +29,9 @@ const MapKit := preload("res://world/map/map_kit.gd")
 	set(value):
 		gate_color = value
 		_queue_draw()
+## Fixed: the gate is a shut sheet. Otherwise its two leaves swing open (G) to that
+## side, looking along the wall from its first point.
+@export_enum("Fixed", "Left", "Right") var gate_swing := 0
 
 var _preview: MeshInstance3D
 var _queued := false
@@ -80,9 +83,26 @@ func _queue_draw() -> void:
 
 func _draw_preview() -> void:
 	_queued = false
+	_keep_on_ground()
 	if _preview == null:
 		_preview = MeshInstance3D.new()
 		_preview.visibility_range_end = 500.0
 		add_child(_preview, false, INTERNAL_MODE_FRONT)
 	_preview.mesh = MapKit.wall_mesh(world_points(), kind, color, height, gate_at, gate_color,
 		global_transform.affine_inverse())
+	# Clicking it in the viewport hits its gizmo (addons/map_editing), which takes its shape from this mesh.
+	update_gizmos()
+
+
+## Puts the node (its first point) on the ground there, so its move handles and
+## curve are where the wall stands rather than deep underground. Only x and z
+## count for the wall itself.
+func _keep_on_ground() -> void:
+	var ground := MapKit.height_at(global_position.x, global_position.z)
+	if absf(global_position.y - ground) > 0.05:
+		global_position.y = ground
+
+
+## The editor's preview of it, in its own space; null outside the editor.
+func preview_mesh() -> Mesh:
+	return _preview.mesh if _preview else null

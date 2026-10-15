@@ -1,0 +1,160 @@
+{
+ "layers": [
+  {
+   "name": "compass_0810",
+   "file": "audi_a4_20tfsi_rpm_ramp.f32",
+   "rpm": 810,
+   "from": 0.5,
+   "to": 4.5,
+   "at": 810
+  },
+  {
+   "name": "compass_1900",
+   "file": "audi_a4_20tfsi_rpm_ramp.f32",
+   "ridge": "tools/engine_layers/ridge_audi.json",
+   "scale": 12.33,
+   "from": 10.7,
+   "to": 19.7,
+   "at": 1900
+  },
+  {
+   "name": "compass_2200",
+   "file": "audi_a4_20tfsi_rpm_ramp.f32",
+   "ridge": "tools/engine_layers/ridge_audi.json",
+   "scale": 12.33,
+   "from": 10.7,
+   "to": 19.7,
+   "at": 2200
+  },
+  {
+   "name": "compass_2500",
+   "file": "audi_a4_20tfsi_rpm_ramp.f32",
+   "ridge": "tools/engine_layers/ridge_audi.json",
+   "scale": 12.33,
+   "from": 10.7,
+   "to": 19.7,
+   "at": 2500
+  },
+  {
+   "name": "compass_2750",
+   "file": "audi_a4_20tfsi_rpm_ramp.f32",
+   "ridge": "tools/engine_layers/ridge_audi.json",
+   "scale": 12.33,
+   "from": 10.7,
+   "to": 19.7,
+   "at": 2750
+  },
+  {
+   "name": "volga_1700",
+   "file": "mazda323_acceleration.f32",
+   "line": [
+    6,
+    1626,
+    10.5,
+    3438
+   ],
+   "from": 6.2,
+   "to": 10.4,
+   "at": 1700
+  },
+  {
+   "name": "volga_2100",
+   "file": "mazda323_acceleration.f32",
+   "line": [
+    6,
+    1626,
+    10.5,
+    3438
+   ],
+   "from": 6.2,
+   "to": 10.4,
+   "at": 2100
+  },
+  {
+   "name": "volga_2500",
+   "file": "mazda323_acceleration.f32",
+   "line": [
+    6,
+    1626,
+    10.5,
+    3438
+   ],
+   "from": 6.2,
+   "to": 10.4,
+   "at": 2500
+  },
+  {
+   "name": "volga_2900",
+   "file": "mazda323_acceleration.f32",
+   "line": [
+    6,
+    1626,
+    10.5,
+    3438
+   ],
+   "from": 6.2,
+   "to": 10.4,
+   "at": 2900
+  },
+  {
+   "name": "volga_3300",
+   "file": "mazda323_acceleration.f32",
+   "line": [
+    6,
+    1626,
+    10.5,
+    3438
+   ],
+   "from": 6.2,
+   "to": 10.4,
+   "at": 3300
+  },
+  {
+   "name": "landcruiser_1400",
+   "file": "etype_jaguar_i6_rev.f32",
+   "rpm": 1400,
+   "from": 0.2,
+   "to": 1.9,
+   "at": 1400
+  },
+  {
+   "name": "landcruiser_1520",
+   "file": "etype_jaguar_i6_rev.f32",
+   "ridge": "tools/engine_layers/ridge_etype.json",
+   "scale": 20,
+   "from": 7.8,
+   "to": 9.3,
+   "at": 1520
+  },
+  {
+   "name": "landcruiser_1900",
+   "file": "etype_jaguar_i6_rev.f32",
+   "ridge": "tools/engine_layers/ridge_etype.json",
+   "scale": 20,
+   "from": 9.4,
+   "to": 10.3,
+   "at": 1900,
+   "tol": 0.07,
+   "grain": 0.05
+  },
+  {
+   "name": "landcruiser_2300",
+   "file": "etype_jaguar_i6_rev.f32",
+   "ridge": "tools/engine_layers/ridge_etype.json",
+   "scale": 20,
+   "from": 9.4,
+   "to": 10.3,
+   "at": 2300,
+   "tol": 0.07,
+   "grain": 0.05
+  },
+  {
+   "name": "e50_0890",
+   "file": "s63_amg_v8_revs.f32",
+   "rpm": 890,
+   "from": 0.02,
+   "to": 0.4,
+   "at": 890
+  }
+ ]
+}
