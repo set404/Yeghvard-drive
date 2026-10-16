@@ -42,7 +42,7 @@ const WATTS_PER_HP := 745.7
 @export var idle_consumption := 1.0
 ## How much faster than a real engine this one drinks, so that a tank lasts
 ## an evening's driving rather than a week's. 1 is true to life.
-@export var fuel_use_scale := 20.0
+@export var fuel_use_scale := 5.0
 
 @export_group("Grip and drifting")
 ## Tyre grip. The rear has less than the front so that power or the handbrake can break it loose.
