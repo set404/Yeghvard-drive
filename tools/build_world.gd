@@ -142,10 +142,12 @@ const WINDOW_SPACING := 3.2
 ##   transom      false for a garage gate with wall above it instead of panes
 ##   doors_near   spots (x, z) in world metres; a shut door goes in the wall at
 ##                the point nearest each, for rooms that are not built inside
-##   replaced     left out: the building is modelled by hand elsewhere (the house
-##                where the game starts: tools/build_house.gd, world/house.scn)
+##   replaced     left out: the building is modelled elsewhere (the house where
+##                the game starts: tools/build_house.gd, world/house.scn; the gas
+##                station on the highway: tools/build_gas_station.gd)
 const BUILDING_FIXES := {
 	293496245: {"floors": 2, "garage_near": Vector2(662.9, 545.2), "stone": "pink_tuff", "replaced": true},
+	464545727: {"replaced": true},
 	# The garage south of house 293497114 on Abovyan street, seen from the street:
 	# its gate at the left end (by the house), two store rooms on the right with
 	# their doors on the yard side.

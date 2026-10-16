@@ -11,6 +11,8 @@ const FUEL_EMPTY := Color(0.9, 0.15, 0.1)
 @export var enter_distance := 4.5
 ## F only gets you out once the car is down to this speed (km/h).
 @export var max_exit_speed := 20.0
+## Litres a second the pump puts in while you hold T.
+@export var refuel_rate := 8.0
 ## The car you are driving when the game starts. Empty means the node named "Car".
 @export var start_car: VehicleBody3D
 
@@ -184,12 +186,13 @@ func _car_in_reach() -> VehicleBody3D:
 	return best
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	var hints := PackedStringArray()
 	if on_foot:
 		if _car_in_reach():
 			hints.append("Press F to get in")
 	else:
+		_refuel(delta, hints)
 		speed_label.text = "%s   %d km/h" % [_gear_letter(), absf(car.forward_speed() * 3.6)]
 		power_bar.value = car.output_hp / car.horsepower * 100.0
 		power_label.text = "%d / %d hp" % [car.output_hp, car.horsepower]
@@ -221,6 +224,29 @@ func _process(_delta: float) -> void:
 			"<<" if lamps.signal_left and blink else "    ",
 			BEAM_NAMES[lamps.beam],
 			">>" if lamps.signal_right and blink else "    "]
+
+
+## Whether the car you are in stands at a fuel pump (see tools/build_gas_station.gd).
+func _at_pump() -> bool:
+	for pumps: Area3D in get_tree().get_nodes_in_group("fuel_pumps"):
+		if pumps.overlaps_body(car):
+			return true
+	return false
+
+
+## At a pump with the car stopped and the engine off, holding T fills the tank.
+func _refuel(delta: float, hints: PackedStringArray) -> void:
+	if not _at_pump() or absf(car.forward_speed()) > 1.0:
+		return
+	if car.fuel >= car.fuel_capacity - 0.05:
+		hints.append("Tank full")
+	elif car.engine_running:
+		hints.append("Stop the engine (E) to refuel")
+	elif Input.is_physical_key_pressed(KEY_T):
+		car.refuel(refuel_rate * delta)
+		hints.append("Refuelling...  %d / %d L" % [ceili(car.fuel), roundi(car.fuel_capacity)])
+	else:
+		hints.append("Hold T to refuel")
 
 
 ## The fuel gauge: litres left, green, amber when low, blinking red on the reserve.

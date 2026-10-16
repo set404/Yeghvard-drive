@@ -12,6 +12,7 @@
 [ext_resource type="PackedScene" path="res://world/house.scn" id="10"]
 [ext_resource type="PackedScene" path="res://world/horizon.scn" id="11"]
 [ext_resource type="PackedScene" path="res://car/jeep_compass.scn" id="12"]
+[ext_resource type="PackedScene" path="res://world/gas_station.scn" id="13"]
 
 [sub_resource type="ProceduralSkyMaterial" id="sky_mat"]
 sky_top_color = Color(0.18, 0.38, 0.72, 1)
@@ -88,6 +89,9 @@ directional_shadow_max_distance = 200.0
 
 [node name="House" parent="." unique_id=126796058 instance=ExtResource("10")]
 
+[node name="GasStation" parent="." unique_id=2136352273 instance=ExtResource("13")]
+transform = Transform3D(0.98546433, 0, 0.16988242, 0, 1, 0, -0.16988242, 0, 0.98546433, -835.4243, -19.39421, 1624.759)
+
 [node name="Car" parent="." unique_id=2085411645 instance=ExtResource("3")]
 transform = Transform3D(-0.74989367, -0.03650205, 0.66055053, -0.027390908, 0.99933356, 0.024127528, -0.6609911, 0, -0.75039375, 657.481, 0.81311536, 552.27185)
 paint_color = Color(0.043137256, 0.09411765, 0.14901961, 1)
@@ -110,7 +114,7 @@ start_fail_chance = 0.5
 fuel = 12.0
 
 [node name="Car4" parent="." unique_id=669761671 instance=ExtResource("8")]
-transform = Transform3D(0.7602329, 0, -0.64676505, 0, 1, 0, 0.6482097, 0, 0.7614456, 670.5, 1, 551.5)
+transform = Transform3D(0.7602329, 0, -0.64676505, 0, 1, 0, 0.6482097, 0, 0.7614456, -815.60516, -20.148405, 1556.3846)
 player_controlled = false
 paint_color = Color(0.05, 0.17, 0.52, 1)
 starter_seconds = 1.1
@@ -157,8 +161,8 @@ offset_right = 600.0
 offset_bottom = 116.0
 text = "W/S or arrows: drive   A/D: steer   Space: handbrake   R: reset car   M: zoom map   K: camera   F: get in / out   E: start / stop engine   G: gate   P: park
 On foot: W/A/S/D walk   Shift: run   Space: jump
-Z / C / X: left, right, hazard signals   L: lights (park, low, high)
-Mouse: look around (click to grab, Esc to release)   Wheel: zoom
+Z / C / X: left, right, hazard signals   L: lights (park, low, high)   T: refuel at a pump
+Mouse: look around (click to grab)   Wheel: zoom   Esc: pause
 1-5: jump into a car (testing): 1 E50   2 E55   3 Volga   4 Land Cruiser   5 Compass"
 
 [node name="Power" type="ProgressBar" parent="HUD" unique_id=123988569]
