@@ -14,6 +14,7 @@
 [ext_resource type="PackedScene" path="res://car/jeep_compass.scn" id="12"]
 [ext_resource type="PackedScene" path="res://world/gas_station.scn" id="13"]
 [ext_resource type="PackedScene" path="res://world/sidewalks.scn" id="14"]
+[ext_resource type="PackedScene" path="res://world/supermarket.scn" id="15"]
 
 [sub_resource type="ProceduralSkyMaterial" id="sky_mat"]
 sky_top_color = Color(0.18, 0.38, 0.72, 1)
@@ -94,6 +95,8 @@ directional_shadow_max_distance = 200.0
 transform = Transform3D(0.98546433, 0, 0.16988242, 0, 1, 0, -0.16988242, 0, 0.98546433, -835.4243, -19.39421, 1624.759)
 
 [node name="Sidewalks" parent="." instance=ExtResource("14")]
+
+[node name="Supermarket" parent="." instance=ExtResource("15")]
 
 [node name="Car" parent="." unique_id=2085411645 instance=ExtResource("3")]
 transform = Transform3D(-0.74989367, -0.03650205, 0.66055053, -0.027390908, 0.99933356, 0.024127528, -0.6609911, 0, -0.75039375, 657.481, 0.81311536, 552.27185)

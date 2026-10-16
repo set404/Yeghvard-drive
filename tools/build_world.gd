@@ -144,10 +144,14 @@ const WINDOW_SPACING := 3.2
 ##                the point nearest each, for rooms that are not built inside
 ##   replaced     left out: the building is modelled elsewhere (the house where
 ##                the game starts: tools/build_house.gd, world/house.scn; the gas
-##                station on the highway: tools/build_gas_station.gd)
+##                station on the highway: tools/build_gas_station.gd; the
+##                supermarket further up the highway and its guard's booth:
+##                tools/build_supermarket.gd, world/supermarket.scn)
 const BUILDING_FIXES := {
 	293496245: {"floors": 2, "garage_near": Vector2(662.9, 545.2), "stone": "pink_tuff", "replaced": true},
 	464545727: {"replaced": true},
+	436388507: {"replaced": true},
+	1256383569: {"replaced": true},
 	# The garage south of house 293497114 on Abovyan street, seen from the street:
 	# its gate at the left end (by the house), two store rooms on the right with
 	# their doors on the yard side.

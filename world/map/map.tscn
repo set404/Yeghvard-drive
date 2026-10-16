@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://dqc5f5e1n780c"]
+[gd_scene format=3 uid="uid://4ehe1ki0qjjc"]
 
 [ext_resource type="Script" uid="uid://dq3nd8fdfbnw5" path="res://world/map/map_root.gd" id="1_sql4x"]
 [ext_resource type="Script" uid="uid://cpparmb68tmgc" path="res://world/map/map_building.gd" id="2_u3wvt"]
@@ -55605,7 +55605,6 @@ _data = {
 }
 point_count = 2
 
-
 [sub_resource type="Curve3D" id="Curve3D_00f5a"]
 _data = {
 "points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -12.780029, 0, 3.5998535),
@@ -55668,7 +55667,6 @@ _data = {
 "tilts": PackedFloat32Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 }
 point_count = 11
-
 
 [sub_resource type="Curve3D" id="Curve3D_qlctp"]
 _data = {
