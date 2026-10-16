@@ -150,7 +150,12 @@ func _ready() -> void:
 	# A sleeping body ignores the engine, so a parked car would never pull away.
 	can_sleep = false
 	_apply_paint()
-	for stream in engine_layers:
+	# Each layer needs its revs. An instance override in a scene that empties one
+	# list (the editor has saved main.tscn like that) falls back to the single loop.
+	var layered := engine_layer_rpms.size() == engine_layers.size()
+	if not layered:
+		push_warning("%s: %d engine_layers but %d engine_layer_rpms, using the plain engine loop" % [name, engine_layers.size(), engine_layer_rpms.size()])
+	for stream in engine_layers if layered else []:
 		var layer := AudioStreamPlayer3D.new()
 		layer.stream = stream
 		layer.unit_size = 9.0

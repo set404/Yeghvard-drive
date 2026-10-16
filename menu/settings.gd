@@ -60,12 +60,21 @@ func use_preset(index: int) -> void:
 
 
 func apply_window() -> void:
-	var mode := DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN if fullscreen else DisplayServer.WINDOW_MODE_WINDOWED
+	Engine.max_fps = FPS_VALUES[max_fps]
+	AudioServer.set_bus_volume_db(0, linear_to_db(maxf(volume, 0.0001)))
+	# Run from the editor (F5) the game sits inside the editor's Game tab, and
+	# changing the window mode or V-Sync there crashes it.
+	if is_embedded():
+		return
+	var mode := DisplayServer.WINDOW_MODE_FULLSCREEN if fullscreen else DisplayServer.WINDOW_MODE_WINDOWED
 	if DisplayServer.window_get_mode() != mode:
 		DisplayServer.window_set_mode(mode)
 	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if vsync else DisplayServer.VSYNC_DISABLED)
-	Engine.max_fps = FPS_VALUES[max_fps]
-	AudioServer.set_bus_volume_db(0, linear_to_db(maxf(volume, 0.0001)))
+
+
+## True when the game window is parented into another window, as the editor does.
+static func is_embedded() -> bool:
+	return Engine.is_embedded_in_editor() or "--wid" in OS.get_cmdline_args()
 
 
 ## Applies the graphics options to the window's viewport and to the world.

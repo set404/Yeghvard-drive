@@ -1,6 +1,7 @@
 extends Node
 ## The title screen. Loads the world behind it with the game paused and a camera
 ## slowly panning towards Ararat; Play hands control over to main.tscn.
+## In game, Esc brings the same menu back as a pause menu.
 
 const Settings := preload("res://menu/settings.gd")
 
@@ -21,6 +22,11 @@ var main: Node3D
 var view_camera: Camera3D
 var layer: CanvasLayer
 var buttons: VBoxContainer
+## Resume, Options... shown in place of buttons while paused in game.
+var pause_buttons: VBoxContainer
+## Darkens the whole game behind the pause menu.
+var dim: ColorRect
+var subtitle: Label
 var controls: PanelContainer
 var options: PanelContainer
 ## The title block, hidden while a panel is open to make room.
@@ -31,13 +37,18 @@ var title_font := SystemFont.new()
 var text_font := SystemFont.new()
 var pan_t := 0.0
 var started := false
+## True while Play is fading into the game, so Esc waits for it.
+var fading := false
+var in_pause := false
 
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	main = load("res://main.tscn").instantiate()
+	# The menu runs while paused; the world under it must not inherit that, or
+	# the chase camera grabs the mouse on the first click outside a button.
+	main.process_mode = Node.PROCESS_MODE_PAUSABLE
 	add_child(main)
-	get_tree().paused = true
 	main.get_node("HUD").visible = false
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	settings.load_file()
@@ -53,6 +64,11 @@ func _ready() -> void:
 	text_font.font_names = PackedStringArray(["Segoe UI", "Arial"])
 	text_font.font_weight = 600
 	_build_ui()
+	# Let main.gd set the cars down on the ground before the world stops.
+	for i in 3:
+		await get_tree().physics_frame
+	if not started:
+		get_tree().paused = true
 
 
 func _process(delta: float) -> void:
@@ -67,19 +83,28 @@ func _process(delta: float) -> void:
 	view_camera.look_at(VIEW_POS + Vector3(sin(az), -0.06, -cos(az)))
 
 
-func _unhandled_key_input(event: InputEvent) -> void:
+## Esc closes an open panel; in game it pauses and resumes. Handled here, before
+## the chase camera, which would otherwise let go of the mouse on Esc.
+func _input(event: InputEvent) -> void:
 	var key := event as InputEventKey
-	if started or key == null or not key.pressed or key.echo:
+	if key == null or not key.pressed or key.echo or key.physical_keycode != KEY_ESCAPE or fading:
 		return
-	if key.physical_keycode == KEY_ESCAPE and not buttons.visible:
+	if controls.visible or options.visible:
 		_show_panel(null)
-		get_viewport().set_input_as_handled()
+	elif in_pause:
+		_resume()
+	elif started:
+		_pause()
+	else:
+		return
+	get_viewport().set_input_as_handled()
 
 
 func _play() -> void:
 	if started:
 		return
 	started = true
+	fading = true
 	var tween := create_tween()
 	tween.tween_property(layer.get_node("Fade"), "modulate:a", 1.0, 0.35)
 	await tween.finished
@@ -89,10 +114,49 @@ func _play() -> void:
 	if cam:
 		cam.make_current()
 	view_camera.queue_free()
+	# From here on the menu is the pause menu.
+	buttons.visible = false
+	pause_buttons.visible = true
+	# The pause menu has an extra button, so a heading replaces the big title.
+	heading[0].visible = false
+	heading.remove_at(0)
+	subtitle.text = "PAUSED"
+	subtitle.add_theme_font_override("font", title_font)
+	subtitle.add_theme_font_size_override("font_size", 52)
+	subtitle.add_theme_color_override("font_color", CREAM)
+	subtitle.add_theme_color_override("font_outline_color", NAVY)
+	subtitle.add_theme_constant_override("outline_size", 12)
 	tween = create_tween()
 	tween.tween_property(layer.get_node("Fade"), "modulate:a", 0.0, 0.5)
 	await tween.finished
-	layer.queue_free()
+	layer.visible = false
+	fading = false
+
+
+func _pause() -> void:
+	in_pause = true
+	get_tree().paused = true
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	main.get_node("HUD").visible = false
+	dim.visible = true
+	layer.visible = true
+	_show_panel(null)
+
+
+func _resume() -> void:
+	_show_panel(null)
+	in_pause = false
+	layer.visible = false
+	dim.visible = false
+	main.get_node("HUD").visible = true
+	get_tree().paused = false
+
+
+## Back to the title screen: reloads the menu and the world from scratch.
+func _to_title() -> void:
+	settings.save_file()
+	get_tree().paused = false
+	get_tree().reload_current_scene()
 
 
 ## Opens one of the panels in place of the main buttons, or goes back with null.
@@ -103,17 +167,24 @@ func _show_panel(panel: PanelContainer) -> void:
 	options.visible = panel == options
 	for c in heading:
 		c.visible = panel == null
-	buttons.visible = panel == null
+	var list := pause_buttons if started else buttons
+	list.visible = panel == null
 	if panel:
 		panel.get_node("Box/Back").grab_focus()
 	else:
-		buttons.get_child(0).grab_focus()
+		list.get_child(0).grab_focus()
 
 
 func _build_ui() -> void:
 	layer = CanvasLayer.new()
 	layer.layer = 10
 	add_child(layer)
+	dim = ColorRect.new()
+	dim.color = Color(0.01, 0.02, 0.05, 0.55)
+	dim.visible = false
+	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	layer.add_child(dim)
 
 	# Darken the left side so the menu reads over the world.
 	var grad := Gradient.new()
@@ -131,6 +202,7 @@ func _build_ui() -> void:
 	layer.add_child(shade)
 
 	var root := MarginContainer.new()
+	root.theme = _menu_theme()
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	for side in ["left", "top", "bottom"]:
 		root.add_theme_constant_override("margin_" + side, 72)
@@ -160,15 +232,15 @@ func _build_ui() -> void:
 	gap.custom_minimum_size.y = 28
 	column.add_child(gap)
 	heading = [title, sub, gap]
+	subtitle = sub
 
-	buttons = VBoxContainer.new()
-	buttons.add_theme_constant_override("separation", 10)
-	column.add_child(buttons)
 	controls = _build_controls()
 	options = _build_options()
-	for entry in [["Play", _play], ["Options", _show_panel.bind(options)],
-			["Controls", _show_panel.bind(controls)], ["Quit", get_tree().quit]]:
-		buttons.add_child(_button(entry[0], entry[1]))
+	buttons = _button_list(column, [["Play", _play], ["Options", _show_panel.bind(options)],
+			["Controls", _show_panel.bind(controls)], ["Quit", get_tree().quit]])
+	pause_buttons = _button_list(column, [["Resume", _resume], ["Options", _show_panel.bind(options)],
+			["Controls", _show_panel.bind(controls)], ["Main menu", _to_title], ["Quit", get_tree().quit]])
+	pause_buttons.visible = false
 	column.add_child(controls)
 	column.add_child(options)
 
@@ -181,6 +253,15 @@ func _build_ui() -> void:
 	layer.add_child(fade)
 
 	buttons.get_child(0).grab_focus()
+
+
+func _button_list(parent: Control, entries: Array) -> VBoxContainer:
+	var list := VBoxContainer.new()
+	list.add_theme_constant_override("separation", 10)
+	parent.add_child(list)
+	for entry in entries:
+		list.add_child(_button(entry[0], entry[1]))
+	return list
 
 
 ## A hidden panel with a VBox named Box inside, ending in a Back button.
@@ -282,9 +363,7 @@ func _option_choice(grid: GridContainer, text: String, key: String, names: Array
 	if key == "quality":
 		# Custom only comes from changing a single graphics option.
 		pick.set_item_disabled(Settings.CUSTOM, true)
-	pick.custom_minimum_size.x = 220
-	pick.add_theme_font_override("font", text_font)
-	pick.add_theme_font_size_override("font_size", 18)
+	pick.custom_minimum_size = Vector2(220, 40)
 	pick.item_selected.connect(func(i: int) -> void:
 		if key == "quality":
 			settings.use_preset(i)
@@ -363,22 +442,81 @@ func _label(text: String, size: int) -> Label:
 func _button(text: String, action: Callable) -> Button:
 	var b := Button.new()
 	b.text = text
-	b.custom_minimum_size = Vector2(260, 52)
+	b.custom_minimum_size = Vector2(300, 54)
 	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	b.add_theme_font_override("font", text_font)
 	b.add_theme_font_size_override("font_size", 26)
-	var normal := StyleBoxFlat.new()
-	normal.bg_color = Color(1, 1, 1, 0.08)
-	normal.set_corner_radius_all(6)
-	normal.content_margin_left = 20
-	var hover := normal.duplicate()
-	hover.bg_color = Color(GOLD, 0.9)
-	b.add_theme_stylebox_override("normal", normal)
-	b.add_theme_stylebox_override("hover", hover)
-	b.add_theme_stylebox_override("focus", hover)
-	b.add_theme_stylebox_override("pressed", hover)
-	b.add_theme_color_override("font_color", CREAM)
-	for state in ["hover", "focus", "pressed"]:
-		b.add_theme_color_override("font_%s_color" % state, NAVY)
 	b.pressed.connect(action)
 	return b
+
+
+func _box(bg: Color, border: Color, border_width := 2) -> StyleBoxFlat:
+	var s := StyleBoxFlat.new()
+	s.bg_color = bg
+	s.border_color = border
+	s.set_border_width_all(border_width)
+	s.set_corner_radius_all(8)
+	s.content_margin_left = 22
+	s.content_margin_right = 16
+	s.content_margin_top = 6
+	s.content_margin_bottom = 6
+	return s
+
+
+## One look for every control in the menu: solid navy boxes, gold when hovered
+## or pressed, and a gold outline for keyboard focus.
+func _menu_theme() -> Theme:
+	var t := Theme.new()
+	t.default_font = text_font
+	t.default_font_size = 18
+	var panel_navy := Color(0.07, 0.1, 0.2, 0.96)
+	var edge := Color(1, 1, 1, 0.14)
+	var lift := Color(0.13, 0.18, 0.33, 0.98)
+	var focus := _box(Color.TRANSPARENT, GOLD, 3)
+	focus.draw_center = false
+	focus.set_expand_margin_all(2)
+
+	for type in ["Button", "OptionButton"]:
+		t.set_stylebox("normal", type, _box(panel_navy, edge))
+		t.set_stylebox("disabled", type, _box(Color(panel_navy, 0.5), edge))
+		t.set_stylebox("focus", type, focus)
+		t.set_color("font_color", type, CREAM)
+		t.set_color("font_focus_color", type, CREAM)
+	# Menu buttons go gold; dropdowns only lighten, so their arrow stays visible.
+	t.set_stylebox("hover", "Button", _box(GOLD, GOLD))
+	t.set_stylebox("pressed", "Button", _box(GOLD.darkened(0.15), GOLD.darkened(0.15)))
+	t.set_stylebox("hover_pressed", "Button", _box(GOLD, GOLD))
+	for state in ["hover", "pressed", "hover_pressed"]:
+		t.set_color("font_%s_color" % state, "Button", NAVY)
+	t.set_stylebox("hover", "OptionButton", _box(lift, GOLD))
+	t.set_stylebox("pressed", "OptionButton", _box(lift, GOLD))
+	for state in ["hover", "pressed", "hover_pressed"]:
+		t.set_color("font_%s_color" % state, "OptionButton", CREAM)
+
+	var popup := _box(panel_navy, edge)
+	popup.set_content_margin_all(6)
+	t.set_stylebox("panel", "PopupMenu", popup)
+	var popup_hover := _box(GOLD, GOLD, 0)
+	popup_hover.set_corner_radius_all(4)
+	t.set_stylebox("hover", "PopupMenu", popup_hover)
+	t.set_color("font_color", "PopupMenu", CREAM)
+	t.set_color("font_hover_color", "PopupMenu", NAVY)
+	t.set_color("font_disabled_color", "PopupMenu", Color(CREAM, 0.35))
+	t.set_constant("v_separation", "PopupMenu", 10)
+
+	# Toggles: no box behind them, just the switch.
+	for state in ["normal", "hover", "pressed", "hover_pressed", "disabled"]:
+		t.set_stylebox(state, "CheckButton", StyleBoxEmpty.new())
+	t.set_stylebox("focus", "CheckButton", focus)
+
+	var track := StyleBoxFlat.new()
+	track.bg_color = Color(1, 1, 1, 0.18)
+	track.set_corner_radius_all(3)
+	track.content_margin_top = 3
+	track.content_margin_bottom = 3
+	var filled := track.duplicate()
+	filled.bg_color = GOLD
+	t.set_stylebox("slider", "HSlider", track)
+	t.set_stylebox("grabber_area", "HSlider", filled)
+	t.set_stylebox("grabber_area_highlight", "HSlider", filled)
+	t.set_stylebox("focus", "HSlider", StyleBoxEmpty.new())
+	return t
