@@ -1,0 +1,63 @@
+# Builds the Windows export on every push to main and uploads it to itch.io.
+# Setup (once, in GitHub repo Settings > Secrets and variables > Actions):
+#   secret   BUTLER_API_KEY  - from https://itch.io/user/settings/api-keys
+#   variable ITCH_GAME       - "<itch username>/<game slug>", e.g. set404/yeghvard-drive
+# Without them the build still runs and is downloadable from the workflow run page.
+
+name: Build and deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: true
+
+env:
+  GODOT_VERSION: 4.7.2
+  EXPORT_PRESET: Windows Desktop 2
+
+jobs:
+  windows:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Godot and export templates
+        run: |
+          base=https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable
+          curl -sSfL -o godot.zip "$base/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          curl -sSfL -o templates.tpz "$base/Godot_v${GODOT_VERSION}-stable_export_templates.tpz"
+          unzip -q godot.zip -d "$RUNNER_TEMP/godot"
+          mv "$RUNNER_TEMP/godot/Godot_v${GODOT_VERSION}-stable_linux.x86_64" "$RUNNER_TEMP/godot/godot"
+          dest="$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable"
+          mkdir -p "$dest"
+          unzip -q templates.tpz -d "$RUNNER_TEMP/tpl"
+          mv "$RUNNER_TEMP"/tpl/templates/* "$dest/"
+          rm godot.zip templates.tpz
+
+      - name: Export
+        run: |
+          mkdir -p build/windows
+          "$RUNNER_TEMP/godot/godot" --headless --import
+          "$RUNNER_TEMP/godot/godot" --headless --export-release "$EXPORT_PRESET" "$GITHUB_WORKSPACE/build/windows/Yeghvard drive.exe"
+          ls -la build/windows
+          test -f "build/windows/Yeghvard drive.pck"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: yeghvard-drive-windows
+          path: build/windows
+
+      - name: Upload to itch.io
+        if: ${{ vars.ITCH_GAME != '' }}
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+          ITCH_GAME: ${{ vars.ITCH_GAME }}
+        run: |
+          curl -sSfL -o butler.zip https://broth.itch.zone/butler/linux-amd64/LATEST/archive/default
+          unzip -q butler.zip -d "$RUNNER_TEMP/butler"
+          chmod +x "$RUNNER_TEMP/butler/butler"
+          "$RUNNER_TEMP/butler/butler" push build/windows "$ITCH_GAME:windows" --userversion "${GITHUB_RUN_NUMBER}-${GITHUB_SHA::7}"
