@@ -3,11 +3,15 @@ extends CharacterBody3D
 ## Shift runs, Space jumps. main.gd hides this while a car is being driven and
 ## stands it beside the driver's door when you get out (E).
 ##
-## The figure is built from simple shapes in code, so there is no model to
-## import. Like the cars, it faces its local +Z.
+## The figure is the Mixamo character in player/character.scn (built by
+## tools/build_character.gd), with his idle, walk, run and jump; without that
+## scene it is built from simple shapes in code. Like the cars, it faces its
+## local +Z.
 
-@export var walk_speed := 3.0 ## m/s
-@export var run_speed := 7.0 ## m/s
+## Walking and running speeds, close to the pace of the character's own walk
+## and run, so his feet keep to the ground.
+@export var walk_speed := 1.8 ## m/s
+@export var run_speed := 6.0 ## m/s
 @export var jump_speed := 4.0 ## m/s upwards; about 0.8 m high
 @export var acceleration := 30.0 ## m/s² on the ground; much less in the air
 @export var turn_speed := 12.0
@@ -38,6 +42,8 @@ const ACTIONS := {
 	"jump": [KEY_SPACE],
 }
 
+const CHARACTER_PATH := "res://player/character.scn"
+
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity", 9.8)
 var _shape: CollisionShape3D
 var _leg_l: Node3D
@@ -48,6 +54,28 @@ var _stride := 0.0
 var _swing := 0.0
 ## Last place you stood on solid ground, for falling out of the world.
 var _safe_spot := Vector3.ZERO
+## The character's animations (null with the figure made of shapes), how fast
+## his walk and run go at normal speed, and how long you have been in the air.
+var _anim: AnimationPlayer
+var _anim_speeds := {}
+var _air_time := 0.0
+## The same character seated at the wheel of the car you are driving, or null,
+## the car, and where he sits in it (car space).
+var _seated: Node3D
+var _seated_car: Node3D
+var _seat_xf := Transform3D.IDENTITY
+## While getting in or out: where the copy stands lined up with the seat, how
+## far below that the ground beside the car is (car space), and his hips bone.
+var _door_xf := Transform3D.IDENTITY
+var _door_drop := 0.0
+var _hips_bone := -1
+
+## Getting in and out play this much faster than they came from Mixamo (five
+## or six seconds each).
+@export var door_speed := 1.5
+## How far the driver's door swings open (degrees) as you get in and out; it
+## opens on cars that have one cut out (tools/build_car_doors.gd).
+@export var door_open_angle := 65.0
 
 
 func _ready() -> void:
@@ -111,6 +139,10 @@ func _physics_process(delta: float) -> void:
 		_safe_spot = global_position
 		if Input.is_action_just_pressed("jump"):
 			velocity.y = jump_speed
+			if _anim and _anim.has_animation("jump"):
+				# Past the crouch: the jump starts as he leaves the ground.
+				_anim.play("jump", 0.08)
+				_anim.seek(0.3, true)
 	else:
 		velocity.y -= _gravity * delta
 	move_and_slide()
@@ -126,6 +158,9 @@ func _physics_process(delta: float) -> void:
 
 ## Swings the arms and legs in step with how fast you are going.
 func _animate(delta: float) -> void:
+	if _anim:
+		_animate_character(delta)
+		return
 	var ground_speed := Vector2(velocity.x, velocity.z).length()
 	# About one full stride (two steps) every 1.5 m.
 	_stride = fmod(_stride + ground_speed * delta * TAU / 1.5, TAU)
@@ -147,6 +182,209 @@ func _animate(delta: float) -> void:
 	_arm_r.rotation.z = -_arm_l.rotation.z
 
 
+## Seats a copy of the character at the wheel of `car`, playing his driving
+## animation: his hands on the steering wheel where the car has one (a node
+## named SteeringWheel), otherwise his eyes where the car's driver_view says.
+## With `entering`, he first gets in from beside the driver's door; returns how
+## many seconds that takes (0 when he is straight away at the wheel).
+func sit_in(car: Node3D, entering := false) -> float:
+	stand_up()
+	if not ResourceLoader.exists(CHARACTER_PATH):
+		return 0.0
+	var driver: Node3D = (load(CHARACTER_PATH) as PackedScene).instantiate()
+	var anim := driver.get_node_or_null("AnimationPlayer") as AnimationPlayer
+	if anim == null or not anim.has_animation("drive") or not driver.has_meta("drive_eyes"):
+		driver.free()
+		return 0.0
+	driver.name = "Driver"
+	var s: float = height / float(driver.get_meta("height", 1.8))
+	var eyes: Vector3 = driver.get_meta("drive_eyes")
+	var hands: Vector3 = driver.get_meta("drive_hands", eyes)
+	var at := Vector3.ZERO
+	var wheel := car.find_child("SteeringWheel", true, false) as Node3D
+	if wheel and wheel.is_inside_tree():
+		at = car.to_local(wheel.global_position) - hands * s
+	else:
+		var view: Variant = car.get("driver_view")
+		var eye_point: Vector3 = view if view is Vector3 else Vector3(0.37, 1.13, 0.1)
+		at = eye_point + Vector3(0.0, 0.0, 0.08) - eyes * s
+	_seat_xf = Transform3D(Basis.IDENTITY.scaled(Vector3.ONE * s), at)
+	driver.transform = _seat_xf
+	car.add_child(driver)
+	_seated = driver
+	_seated_car = car
+	anim.animation_finished.connect(_on_seated_animation_finished)
+	if entering and anim.has_animation("enter") and driver.has_meta("enter_hips_end"):
+		_begin_door("enter", "end")
+		anim.speed_scale = door_speed
+		anim.play("enter")
+		return anim.get_animation("enter").length / door_speed
+	anim.play("drive")
+	return 0.0
+
+
+## The car he is sitting in (or getting into or out of), or null.
+func seated_in() -> Node3D:
+	return _seated_car if _seated and is_instance_valid(_seated) else null
+
+
+## Starts him getting out of the car; returns how many seconds that takes (0
+## when there is no animation for it).
+func get_out() -> float:
+	if seated_in() == null:
+		return 0.0
+	var anim := _seated.get_node("AnimationPlayer") as AnimationPlayer
+	if not anim.has_animation("exit") or not _seated.has_meta("exit_hips_start"):
+		return 0.0
+	_begin_door("exit", "start")
+	anim.speed_scale = door_speed
+	anim.play("exit")
+	return anim.get_animation("exit").length / door_speed
+
+
+## Where getting out leaves him: {"feet": world position, "facing": direction}.
+## Empty when he is not getting out.
+func exit_spot() -> Dictionary:
+	if seated_in() == null or not _seated.has_meta("exit_hips_end"):
+		return {}
+	var hips: Vector3 = _seated.get_meta("exit_hips_end")
+	var facing: Vector2 = _seated.get_meta("exit_facing_end")
+	var xf := _seated.global_transform
+	return {"feet": xf * Vector3(hips.x, 0.0, hips.z), "facing": (xf.basis * Vector3(facing.x, 0.0, facing.y)).normalized()}
+
+
+## Where to put the seated copy for getting in or out, so that his hips meet
+## the driver's at the seated `end` of that animation, turned to face the same way.
+func _path_xf(anim_name: String, end: String) -> Transform3D:
+	var drive_hips: Vector3 = _seated.get_meta("drive_hips_start")
+	var drive_facing: Vector2 = _seated.get_meta("drive_facing_start")
+	var hips: Vector3 = _seated.get_meta("%s_hips_%s" % [anim_name, end])
+	var facing: Vector2 = _seated.get_meta("%s_facing_%s" % [anim_name, end])
+	var turn := atan2(drive_facing.x, drive_facing.y) - atan2(facing.x, facing.y)
+	var s := _seat_xf.basis.get_scale().x
+	var basis := Basis(Vector3.UP, turn).scaled(Vector3.ONE * s)
+	return Transform3D(basis, _seat_xf * drive_hips - basis * hips)
+
+
+## Getting in or out was made for a car whose seat is higher off the ground
+## than ours: lined up at the seat, his feet would be under the road while he
+## stands. So he stands on the ground beside the door and is lifted to the
+## seat only as he sits (see update_seated).
+func _begin_door(anim_name: String, end: String) -> void:
+	_door_xf = _path_xf(anim_name, end)
+	_door_drop = _ground_beside(_seated_car) - _door_xf.origin.y
+	var skeleton := _seated.get_node("Skeleton3D") as Skeleton3D
+	_hips_bone = -1
+	for b in skeleton.get_bone_count():
+		if skeleton.get_bone_name(b).ends_with("Hips"):
+			_hips_bone = b
+	_seated.transform = _door_xf
+	update_seated()
+
+
+## Height of the ground beside the driver's door, in the car's space.
+func _ground_beside(car: Node3D) -> float:
+	var view: Variant = car.get("driver_view")
+	var side := 1.0 if not (view is Vector3) or (view as Vector3).x >= 0.0 else -1.0
+	if car.is_inside_tree():
+		var from := car.to_global(Vector3(side * 1.6, 2.0, 0.0))
+		var query := PhysicsRayQueryParameters3D.create(from, from + Vector3.DOWN * 6.0)
+		var skip: Array[RID] = []
+		for other: CollisionObject3D in get_tree().get_nodes_in_group("cars"):
+			skip.append(other.get_rid())
+		query.exclude = skip
+		var hit := car.get_world_3d().direct_space_state.intersect_ray(query)
+		if hit:
+			return car.to_local(hit["position"]).y
+	# No ground found: where the tyres touch it with the springs at rest.
+	var lowest := INF
+	for wheel: VehicleWheel3D in car.find_children("*", "VehicleWheel3D", false, false):
+		lowest = minf(lowest, wheel.position.y - wheel.wheel_rest_length - wheel.wheel_radius)
+	return lowest if lowest < INF else 0.0
+
+
+## Keeps his feet on the ground while he stands beside the car, easing him up
+## to the seat as his hips drop into it. main.gd calls this every frame.
+func update_seated() -> void:
+	if seated_in() == null or _hips_bone < 0:
+		return
+	var anim := _seated.get_node("AnimationPlayer") as AnimationPlayer
+	var playing := anim.assigned_animation
+	if playing != "enter" and playing != "exit":
+		_swing_door(0.0)
+		return
+	# The door: opened as he reaches for it, shut again once he is in (or out).
+	var t := anim.current_animation_position / maxf(anim.get_animation(playing).length, 0.001)
+	if playing == "enter":
+		_swing_door(smoothstep(0.12, 0.28, t) * (1.0 - smoothstep(0.8, 0.96, t)))
+	else:
+		_swing_door(smoothstep(0.06, 0.22, t) * (1.0 - smoothstep(0.84, 0.98, t)))
+	var skeleton := _seated.get_node("Skeleton3D") as Skeleton3D
+	var standing: float = (_seated.get_meta("enter_hips_start") as Vector3).y
+	var sitting: float = (_seated.get_meta("exit_hips_start") as Vector3).y
+	var y := skeleton.get_bone_pose_position(_hips_bone).y
+	var seated := smoothstep(0.25, 0.9, inverse_lerp(standing, sitting, y))
+	var xf := _door_xf
+	xf.origin.y += _door_drop * (1.0 - seated)
+	_seated.transform = xf
+
+
+## Opens the car's driver's door this far (0 shut, 1 fully open).
+func _swing_door(open: float) -> void:
+	var door := _seated_car.get_node_or_null("DriverDoor") as Node3D if _seated_car else null
+	if door:
+		door.rotation.y = -deg_to_rad(door_open_angle) * open
+
+
+func _on_seated_animation_finished(anim_name: StringName) -> void:
+	if anim_name == &"enter" and _seated:
+		_seated.transform = _seat_xf
+		var anim := _seated.get_node("AnimationPlayer") as AnimationPlayer
+		anim.speed_scale = 1.0
+		anim.play("drive")
+		_swing_door(0.0)
+
+
+## Takes the seated copy out of the car.
+func stand_up() -> void:
+	if _seated and is_instance_valid(_seated):
+		_seated.queue_free()
+	if _seated_car and is_instance_valid(_seated_car):
+		_swing_door(0.0)
+	_seated = null
+	_seated_car = null
+
+
+func show_seated(on: bool) -> void:
+	if _seated and is_instance_valid(_seated):
+		_seated.visible = on
+
+
+## Plays the character's idle, walk or run, at the pace you are going; the
+## jump while you are in the air.
+func _animate_character(delta: float) -> void:
+	_air_time = 0.0 if is_on_floor() else _air_time + delta
+	var ground_speed := Vector2(velocity.x, velocity.z).length()
+	if not is_on_floor():
+		if _air_time > 0.2 and _anim.current_animation != "jump" and _anim.has_animation("jump"):
+			# Stepped off something: the airborne part of the jump.
+			_anim.play("jump", 0.15)
+			_anim.seek(0.5, true)
+		return
+	var wanted := "idle"
+	var rate := 1.0
+	if ground_speed > 0.2:
+		var run := ground_speed > (walk_speed + run_speed) * 0.5 and _anim.has_animation("run")
+		wanted = "run" if run else "walk"
+		rate = clampf(ground_speed / float(_anim_speeds.get(wanted, ground_speed)), 0.4, 1.8)
+	var landing := _anim.current_animation == "jump" and _anim.current_animation_position < 0.85
+	if landing and wanted == "idle":
+		return
+	if _anim.current_animation != wanted:
+		_anim.play(wanted, 0.2)
+	_anim.speed_scale = rate
+
+
 # --- the figure -------------------------------------------------------------
 # Modelled 1.8 m tall with its feet at the origin, then scaled to `height`.
 # +X is its left, +Z its front.
@@ -160,6 +398,18 @@ func _build_figure() -> void:
 	_shape.shape = capsule
 	_shape.position = Vector3(0.0, height * 0.5, 0.0)
 	add_child(_shape)
+
+	if ResourceLoader.exists(CHARACTER_PATH):
+		var character: Node3D = (load(CHARACTER_PATH) as PackedScene).instantiate()
+		character.name = "Model"
+		var model_height: float = character.get_meta("height", 1.8)
+		character.scale = Vector3.ONE * height / model_height
+		_anim_speeds = character.get_meta("speeds", {})
+		add_child(character)
+		_anim = character.get_node_or_null("AnimationPlayer") as AnimationPlayer
+		if _anim and _anim.has_animation("idle"):
+			_anim.play("idle")
+		return
 
 	var model := Node3D.new()
 	model.name = "Model"

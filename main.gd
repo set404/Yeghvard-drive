@@ -33,6 +33,10 @@ const FUEL_EMPTY := Color(0.9, 0.15, 0.1)
 ## Only cars built with lamps have this node. Null while on foot.
 var lamps: Node
 var on_foot := false
+## Seconds left of getting into or out of a car, and which car and which way.
+var _door_time := 0.0
+var _door_car: VehicleBody3D
+var _door_in := false
 
 
 func _ready() -> void:
@@ -56,7 +60,7 @@ func _ready() -> void:
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	var key := event as InputEventKey
-	if key == null or not key.pressed or key.echo:
+	if key == null or not key.pressed or key.echo or _door_time > 0.0:
 		return
 	# For testing: 1, 2, 3... put you straight into that car, wherever it is,
 	# in the order the cars come in this scene.
@@ -72,9 +76,35 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	if on_foot:
 		var other := _car_in_reach()
 		if other:
-			_drive(other)
+			_get_in(other)
 	elif _slow_enough_to_leave():
+		_leave()
+
+
+## Walks you into the driver's seat of the car, then hands it to you.
+func _get_in(other: VehicleBody3D) -> void:
+	player.set_active(false)
+	minimap.target = other
+	camera.follow(other)
+	var seconds: float = player.sit_in(other, true)
+	if seconds <= 0.0:
+		_drive(other)
+		return
+	_door_car = other
+	_door_in = true
+	_door_time = seconds
+
+
+## Stops driving and climbs you out of the car.
+func _leave() -> void:
+	car.player_controlled = false
+	var seconds: float = player.get_out()
+	if seconds <= 0.0:
 		_get_out()
+		return
+	_door_car = car
+	_door_in = false
+	_door_time = seconds
 
 
 ## Puts you in the given car and hands it the controls, camera and HUD.
@@ -84,6 +114,9 @@ func _drive(next: VehicleBody3D, jump_camera := false) -> void:
 	car = next
 	on_foot = false
 	player.set_active(false)
+	# You, at the wheel of the car you drive (hidden in the driver's-seat view).
+	if player.seated_in() != car:
+		player.sit_in(car)
 	lamps = car.get_node_or_null("Lamps")
 	lights_label.visible = lamps != null
 	speed_label.visible = true
@@ -96,7 +129,14 @@ func _drive(next: VehicleBody3D, jump_camera := false) -> void:
 ## Leaves the car where it is and stands you beside it.
 func _get_out() -> void:
 	car.player_controlled = false
-	player.place(_exit_spot(car), car.global_basis.z)
+	# Where climbing out left you, if there is room to stand there.
+	var spot: Dictionary = player.exit_spot()
+	var feet: Vector3 = spot["feet"] + Vector3.UP * 0.3 if spot else Vector3.ZERO
+	if spot and _room_to_stand(feet):
+		player.place(feet, spot["facing"])
+	else:
+		player.place(_exit_spot(car), car.global_basis.z)
+	player.stand_up()
 	player.set_active(true)
 	on_foot = true
 	lamps = null
@@ -187,6 +227,17 @@ func _car_in_reach() -> VehicleBody3D:
 
 
 func _process(delta: float) -> void:
+	player.show_seated(camera.get("view") != 3 or _door_time > 0.0) # 3: chase_camera.gd's View.DRIVER
+	if _door_time > 0.0:
+		player.update_seated()
+		_door_time -= delta
+		prompt_label.visible = false
+		if _door_time <= 0.0:
+			if _door_in:
+				_drive(_door_car)
+			else:
+				_get_out()
+		return
 	var hints := PackedStringArray()
 	if on_foot:
 		if _car_in_reach():

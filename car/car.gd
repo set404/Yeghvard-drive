@@ -383,16 +383,18 @@ func _crank() -> void:
 
 
 func _apply_paint() -> void:
-	var body := get_node_or_null("Body") as MeshInstance3D
-	if body == null:
-		return
-	for s in body.mesh.get_surface_count():
-		var mat := body.mesh.surface_get_material(s) as BaseMaterial3D
-		if mat and mat.resource_name == "Paint":
-			# A copy, so that two cars sharing the model can be different colours.
-			var own := mat.duplicate() as BaseMaterial3D
-			own.albedo_color = paint_color
-			body.set_surface_override_material(s, own)
+	# The body, and the driver's door cut out of it (tools/build_car_doors.gd).
+	for part: String in ["Body", "DriverDoor/Mesh"]:
+		var body := get_node_or_null(part) as MeshInstance3D
+		if body == null:
+			continue
+		for s in body.mesh.get_surface_count():
+			var mat := body.mesh.surface_get_material(s) as BaseMaterial3D
+			if mat and mat.resource_name == "Paint":
+				# A copy, so that two cars sharing the model can be different colours.
+				var own := mat.duplicate() as BaseMaterial3D
+				own.albedo_color = paint_color
+				body.set_surface_override_material(s, own)
 
 
 ## A sound that travels with the car; silent until played. Null if the

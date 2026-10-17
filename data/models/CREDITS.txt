@@ -28,3 +28,7 @@ Lowpoly Gas Station
 Author:  AspectStudios - https://sketchfab.com/AspectStudio
 Source:  https://sketchfab.com/3d-models/lowpoly-gas-station-02a11319cb744999adddd7236a46bf8e
 License: CC BY 4.0 - http://creativecommons.org/licenses/by/4.0/ (credit the author; commercial use allowed)
+
+Adam (character Ch08) and his walking, running and jumping animations
+Source:  Mixamo - https://www.mixamo.com (Adobe)
+License: Mixamo terms: free to use in games and other projects; the raw files may not be redistributed on their own
