@@ -26,6 +26,12 @@ const ANIMATIONS := {"idle": "Standing Idle.fbx", "walk": "Walking.fbx", "run": 
 	"drive": "Driving.fbx", "enter": "Entering Car.fbx", "exit": "Exiting Car.fbx"}
 ## Animations that keep how far they move him.
 const MOVING := ["enter", "exit"]
+## Mixamo's driving pose sits upright as on a high chair; in our cars that put
+## his feet through the floor. His thighs are raised this much (degrees), as in
+## a car seat, which brings his feet up and his knees up under the wheel.
+const DRIVE_LEG_LIFT := 30.0
+## How far into getting in (share of its length) his hand is on the door handle.
+const REACH := 0.18
 const LOOPED := ["idle", "walk", "run", "drive"]
 const OUT_PATH := "res://player/character.scn"
 ## Textures are stored at most this big.
@@ -98,6 +104,7 @@ func _build() -> Error:
 	player.add_animation_library("", library)
 	character.set_meta("speeds", speeds)
 	if library.has_animation("drive"):
+		_lift_legs(library.get_animation("drive"), "Skeleton3D:" + hips_name, skeleton)
 		_measure_seat(character, player, skeleton)
 		_seat_paths(character, library, "Skeleton3D:" + hips_name)
 
@@ -132,9 +139,29 @@ func _measure_seat(character: Node3D, player: AnimationPlayer, skeleton: Skeleto
 	var hands: Vector3 = (at.call("_LeftHand") + at.call("_RightHand")) * 0.5
 	character.set_meta("drive_eyes", eyes)
 	character.set_meta("drive_hands", hands)
-	print("seated: eyes %s, hands %s, hips %s" % [eyes, hands, at.call("_Hips")])
+	character.set_meta("drive_feet", (at.call("_LeftToeBase") + at.call("_RightToeBase")) * 0.5)
+	print("seated: eyes %s, hands %s, hips %s, feet %s" % [eyes, hands, at.call("_Hips"), character.get_meta("drive_feet")])
 	player.stop()
 	root.remove_child(character)
+
+
+## Raises both thighs of the animation by DRIVE_LEG_LIFT, about his body's
+## side-to-side axis.
+func _lift_legs(anim: Animation, hips_path: String, skeleton: Skeleton3D) -> void:
+	var hips_track := -1
+	for t in anim.get_track_count():
+		if str(anim.track_get_path(t)) == hips_path and anim.track_get_type(t) == Animation.TYPE_ROTATION_3D:
+			hips_track = t
+	var lift := Quaternion(Vector3.RIGHT, -deg_to_rad(DRIVE_LEG_LIFT))
+	for t in anim.get_track_count():
+		var path := str(anim.track_get_path(t))
+		if anim.track_get_type(t) != Animation.TYPE_ROTATION_3D or not path.ends_with("UpLeg"):
+			continue
+		for k in anim.track_get_key_count(t):
+			var at := anim.track_get_key_time(t, k)
+			var hips := anim.rotation_track_interpolate(hips_track, at) if hips_track >= 0 else Quaternion.IDENTITY
+			var q: Quaternion = anim.track_get_key_value(t, k)
+			anim.track_set_key_value(t, k, hips.inverse() * lift * hips * q)
 
 
 ## Where the hips start and end in sitting, getting in and getting out, and

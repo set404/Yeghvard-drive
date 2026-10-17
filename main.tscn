@@ -15,6 +15,8 @@
 [ext_resource type="PackedScene" path="res://world/gas_station.scn" id="13"]
 [ext_resource type="PackedScene" path="res://world/sidewalks.scn" id="14"]
 [ext_resource type="PackedScene" path="res://world/supermarket.scn" id="15"]
+[ext_resource type="Script" uid="uid://dts5anr4xag8" path="res://game/wallet.gd" id="16"]
+[ext_resource type="Script" uid="uid://djli0m1af50kx" path="res://world/townsfolk.gd" id="17"]
 
 [sub_resource type="ProceduralSkyMaterial" id="sky_mat"]
 sky_top_color = Color(0.18, 0.38, 0.72, 1)
@@ -94,15 +96,21 @@ directional_shadow_max_distance = 200.0
 [node name="GasStation" parent="." unique_id=2136352273 instance=ExtResource("13")]
 transform = Transform3D(0.98546433, 0, 0.16988242, 0, 1, 0, -0.16988242, 0, 0.98546433, -835.4243, -19.39421, 1624.759)
 
-[node name="Sidewalks" parent="." instance=ExtResource("14")]
+[node name="Sidewalks" parent="." unique_id=1906525183 instance=ExtResource("14")]
 
-[node name="Supermarket" parent="." instance=ExtResource("15")]
+[node name="Supermarket" parent="." unique_id=1356032161 instance=ExtResource("15")]
+
+[node name="Townsfolk" type="Node3D" parent="." unique_id=1520867731 node_paths=PackedStringArray("sidewalks", "player")]
+script = ExtResource("17")
+sidewalks = NodePath("../Sidewalks")
+player = NodePath("../Player")
 
 [node name="Car" parent="." unique_id=2085411645 instance=ExtResource("3")]
 transform = Transform3D(-0.74989367, -0.03650205, 0.66055053, -0.027390908, 0.99933356, 0.024127528, -0.6609911, 0, -0.75039375, 657.481, 0.81311536, 552.27185)
 paint_color = Color(0.043137256, 0.09411765, 0.14901961, 1)
 starter_seconds = 0.45
 fuel = 52.0
+engine_layer_rpms = []
 
 [node name="Car2" parent="." unique_id=1300135129 instance=ExtResource("6")]
 transform = Transform3D(0.7602329, -0.06117464, -0.64676505, 0.043261614, 0.99811393, -0.043555934, 0.6482097, 0.0051325336, 0.7614456, 662.89667, 0.9793341, 545.1871)
@@ -110,6 +118,7 @@ player_controlled = false
 paint_color = Color(0.22745098, 0.23137255, 0.23137255, 1)
 starter_seconds = 0.35
 fuel = 30.0
+engine_layer_rpms = []
 
 [node name="Car3" parent="." unique_id=27463107 instance=ExtResource("7")]
 transform = Transform3D(0.0803, 0, -0.9968, 0, 1, 0, 0.9968, 0, 0.0803, 592.08, 17.85, -398.67)
@@ -118,6 +127,7 @@ paint_color = Color(0.007280823, 0.3030038, 0.0073056705, 1)
 starter_seconds = 2.2
 start_fail_chance = 0.5
 fuel = 12.0
+engine_layer_rpms = []
 
 [node name="Car4" parent="." unique_id=669761671 instance=ExtResource("8")]
 transform = Transform3D(0.7602329, 0, -0.64676505, 0, 1, 0, 0.6482097, 0, 0.7614456, -815.60516, -20.148405, 1556.3846)
@@ -125,6 +135,7 @@ player_controlled = false
 paint_color = Color(0.05, 0.17, 0.52, 1)
 starter_seconds = 1.1
 fuel = 48.0
+engine_layer_rpms = []
 
 [node name="Car5" parent="." unique_id=1838205611 instance=ExtResource("12")]
 transform = Transform3D(0.152, 0, -0.9884, 0, 1, 0, 0.9884, 0, 0.152, 593.4, 17.85, -402.55)
@@ -132,6 +143,7 @@ player_controlled = false
 paint_color = Color(0.408, 0.416, 0.424, 1)
 starter_seconds = 0.5
 fuel = 41.0
+engine_layer_rpms = []
 
 [node name="Player" type="CharacterBody3D" parent="." unique_id=1187892447]
 script = ExtResource("9")
@@ -142,7 +154,29 @@ far = 20000.0
 script = ExtResource("4")
 target = NodePath("../Car")
 
+[node name="Wallet" type="Node" parent="." unique_id=1844470213]
+script = ExtResource("16")
+
 [node name="HUD" type="CanvasLayer" parent="." unique_id=2093880468]
+
+[node name="Money" type="Label" parent="HUD" unique_id=730155924]
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -366.0
+offset_top = -252.0
+offset_right = -30.0
+offset_bottom = -212.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_colors/font_color = Color(1, 0.92, 0.55, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 8
+theme_override_font_sizes/font_size = 30
+text = "20 000 AMD"
+horizontal_alignment = 2
 
 [node name="Speed" type="Label" parent="HUD" unique_id=1048776784]
 anchors_preset = 3
@@ -167,9 +201,9 @@ offset_right = 600.0
 offset_bottom = 116.0
 text = "W/S or arrows: drive   A/D: steer   Space: handbrake   R: reset car   M: zoom map   K: camera   F: get in / out   E: start / stop engine   G: gate   P: park
 On foot: W/A/S/D walk   Shift: run   Space: jump
-Z / C / X: left, right, hazard signals   L: lights (park, low, high)   T: refuel at a pump
+Z / C / X: left, right, hazard signals   L: lights (park, low, high)   T: refuel at a pump (you pay as it fills)
 Mouse: look around (click to grab)   Wheel: zoom   Esc: pause
-1-5: jump into a car (testing): 1 E50   2 E55   3 Volga   4 Land Cruiser   5 Compass"
+1-5: jump into a car (testing): 1 E50   2 E55   3 Volga   4 Land Cruiser   5 Compass   =: +10 000 AMD (testing)"
 
 [node name="Power" type="ProgressBar" parent="HUD" unique_id=123988569]
 anchors_preset = 3

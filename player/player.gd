@@ -43,6 +43,8 @@ const ACTIONS := {
 }
 
 const CHARACTER_PATH := "res://player/character.scn"
+## When in getting in (share of its length) his left hand takes the door handle.
+const ENTER_GRAB := 0.18
 
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity", 9.8)
 var _shape: CollisionShape3D
@@ -69,6 +71,11 @@ var _seat_xf := Transform3D.IDENTITY
 var _door_xf := Transform3D.IDENTITY
 var _door_drop := 0.0
 var _hips_bone := -1
+## While he stands at the door: how far to move him (car space) so his hand
+## meets this car's door handle, out of the way of the door as it swings.
+var _door_shift := Vector3.ZERO
+## How far open the door has been pulled so far (0..1).
+var _door_open := 0.0
 
 ## Getting in and out play this much faster than they came from Mixamo (five
 ## or six seconds each).
@@ -200,14 +207,16 @@ func sit_in(car: Node3D, entering := false) -> float:
 	var s: float = height / float(driver.get_meta("height", 1.8))
 	var eyes: Vector3 = driver.get_meta("drive_eyes")
 	var hands: Vector3 = driver.get_meta("drive_hands", eyes)
-	var at := Vector3.ZERO
+	# His eyes where the car's in-car camera is (driver_view), a little forward
+	# of it; where the car has a steering wheel, forward again until his hands
+	# are on it (by up to 15 cm).
+	var view: Variant = car.get("driver_view")
+	var eye_point: Vector3 = view if view is Vector3 else Vector3(0.37, 1.13, 0.1)
+	var at := eye_point + Vector3(0.0, 0.0, 0.05) - eyes * s
 	var wheel := car.find_child("SteeringWheel", true, false) as Node3D
 	if wheel and wheel.is_inside_tree():
-		at = car.to_local(wheel.global_position) - hands * s
-	else:
-		var view: Variant = car.get("driver_view")
-		var eye_point: Vector3 = view if view is Vector3 else Vector3(0.37, 1.13, 0.1)
-		at = eye_point + Vector3(0.0, 0.0, 0.08) - eyes * s
+		var short := car.to_local(wheel.global_position).z - (at + hands * s).z
+		at.z += clampf(short, 0.0, 0.15)
 	_seat_xf = Transform3D(Basis.IDENTITY.scaled(Vector3.ONE * s), at)
 	driver.transform = _seat_xf
 	car.add_child(driver)
@@ -273,6 +282,8 @@ func _path_xf(anim_name: String, end: String) -> Transform3D:
 func _begin_door(anim_name: String, end: String) -> void:
 	_door_xf = _path_xf(anim_name, end)
 	_door_drop = _ground_beside(_seated_car) - _door_xf.origin.y
+	_door_shift = _shift_to_handle()
+	_door_open = 0.0
 	var skeleton := _seated.get_node("Skeleton3D") as Skeleton3D
 	_hips_bone = -1
 	for b in skeleton.get_bone_count():
@@ -280,6 +291,31 @@ func _begin_door(anim_name: String, end: String) -> void:
 			_hips_bone = b
 	_seated.transform = _door_xf
 	update_seated()
+
+
+## Getting in was made for another car: lined up at the seat, his hand would
+## reach for the door some way off this car's handle, and he would stand where
+## the door swings. This is how far to move him while he stands at the door so
+## his hand meets the handle (near the door's back edge, just outside it).
+func _shift_to_handle() -> Vector3:
+	var door := _seated_car.get_node_or_null("DriverDoor") as Node3D
+	var mesh := door.get_node_or_null("Mesh") as MeshInstance3D if door else null
+	var anim := _seated.get_node("AnimationPlayer") as AnimationPlayer
+	if mesh == null or not anim.has_animation("enter"):
+		return Vector3.ZERO
+	var box := mesh.get_aabb()
+	var handle := door.position + Vector3(0.05, 0.0, box.position.z + 0.15)
+	# Where his left hand is when it takes the handle, with him lined up at the seat.
+	var skeleton := _seated.get_node("Skeleton3D") as Skeleton3D
+	var hand_bone := -1
+	for b in skeleton.get_bone_count():
+		if skeleton.get_bone_name(b).ends_with("_LeftHand"):
+			hand_bone = b
+	anim.play("enter")
+	anim.seek(anim.get_animation("enter").length * ENTER_GRAB, true)
+	var reach := _path_xf("enter", "end") * (skeleton.transform * skeleton.get_bone_global_pose(hand_bone).origin)
+	anim.seek(0.0, true)
+	return Vector3(handle.x - reach.x, 0.0, handle.z - reach.z)
 
 
 ## Height of the ground beside the driver's door, in the car's space.
@@ -313,12 +349,7 @@ func update_seated() -> void:
 	if playing != "enter" and playing != "exit":
 		_swing_door(0.0)
 		return
-	# The door: opened as he reaches for it, shut again once he is in (or out).
 	var t := anim.current_animation_position / maxf(anim.get_animation(playing).length, 0.001)
-	if playing == "enter":
-		_swing_door(smoothstep(0.12, 0.28, t) * (1.0 - smoothstep(0.8, 0.96, t)))
-	else:
-		_swing_door(smoothstep(0.06, 0.22, t) * (1.0 - smoothstep(0.84, 0.98, t)))
 	var skeleton := _seated.get_node("Skeleton3D") as Skeleton3D
 	var standing: float = (_seated.get_meta("enter_hips_start") as Vector3).y
 	var sitting: float = (_seated.get_meta("exit_hips_start") as Vector3).y
@@ -326,8 +357,41 @@ func update_seated() -> void:
 	var seated := smoothstep(0.25, 0.9, inverse_lerp(standing, sitting, y))
 	var xf := _door_xf
 	xf.origin.y += _door_drop * (1.0 - seated)
+	# At the door he stands where this car's handle is; he moves over to the
+	# seat as he climbs in (and back out as he climbs out).
+	var at_door := 1.0 - smoothstep(0.35, 0.6, t) if playing == "enter" else smoothstep(0.32, 0.55, t)
+	xf.origin += _door_shift * at_door
 	_seated.transform = xf
+	_move_door(playing, t, skeleton)
 
+
+## The door follows his left hand while he pulls it open getting in (and
+## swings open as he pushes it getting out), stays open, and swings shut as he
+## closes it.
+func _move_door(playing: String, t: float, skeleton: Skeleton3D) -> void:
+	var door := _seated_car.get_node_or_null("DriverDoor") as Node3D
+	if door == null:
+		return
+	var opening := Vector2(0.16, 0.40) if playing == "enter" else Vector2(0.06, 0.34)
+	var closing := Vector2(0.80, 0.92) if playing == "enter" else Vector2(0.62, 0.80)
+	if t < opening.x:
+		_door_open = 0.0
+	elif playing == "exit":
+		# Pushed open from inside, where his hand cannot be followed.
+		_door_open = maxf(_door_open, smoothstep(opening.x, opening.y * 0.8, t))
+	elif t <= opening.y:
+		var hand := Vector3.ZERO
+		for b in skeleton.get_bone_count():
+			if skeleton.get_bone_name(b).ends_with("_LeftHand"):
+				hand = skeleton.global_transform * skeleton.get_bone_global_pose(b).origin
+		var rel: Vector3 = _seated_car.to_local(hand) - door.position
+		# The closed door runs back (-Z) from its hinge; opened by a, its back
+		# edge points along (-sin a, -cos a).
+		var angle := atan2(-rel.x, -rel.z)
+		var open := clampf(-rad_to_deg(angle) / door_open_angle, 0.0, 1.0)
+		_door_open = maxf(_door_open, open)
+	var shut := 1.0 - smoothstep(closing.x, closing.y, t)
+	_swing_door(_door_open * shut)
 
 ## Opens the car's driver's door this far (0 shut, 1 fully open).
 func _swing_door(open: float) -> void:

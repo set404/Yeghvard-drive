@@ -1,21 +1,17 @@
 {
  "jobs": [
   {
-   "source": "../../data/sounds/big_block_v8_idle_loop.wav",
-   "rpm": 1120,
+   "source": "../../data/sounds/layers/e55_1350.wav",
+   "rpm": 1350,
    "cylinders": 8,
-   "rate": 0.4,
+   "rate": 0.6,
    "prefix": "e55",
-   "targets": [ 1120, 1500, 2000, 2600, 3300, 4200, 5300
-   ]
-  },
-  {
-   "source": "../../data/sounds/layers/e50_0890.wav",
-   "rpm": 890,
-   "cylinders": 8,
-   "rate": 0.4,
-   "prefix": "e50",
-   "targets": [ 1300, 1800
+   "targets": [
+    1800,
+    2400,
+    3100,
+    4000,
+    5200
    ]
   },
   {
@@ -24,7 +20,10 @@
    "cylinders": 4,
    "rate": 0.4,
    "prefix": "compass",
-   "targets": [ 3400, 4200, 5200
+   "targets": [
+    3400,
+    4200,
+    5200
    ]
   },
   {
@@ -33,7 +32,10 @@
    "cylinders": 4,
    "rate": 0.4,
    "prefix": "volga",
-   "targets": [ 4000, 4800, 5600
+   "targets": [
+    4000,
+    4800,
+    5600
    ]
   },
   {
@@ -42,7 +44,10 @@
    "cylinders": 6,
    "rate": 0.4,
    "prefix": "landcruiser",
-   "targets": [ 2900, 3600, 4500
+   "targets": [
+    2900,
+    3600,
+    4500
    ]
   }
  ]

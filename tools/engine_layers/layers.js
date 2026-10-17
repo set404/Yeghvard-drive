@@ -1,6 +1,7 @@
 // Makes steady engine loops at given rpm from recordings whose revs are known over time.
 // Each loop is built by overlap-adding short grains from where the recording is near that rpm
-// (and steady in loudness), walking back and forth through that stretch,
+// (and steady in loudness), wandering through that stretch at random (mostly onwards, now and
+// then jumping elsewhere in it), so that a long loop has no shorter pattern in it to be heard,
 // each grain resampled to exactly that rpm and placed where it best lines up with what came
 // before (WSOLA), wrapping round so the loop has no seam. Writes 16-bit mono 48 kHz .wav files.
 // Usage: node layers.js spec.json outDir
@@ -25,14 +26,16 @@ for(const L of spec.layers){
  const lv=near.map(level);const med=[...lv].sort((a,b)=>a-b)[lv.length>>1];
  const ok=near.filter((t,i)=>lv[i]>med*0.7&&lv[i]<med*1.4);
  if(ok.length<10){console.log('SKIP',L.name,'- revs never near',target);continue;}
- const len=Math.round((L.seconds||1.2)*R),G=Math.round((L.grain||0.08)*R),hop=G/2,seek=Math.round(0.012*R);
+ const len=Math.round((L.seconds||6)*R),G=Math.round((L.grain||0.08)*R),hop=G/2,seek=Math.round(0.012*R);
  const out=new Float32Array(len),win=new Float32Array(G);for(let i=0;i<G;i++)win[i]=0.5-0.5*Math.cos(2*Math.PI*i/G);
- const grains=Math.round(len/hop);let pos=ok[0];let used=0;
+ const grains=Math.round(len/hop);let idx=0;const pace=hop/R/0.005;
  for(let g=0;g<grains;g++){
-  // Walk forward through the near-target stretch and back again, never jumping
-  // from its end to its start (which is heard as a hiccup each time round).
-  const turn=Math.max(1,2*ok.length-2),step=Math.floor(used)%turn;
-  let st=ok[step<ok.length?step:turn-step];used+=hop/R/0.005;
+  // Wander through the near-target stretch: mostly on at the recording's own pace, a
+  // little faster or slower, now and then somewhere else in it; turning back at its
+  // ends rather than jumping from the end to the start.
+  if(g>0){idx+=Math.round(pace*(0.5+rnd()));if(rnd()<0.06)idx=Math.floor(rnd()*ok.length);}
+  const last=ok.length-1;while(idx<0||idx>last)idx=idx<0?-idx:2*last-idx;
+  const st=ok[idx];
   const ratio=target/rpm(st);
   // Line it up with the tail already written: best match within +-12 ms.
   const dst=g*hop;let best=-1e9,bo=0;

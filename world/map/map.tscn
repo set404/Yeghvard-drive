@@ -16090,13 +16090,6 @@ _data = {
 }
 point_count = 2
 
-[sub_resource type="Curve3D" id="Curve3D_wir5r"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 22.5, 0, 23.160004, 0, 0, 0, 0, 0, 0, 46.5, 0, -3),
-"tilts": PackedFloat32Array(0, 0, 0)
-}
-point_count = 3
-
 [sub_resource type="Curve3D" id="Curve3D_jcpx6"]
 _data = {
 "points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 30, 0, -27),
@@ -56434,7 +56427,6 @@ roof_color = Color(0.66, 0.66, 0.64, 1)
 osm_id = 1275648748
 
 [node name="Buildings_E3" type="Node3D" parent="Buildings" unique_id=178125652]
-visible = false
 
 [node name="Building_207635643" type="Node3D" parent="Buildings/Buildings_E3" unique_id=1826198669]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -515.3543, -8.877774, 1431.9711)
@@ -57681,7 +57673,6 @@ roof_color = Color(0.32, 0.32, 0.34, 1)
 osm_id = 447340529
 
 [node name="Buildings_D4" type="Node3D" parent="Buildings" unique_id=308408583]
-visible = false
 
 [node name="Building_208561328" type="Node3D" parent="Buildings/Buildings_D4" unique_id=1055911915]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 672.3909, 15.03402, 43.67401)
@@ -57701,7 +57692,7 @@ roof_color = Color(0.66, 0.66, 0.64, 1)
 osm_id = 208624893
 
 [node name="Building_293495607" type="Node3D" parent="Buildings/Buildings_D4" unique_id=1134209140]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 324.5697, -1.1773262, 335.7596)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 322.07336, -1.1773262, 333.96606)
 script = ExtResource("2_u3wvt")
 footprint = PackedVector2Array(-3.335907, 7.5785217, -7.3815002, 3.7476196, 3.335907, -7.5785217, 7.3815002, -3.7476196)
 wall_color = Color(0.8017213, 0.6058993, 0.4296595, 1)
@@ -57769,7 +57760,7 @@ roof_color = Color(0.32, 0.32, 0.34, 1)
 osm_id = 293495638
 
 [node name="Building_293495640" type="Node3D" parent="Buildings/Buildings_D4" unique_id=290115660]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 269.70984, -2.6584756, 385.83902)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 268.92642, -2.6052318, 382.11014)
 script = ExtResource("2_u3wvt")
 footprint = PackedVector2Array(-5.785797, -12.275574, 11.790436, 6.734619, 5.790039, 12.275543, -11.794708, -6.734619)
 wall_color = Color(0.81054336, 0.73140806, 0.612705, 1)
@@ -58027,7 +58018,7 @@ roof_color = Color(0.42, 0.44, 0.4, 1)
 osm_id = 293495791
 
 [node name="Building_293495792" type="Node3D" parent="Buildings/Buildings_D4" unique_id=923014015]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 252.87727, -2.7756197, 395.40796)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 250.26024, -2.7756197, 395.40796)
 script = ExtResource("2_u3wvt")
 footprint = PackedVector2Array(-9.51268, 0.8189087, 2.1566467, -9.308014, 9.516922, -0.813385, -2.1609192, 9.302429)
 height = 3.6
@@ -98378,15 +98369,6 @@ curve = SubResource("Curve3D_b1doc")
 script = ExtResource("3_0f1lj")
 color = Color(0.7094465, 0.47867012, 0.4017447, 0.9102314)
 height = 1.8342016
-gate_color = Color(0.3, 0.48, 0.52, 1)
-
-[node name="Wall_1966" type="Path3D" parent="Walls/Walls_D4" unique_id=405519532]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 251.32495, -2.7195702, 372.5171)
-curve = SubResource("Curve3D_wir5r")
-script = ExtResource("3_0f1lj")
-color = Color(0.7094465, 0.47867012, 0.4017447, 0.9102314)
-height = 2.147729
-gate_at = 22.366013
 gate_color = Color(0.3, 0.48, 0.52, 1)
 
 [node name="Wall_1991" type="Path3D" parent="Walls/Walls_D4" unique_id=1742229991]

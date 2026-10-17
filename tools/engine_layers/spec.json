@@ -149,12 +149,38 @@
    "grain": 0.05
   },
   {
-   "name": "e50_0890",
-   "file": "s63_amg_v8_revs.f32",
-   "rpm": 890,
-   "from": 0.02,
-   "to": 0.4,
-   "at": 890
+   "name": "e55_0800",
+   "file": "barracuda_v8_acceleration.f32",
+   "rpm": 800,
+   "from": 12.4,
+   "to": 30.3,
+   "at": 800
+  },
+  {
+   "name": "e55_1100",
+   "file": "barracuda_v8_acceleration.f32",
+   "ridge": "tools/engine_layers/ridge_barracuda.json",
+   "scale": 10.8,
+   "from": 9.5,
+   "to": 11.6,
+   "at": 1100
+  },
+  {
+   "name": "e55_1350",
+   "file": "barracuda_v8_acceleration.f32",
+   "ridge": "tools/engine_layers/ridge_barracuda.json",
+   "scale": 10.8,
+   "from": 9.5,
+   "to": 11.6,
+   "at": 1350
+  },
+  {
+   "name": "e50_0800",
+   "file": "barracuda_v8_acceleration.f32",
+   "rpm": 800,
+   "from": 2.4,
+   "to": 9.3,
+   "at": 800
   }
  ]
 }

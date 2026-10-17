@@ -10,6 +10,12 @@ const WATTS_PER_HP := 745.7
 @export var drag := 0.42 ## air resistance, N per (m/s)^2
 @export var rolling_resistance := 180.0 ## N
 @export var brake_power := 60.0
+## Deceleration in m/s² the foot brake adds on top of the tyres, the same
+## for every car whatever it weighs (9.8 is 1 g). The wheel brakes alone fade
+## once the tyres skid, so this is what makes the car actually stop.
+@export var brake_decel := 10.0
+## The same for the handbrake. It still loosens the rear to start a slide.
+@export var handbrake_decel := 9.0
 @export var max_steer := 0.6
 @export var steer_speed := 3.0
 ## Whether the keyboard drives this car. Parked cars have it off.
@@ -276,6 +282,7 @@ func _physics_process(delta: float) -> void:
 		else:
 			drive = -reverse_force * back * clampf(1.0 + speed / max_reverse_speed, 0.0, 1.0)
 	braking = brake > 0.0
+	_apply_brake_assist(brake / brake_power if braking else 0.0, handbrake)
 	if parked:
 		# The parking lock holds the wheels. Locked tyres still slide slowly down
 		# a slope in the physics engine, so the car is also held to the spot where
@@ -302,7 +309,7 @@ func _physics_process(delta: float) -> void:
 		wheel.wheel_friction_slip = handbrake_grip if handbrake else rear_grip - loosen
 		if handbrake:
 			# The handbrake locks the rear wheels only, which is what starts a slide.
-			wheel.brake = brake_power * 1.5
+			wheel.brake = maxf(wheel.brake, brake_power * 3.0 * mass / 1500.0)
 	# engine_force is applied at every driven wheel.
 	engine_force = drive / maxi(_traction_wheels, 1)
 	output_hp = absf(drive * speed) / WATTS_PER_HP
@@ -340,6 +347,30 @@ func _physics_process(delta: float) -> void:
 		place(Transform3D(Basis.looking_at(-yaw), global_position + Vector3.UP * 1.5))
 	elif global_position.y < -500.0:
 		place(spawn_transform)
+
+
+## Slows the car by brake_decel (foot, 0 to 1) and handbrake_decel, pushing
+## straight against its motion. Only the share of wheels on the ground counts,
+## and it fades out below 1.5 m/s so the car comes to rest instead of rocking;
+## the wheel brakes hold it from there.
+func _apply_brake_assist(foot: float, handbrake: bool) -> void:
+	var decel := brake_decel * foot
+	if handbrake:
+		decel = maxf(decel, handbrake_decel)
+	if decel <= 0.0:
+		return
+	var grounded := 0
+	for wheel in _front_wheels + _rear_wheels:
+		if wheel.is_in_contact():
+			grounded += 1
+	var wheels := _front_wheels.size() + _rear_wheels.size()
+	if grounded == 0 or wheels == 0:
+		return
+	var v := linear_velocity.slide(global_basis.y)
+	var fade := clampf(v.length() / 1.5, 0.0, 1.0)
+	if fade <= 0.0:
+		return
+	apply_central_force(-v.normalized() * mass * decel * fade * grounded / wheels)
 
 
 ## Puts up to `litres` of fuel in the tank and returns how much went in.
@@ -459,12 +490,18 @@ func _mix_layers(level_db: float) -> void:
 		elif i == k + 1:
 			share = sin(blend * PI * 0.5)
 		var layer := _layers[i]
-		var on := engine_running and share > 0.001
-		if on != layer.playing:
-			layer.playing = on
-		if on:
+		# All of them keep playing while the engine runs, only their loudness
+		# changing: a loop switched on as the revs reach it would start again
+		# from its beginning every time, which is heard as the same sound
+		# repeating through each gear. Each starts somewhere else in its loop.
+		if engine_running != layer.playing:
+			if engine_running:
+				layer.play(randf() * layer.stream.get_length())
+			else:
+				layer.stop()
+		if engine_running:
 			layer.pitch_scale = clampf(rpm / engine_layer_rpms[i], 0.3, 4.0)
-			layer.volume_db = level_db + linear_to_db(share)
+			layer.volume_db = level_db + linear_to_db(maxf(share, 0.0001))
 
 
 func _process(delta: float) -> void:

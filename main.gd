@@ -13,6 +13,8 @@ const FUEL_EMPTY := Color(0.9, 0.15, 0.1)
 @export var max_exit_speed := 20.0
 ## Litres a second the pump puts in while you hold T.
 @export var refuel_rate := 8.0
+## What a litre of fuel costs at the pump, in drams (see game/wallet.gd).
+@export var fuel_price := 490.0
 ## The car you are driving when the game starts. Empty means the node named "Car".
 @export var start_car: VehicleBody3D
 
@@ -30,6 +32,9 @@ const FUEL_EMPTY := Color(0.9, 0.15, 0.1)
 @onready var fuel_label: Label = $HUD/Fuel/Label
 @onready var lights_label: Label = $HUD/Lights
 @onready var prompt_label: Label = $HUD/Prompt
+@onready var money_label: Label = $HUD/Money
+## Your money.
+@onready var wallet: Wallet = $Wallet
 ## Only cars built with lamps have this node. Null while on foot.
 var lamps: Node
 var on_foot := false
@@ -37,6 +42,11 @@ var on_foot := false
 var _door_time := 0.0
 var _door_car: VehicleBody3D
 var _door_in := false
+## This visit to the pump so far: litres put in and what they cost.
+var _pumped := 0.0
+var _bill := 0.0
+## Paid since the wallet was last saved.
+var _unsaved := false
 
 
 func _ready() -> void:
@@ -56,6 +66,12 @@ func _ready() -> void:
 		# The cars standing about are parked; the one you start in is ready to go.
 		other.parked = other != car
 	_drive(car, true)
+	wallet.changed.connect(_show_money)
+	_show_money(wallet.balance)
+
+
+func _show_money(balance: float) -> void:
+	money_label.text = Wallet.format(balance)
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
@@ -69,6 +85,11 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		var cars := get_tree().get_nodes_in_group("cars")
 		if number < cars.size():
 			_drive(cars[number], true)
+		return
+	# For testing: = puts 10 000 drams in your wallet.
+	if key.physical_keycode == KEY_EQUAL:
+		wallet.earn(10000.0)
+		wallet.save()
 		return
 	# F gets you in or out; E (the starter) belongs to the car, see car.gd.
 	if key.physical_keycode != KEY_F:
@@ -240,6 +261,7 @@ func _process(delta: float) -> void:
 		return
 	var hints := PackedStringArray()
 	if on_foot:
+		_end_pump_visit()
 		if _car_in_reach():
 			hints.append("Press F to get in")
 	else:
@@ -285,19 +307,44 @@ func _at_pump() -> bool:
 	return false
 
 
-## At a pump with the car stopped and the engine off, holding T fills the tank.
+## At a pump with the car stopped and the engine off, holding T fills the tank,
+## paying fuel_price a litre from your wallet as it goes in; it stops when the
+## tank is full or the money runs out.
 func _refuel(delta: float, hints: PackedStringArray) -> void:
 	if not _at_pump() or absf(car.forward_speed()) > 1.0:
+		_end_pump_visit()
 		return
+	var price := "%s a litre" % Wallet.format(fuel_price)
+	var paid := "  -  %d L, %s" % [roundi(_pumped), Wallet.format(_bill)] if _pumped > 0.0 else ""
 	if car.fuel >= car.fuel_capacity - 0.05:
-		hints.append("Tank full")
+		hints.append("Tank full" + paid)
 	elif car.engine_running:
-		hints.append("Stop the engine (E) to refuel")
+		hints.append("Stop the engine (E) to refuel  (%s)" % price)
+	elif not wallet.can_afford(fuel_price * 0.1):
+		hints.append("Not enough money for fuel  (%s)" % price + paid)
 	elif Input.is_physical_key_pressed(KEY_T):
-		car.refuel(refuel_rate * delta)
-		hints.append("Refuelling...  %d / %d L" % [ceili(car.fuel), roundi(car.fuel_capacity)])
+		# As much as flows this frame, the tank takes and you can pay for.
+		var litres := minf(refuel_rate * delta, wallet.balance / fuel_price)
+		litres = car.refuel(litres)
+		wallet.spend(litres * fuel_price)
+		_pumped += litres
+		_bill += litres * fuel_price
+		_unsaved = _unsaved or litres > 0.0
+		hints.append("Refuelling...  %d / %d L  -  %s" % [ceili(car.fuel), roundi(car.fuel_capacity), Wallet.format(_bill)])
 	else:
-		hints.append("Hold T to refuel")
+		hints.append("Hold T to refuel  (%s)" % price + paid)
+	if _unsaved and not Input.is_physical_key_pressed(KEY_T):
+		wallet.save()
+		_unsaved = false
+
+
+## Leaving the pump: what you paid is kept, and the next visit starts a new bill.
+func _end_pump_visit() -> void:
+	if _unsaved:
+		wallet.save()
+		_unsaved = false
+	_pumped = 0.0
+	_bill = 0.0
 
 
 ## The fuel gauge: litres left, green, amber when low, blinking red on the reserve.

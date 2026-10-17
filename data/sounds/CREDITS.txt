@@ -19,3 +19,9 @@ audi a4 allroad 20TFSI engine rpm ramp fast mono (audi_a4_20tfsi_rpm_ramp.mp3) -
          License: CC BY 3.0 - http://creativecommons.org/licenses/by/3.0/
 Car acceleration (mazda323_acceleration.mp3) - han1, https://freesound.org/people/han1/sounds/19024/
          License: CC BY 4.0 - http://creativecommons.org/licenses/by/4.0/
+
+Mercedes engines (karlosdearma-motor-v8-plymouth-barracuda-encendido-acelerada-marcha-243224.mp3,
+         decoded as barracuda_v8_acceleration.f32 for tools/engine_layers; layers/e55_*.wav and e50_0800.wav are cut from it)
+Motor V8 Plymouth Barracuda encendido acelerada marcha - karlosdearma
+Source:  Pixabay, sound 243224
+License: Pixabay Content License - https://pixabay.com/service/license-summary/
