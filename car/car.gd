@@ -151,6 +151,23 @@ var _traction_wheels := 0
 var _wheelbase := 2.7
 
 
+## The engine_layer_rpms the car's own scene (car/*.scn) gives, for when a scene
+## that places the car has emptied them (the Godot editor keeps saving main.tscn so).
+func _rpms_from_own_scene() -> void:
+	if scene_file_path == "":
+		return
+	var scene := load(scene_file_path) as PackedScene
+	if scene == null:
+		return
+	var state := scene.get_state()
+	for i in state.get_node_property_count(0):
+		if state.get_node_property_name(0, i) == &"engine_layer_rpms":
+			var rpms: PackedFloat32Array = PackedFloat32Array(state.get_node_property_value(0, i))
+			if rpms.size() == engine_layers.size():
+				engine_layer_rpms = rpms
+			return
+
+
 func _ready() -> void:
 	add_to_group("cars")
 	# A sleeping body ignores the engine, so a parked car would never pull away.
@@ -158,6 +175,8 @@ func _ready() -> void:
 	_apply_paint()
 	# Each layer needs its revs. An instance override in a scene that empties one
 	# list (the editor has saved main.tscn like that) falls back to the single loop.
+	if engine_layer_rpms.size() != engine_layers.size():
+		_rpms_from_own_scene()
 	var layered := engine_layer_rpms.size() == engine_layers.size()
 	if not layered:
 		push_warning("%s: %d engine_layers but %d engine_layer_rpms, using the plain engine loop" % [name, engine_layers.size(), engine_layer_rpms.size()])

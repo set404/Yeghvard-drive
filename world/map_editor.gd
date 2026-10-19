@@ -26,6 +26,10 @@ extends Node3D
 const MapKit := preload("res://world/map/map_kit.gd")
 const MAP_BUILDING := preload("res://world/map/map_building.gd")
 const MAP_WALL := preload("res://world/map/map_wall.gd")
+## The town's baker: the chunks a changed building or wall was baked into are
+## baked again here without it (all on the processor: reading the baked meshes
+## back from the graphics card is what made the graphics driver give out).
+const BuildWorld := preload("res://tools/build_world.gd")
 const MAP_PATH := "res://world/map/map.tscn"
 const EDITS_PATH := "res://world/map/map_edits.json"
 const PROPS_DIR := "res://props"
@@ -87,6 +91,9 @@ var _drag_ref := {}
 var _drag_redraw := 0
 var _drag_node_xf := Transform3D.IDENTITY
 var _undo: Array[String] = []
+var _bw: Object ## a BuildWorld, made when first needed
+## Buildings and walls (paths) the baked chunks are now made without.
+var _left_out := {"buildings": {}, "walls": {}}
 var _undo_tag := ""
 var _undo_time := 0
 var _unsaved := false
@@ -104,7 +111,15 @@ func _ready() -> void:
 	_layer.name = "MapEdits"
 	_world.add_child(_layer)
 	_load_edits()
+	if not (edits["buildings"].is_empty() and edits["walls"].is_empty()):
+		_read_map()
 	_apply_all()
+
+
+func _exit_tree() -> void:
+	if _bw:
+		_bw.free()
+		_bw = null
 
 
 # --- the edits on the town -------------------------------------------------
@@ -138,18 +153,16 @@ func _save_edits() -> void:
 	_say("Saved to " + where)
 
 
-## Puts every edit on the town: changed buildings and walls are cut out of the
-## baked ones and drawn again as they now are; props are placed.
+## Puts every edit on the town: changed buildings and walls are left out of the
+## baked chunks and drawn again as they now are; props are placed.
 func _apply_all() -> void:
 	for child in _layer.get_children():
 		child.queue_free()
 	_shown.clear()
+	_refresh_baked()
 	for path: String in edits["buildings"]:
-		_cut_building(_points(edits["buildings"][path]))
 		_show("building", path)
 	for path: String in edits["walls"]:
-		var wall: Dictionary = edits["walls"][path]
-		_cut_wall(_points({"pts": wall.get("orig", wall["pts"])}))
 		_show("wall", path)
 	var props: Array = edits["props"]
 	for i in props.size():
@@ -238,13 +251,54 @@ func _show(kind: String, key: String, solid := true) -> void:
 		mi.mesh = mesh
 		node.add_child(mi)
 		if solid:
+			# Made from the outline, not from the mesh (reading a mesh back from
+			# the graphics card upsets the graphics driver).
 			var cs := CollisionShape3D.new()
-			cs.shape = mesh.create_trimesh_shape()
+			cs.shape = _solid(kind, _moved(e), float(e["height"]))
 			node.add_child(cs)
 	node.set_meta("map_kind", kind)
 	node.set_meta("map_key", key)
 	_layer.add_child(node)
 	_shown[id] = node
+
+
+## Something to bump into for a building (its walls and roof) or a wall (a thin
+## slab along each run), in world space.
+func _solid(kind: String, pts: PackedVector2Array, height: float) -> ConcavePolygonShape3D:
+	var faces := PackedVector3Array()
+	var low := INF
+	var high := -INF
+	for p in pts:
+		var y := MapKit.height_at(p.x, p.y)
+		low = minf(low, y)
+		high = maxf(high, y)
+	low -= 0.6
+	var top := high + height
+	var quad := func(a: Vector3, b: Vector3, c: Vector3, d: Vector3) -> void:
+		faces.append_array([a, b, c, a, c, d])
+	if kind == "building":
+		for k in pts.size():
+			var a := pts[k]
+			var b := pts[(k + 1) % pts.size()]
+			quad.call(Vector3(a.x, low, a.y), Vector3(b.x, low, b.y), Vector3(b.x, top, b.y), Vector3(a.x, top, a.y))
+		var tris := Geometry2D.triangulate_polygon(pts)
+		for i in tris:
+			faces.append(Vector3(pts[i].x, top, pts[i].y))
+	else:
+		for k in pts.size() - 1:
+			var a := pts[k]
+			var b := pts[k + 1]
+			if a.distance_to(b) < 0.01:
+				continue
+			var d := (b - a).normalized()
+			var n := Vector2(d.y, -d.x) * 0.15
+			for side in [n, -n]:
+				quad.call(Vector3(a.x + side.x, low, a.y + side.y), Vector3(b.x + side.x, low, b.y + side.y),
+					Vector3(b.x + side.x, top, b.y + side.y), Vector3(a.x + side.x, top, a.y + side.y))
+	var shape := ConcavePolygonShape3D.new()
+	shape.backface_collision = true
+	shape.set_faces(faces)
+	return shape
 
 
 ## A prop: the model, standing on a static body with a box round it to bump into.
@@ -302,34 +356,166 @@ func _baked_prop(key: String) -> Node3D:
 	return props.get_node_or_null(key.get_file()) as Node3D if props else null
 
 
-## Takes the baked walls and roof of a building out of the world.
-func _cut_building(poly: PackedVector2Array) -> void:
-	var grown := Geometry2D.offset_polygon(poly, 0.08)
-	if grown.is_empty():
+## Bakes again every chunk of the town whose buildings or walls left out have
+## changed, so the baked town has none of the edited ones (they are drawn by
+## _show) and all the others, as the map has them.
+func _refresh_baked() -> void:
+	if _map_buildings.is_empty() and _map_walls.is_empty():
 		return
-	var zone: PackedVector2Array = grown[0]
-	var box := _box(zone, 0.0)
-	_cut("Buildings", box, func(v: Vector3) -> bool:
-		return box.has_point(Vector2(v.x, v.z)) and Geometry2D.is_point_in_polygon(Vector2(v.x, v.z), zone))
+	for kind in ["buildings", "walls"]:
+		var want: Dictionary = edits[kind]
+		var have: Dictionary = _left_out[kind]
+		var chunks := {}
+		for path: String in want:
+			if not have.has(path):
+				_chunks_of(kind, path, chunks)
+		for path: String in have:
+			if not want.has(path):
+				_chunks_of(kind, path, chunks)
+		var now := {}
+		for path: String in want:
+			now[path] = true
+		if kind == "walls":
+			for path: String in want:
+				if not have.has(path):
+					_wall_gates(path, false)
+			for path: String in have:
+				if not want.has(path):
+					_wall_gates(path, true)
+		_left_out[kind] = now
+		for key: Vector2i in chunks:
+			_rebake(kind, key)
 
 
-## Takes a baked wall (and the swinging gate in it) out of the world.
-func _cut_wall(pts: PackedVector2Array) -> void:
-	var box := _box(pts, WALL_REACH + 0.1)
-	var near := func(v: Vector3) -> bool:
-		var p := Vector2(v.x, v.z)
-		if not box.has_point(p):
-			return false
-		for k in pts.size() - 1:
-			if p.distance_to(Geometry2D.get_closest_point_to_segment(p, pts[k], pts[k + 1])) < WALL_REACH:
-				return true
-		return false
-	_cut("Fences", box, near)
+## Hides (or shows again) the baked swinging gate of a map wall, a node of its own.
+func _wall_gates(path: String, on: bool) -> void:
 	var gates := _world.get_node_or_null("Gates")
-	if gates:
-		for gate in gates.get_children():
-			if gate is Node3D and str(gate.name).begins_with("YardGate") and near.call((gate as Node3D).global_position):
-				gate.queue_free()
+	if gates == null or not _map_walls.has(path):
+		return
+	var pts := _points(_map_walls[path])
+	for gate in gates.get_children():
+		if not (gate is Node3D) or not str(gate.name).begins_with("YardGate"):
+			continue
+		var g := (gate as Node3D).global_position
+		if _distance(Vector2(g.x, g.z), pts, false) < 1.5:
+			(gate as Node3D).visible = on
+			gate.process_mode = Node.PROCESS_MODE_INHERIT if on else Node.PROCESS_MODE_DISABLED
+			for cs: CollisionShape3D in gate.find_children("*", "CollisionShape3D", true, false):
+				cs.disabled = not on
+
+
+## The baked chunks a building (by its middle) or a wall (all along) is in.
+func _chunks_of(kind: String, path: String, into: Dictionary) -> void:
+	if kind == "buildings":
+		if _map_buildings.has(path):
+			var c := _centre(_points(_map_buildings[path]))
+			into[Vector2i(floori(c.x / BuildWorld.OBJ_CHUNK), floori(c.y / BuildWorld.OBJ_CHUNK))] = true
+		return
+	if not _map_walls.has(path):
+		return
+	var pts := _points(_map_walls[path])
+	var size: float = BuildWorld.FENCE_CHUNK
+	for k in pts.size():
+		into[Vector2i(floori(pts[k].x / size), floori(pts[k].y / size))] = true
+		if k + 1 < pts.size():
+			var steps := ceili(pts[k].distance_to(pts[k + 1]) / 5.0)
+			for i in steps + 1:
+				var p := pts[k].lerp(pts[k + 1], float(i) / maxf(steps, 1))
+				into[Vector2i(floori(p.x / size), floori(p.y / size))] = true
+
+
+func _builder() -> Object:
+	if _bw == null:
+		_bw = BuildWorld.new()
+		var p := deg_to_rad(BuildWorld.LAT0)
+		_bw.mz = 111132.92 - 559.82 * cos(2.0 * p) + 1.175 * cos(4.0 * p)
+		_bw.mx = 111412.84 * cos(p) - 93.5 * cos(3.0 * p)
+		var heights: Image = load(BuildWorld.HEIGHTS_PATH)
+		_bw.hgt = heights.get_data().to_float32_array()
+	return _bw
+
+
+## The baker's form of a map building.
+func _bake_building(path: String) -> Dictionary:
+	var b: Dictionary = _map_buildings[path]
+	var poly := _points(b)
+	var area := 0.0
+	for k in poly.size():
+		area += poly[k].cross(poly[(k + 1) % poly.size()]) * 0.5
+	if area < 0.0:
+		poly.reverse()
+		area = -area
+	return {"poly": poly, "id": int(b.get("id", 0)), "area": area, "tags": {"building": "shed" if b["plain"] else "yes"},
+		"height": float(b["height"]), "wall": Color.html(b["wall"]), "roof": Color.html(b["roof"]),
+		"plain": bool(b["plain"]), "stone": bool(b["tuff"])}
+
+
+## Bakes one chunk of the town's buildings or walls again, leaving out the edited
+## ones, and puts it in place of the world's.
+func _rebake(kind: String, key: Vector2i) -> void:
+	var bw := _builder()
+	var part := "Buildings" if kind == "buildings" else "Fences"
+	var root := Node3D.new()
+	if kind == "buildings":
+		var list: Array[Dictionary] = []
+		for path: String in _map_buildings:
+			if edits["buildings"].has(path):
+				continue
+			var c := _centre(_points(_map_buildings[path]))
+			if Vector2i(floori(c.x / BuildWorld.OBJ_CHUNK), floori(c.y / BuildWorld.OBJ_CHUNK)) == key:
+				list.append(_bake_building(path))
+		bw.buildings = list
+		bw._build_buildings(root)
+	else:
+		# Walls keep out of the buildings, so the baker needs all of them.
+		var all_buildings: Array[Dictionary] = []
+		for path: String in _map_buildings:
+			all_buildings.append(_bake_building(path))
+		bw.buildings = all_buildings
+		var size: float = BuildWorld.FENCE_CHUNK
+		var area := Rect2(Vector2(key) * size, Vector2(size, size)).grow(6.0)
+		var walls: Array[Dictionary] = []
+		for path: String in _map_walls:
+			if edits["walls"].has(path):
+				continue
+			var w: Dictionary = _map_walls[path]
+			var pts := _points(w)
+			if not _box(pts, 0.0).intersects(area):
+				continue
+			walls.append({"pts": pts, "kind": int(w["kind"]), "color": Color.html(w["color"]), "height": float(w["height"]),
+				"gate": float(w["gate_at"]), "gate_color": Color.html(w["gate_color"]), "swing": int(w["swing"])})
+		bw._build_walls(root, walls)
+	var made: Array = _chunk_parts(root.get_node_or_null(part), part).get(key, [])
+	var mine: Array = _chunk_parts(_world.get_node_or_null(part), part).get(key, [])
+	if not mine.is_empty():
+		(mine[0] as MeshInstance3D).mesh = (made[0] as MeshInstance3D).mesh if not made.is_empty() else null
+		if mine[1]:
+			(mine[1] as CollisionShape3D).shape = (made[1] as CollisionShape3D).shape if not made.is_empty() and made[1] else ConcavePolygonShape3D.new()
+	elif not made.is_empty():
+		# A chunk the world had nothing in (a wall moved there): take the new one.
+		var body := _world.get_node(part)
+		for n: Node in made:
+			if n:
+				n.get_parent().remove_child(n)
+				body.add_child(n)
+	root.free()
+
+
+## A baked part's chunks: key -> [its mesh, its collision], from how the baker
+## lays them out (each chunk's mesh, "<part>_x_y", then its collision).
+func _chunk_parts(body: Node, part: String) -> Dictionary:
+	var out := {}
+	if body == null:
+		return out
+	var last := Vector2i.MAX
+	for child in body.get_children():
+		if child is MeshInstance3D and str(child.name).begins_with(part + "_"):
+			var bits := str(child.name).split("_")
+			last = Vector2i(int(bits[bits.size() - 2]), int(bits[bits.size() - 1]))
+			out[last] = [child, null]
+		elif child is CollisionShape3D and out.has(last) and out[last][1] == null:
+			out[last][1] = child
+	return out
 
 
 func _box(pts: PackedVector2Array, grow: float) -> Rect2:
@@ -337,59 +523,6 @@ func _box(pts: PackedVector2Array, grow: float) -> Rect2:
 	for p in pts:
 		r = r.expand(p)
 	return r.grow(grow)
-
-
-## Takes out of the baked part (World/<part>) the triangles, drawn and collision,
-## with all three corners inside: the town's buildings and walls are baked in big chunks.
-func _cut(part: String, box: Rect2, inside: Callable) -> void:
-	var baked := _world.get_node_or_null(part)
-	if baked == null:
-		return
-	for child in baked.get_children():
-		var mi := child as MeshInstance3D
-		if mi and mi.mesh:
-			var aabb := mi.global_transform * mi.mesh.get_aabb()
-			if not Rect2(aabb.position.x, aabb.position.z, aabb.size.x, aabb.size.z).intersects(box):
-				continue
-			var xf := mi.global_transform
-			var mesh := ArrayMesh.new()
-			var changed := false
-			for s in mi.mesh.get_surface_count():
-				var arr := mi.mesh.surface_get_arrays(s)
-				var v: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
-				var idx: PackedInt32Array = arr[Mesh.ARRAY_INDEX] if arr[Mesh.ARRAY_INDEX] != null else PackedInt32Array()
-				if idx.is_empty():
-					idx.resize(v.size())
-					for k in v.size():
-						idx[k] = k
-				var keep := PackedInt32Array()
-				for k in range(0, idx.size(), 3):
-					if inside.call(xf * v[idx[k]]) and inside.call(xf * v[idx[k + 1]]) and inside.call(xf * v[idx[k + 2]]):
-						changed = true
-						continue
-					keep.append_array([idx[k], idx[k + 1], idx[k + 2]])
-				if keep.is_empty():
-					continue
-				arr[Mesh.ARRAY_INDEX] = keep
-				mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr)
-				mesh.surface_set_material(mesh.get_surface_count() - 1, mi.mesh.surface_get_material(s))
-			if changed:
-				mi.mesh = mesh
-		var cs := child as CollisionShape3D
-		if cs and cs.shape is ConcavePolygonShape3D:
-			var faces := (cs.shape as ConcavePolygonShape3D).get_faces()
-			var cxf := cs.global_transform
-			var kept := PackedVector3Array()
-			var dropped := false
-			for k in range(0, faces.size(), 3):
-				if inside.call(cxf * faces[k]) and inside.call(cxf * faces[k + 1]) and inside.call(cxf * faces[k + 2]):
-					dropped = true
-					continue
-				kept.append_array([faces[k], faces[k + 1], faces[k + 2]])
-			if dropped:
-				var shape := ConcavePolygonShape3D.new()
-				shape.set_faces(kept)
-				cs.shape = shape
 
 
 # --- the editor --------------------------------------------------------------
@@ -574,8 +707,9 @@ func _read_map() -> void:
 			if poly.size() < 3:
 				continue
 			var path := str(map.get_path_to(node))
+			var id: int = node.osm_id if node.osm_id != 0 else -(_map_buildings.size() + 1)
 			_map_buildings[path] = {"poly": _flat(poly), "height": node.height, "wall": node.wall_color.to_html(),
-				"roof": node.roof_color.to_html(), "plain": node.plain, "tuff": node.tuff}
+				"roof": node.roof_color.to_html(), "plain": node.plain, "tuff": node.tuff, "id": id}
 			_index(_grid, path, poly)
 		elif script == MAP_WALL:
 			var pts: PackedVector2Array = node.world_points()
@@ -704,10 +838,7 @@ func _picked_entry() -> Dictionary:
 		e["offset"] = [0.0, 0.0]
 		e["yaw"] = 0.0
 		all[_pick_key] = e
-		if _pick_kind == "building":
-			_cut_building(_points(e))
-		else:
-			_cut_wall(_points(e))
+		_refresh_baked()
 	return all[_pick_key]
 
 
@@ -755,25 +886,38 @@ func _undo_last() -> void:
 		return
 	var data: Dictionary = JSON.parse_string(_undo.pop_back())
 	_undo_tag = ""
-	# Buildings and walls are cut out of the baked town the first time they are
-	# changed and come back only on the next start, so an undone first change
-	# keeps them, unchanged, as edits.
 	for kind in ["buildings", "walls"]:
 		if not data.has(kind):
 			data[kind] = {}
-		for path: String in edits[kind]:
-			if not data[kind].has(path):
-				var src: Dictionary = (_map_buildings if kind == "buildings" else _map_walls).get(path, edits[kind][path])
-				var e := src.duplicate(true)
-				e["removed"] = false
-				e["offset"] = [0.0, 0.0]
-				e["yaw"] = 0.0
-				data[kind][path] = e
+	var old := edits
 	edits = data
 	_moving = false
 	var pick_kind := _pick_kind
 	var pick_key := _pick_key
-	_apply_all()
+	# Only what the undo changes is drawn again (and the chunks it touches baked again).
+	_refresh_baked()
+	for kind in ["building", "wall"]:
+		var before: Dictionary = old[kind + "s"]
+		var after: Dictionary = edits[kind + "s"]
+		for path: String in before.keys() + after.keys():
+			if JSON.stringify(before.get(path, {})) != JSON.stringify(after.get(path, {})):
+				_show(kind, path)
+	var old_props: Array = old["props"]
+	var props: Array = edits["props"]
+	for i in maxi(old_props.size(), props.size()):
+		if i >= props.size():
+			var gone: Node = _shown.get("prop:%d" % i)
+			if gone:
+				gone.queue_free()
+				_shown.erase("prop:%d" % i)
+			# A baked prop no longer edited shows again.
+			var baked := _baked_prop(old_props[i].get("key", ""))
+			if baked:
+				baked.visible = true
+				for cs: CollisionShape3D in baked.find_children("*", "CollisionShape3D", true, false):
+					cs.disabled = false
+		elif i >= old_props.size() or JSON.stringify(old_props[i]) != JSON.stringify(props[i]):
+			_show("prop", str(i))
 	if pick_kind == "prop" and int(pick_key) >= edits["props"].size():
 		pick_kind = ""
 	_select(pick_kind, pick_key)
