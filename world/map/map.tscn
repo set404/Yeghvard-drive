@@ -4976,7 +4976,7 @@ point_count = 2
 
 [sub_resource type="Curve3D" id="Curve3D_e3ftb"]
 _data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -43.5, 0, 18),
+"points": PackedVector3Array(0, 0, 0, 0, 0, 0, -28.576767, 0, 11.18634, 0, 0, 0, 0, 0, 0, -43.5, 0, 18),
 "tilts": PackedFloat32Array(0, 0)
 }
 point_count = 2
@@ -60882,7 +60882,6 @@ plain = true
 osm_id = 1535897254
 
 [node name="Buildings_E4" type="Node3D" parent="Buildings" unique_id=1857336280]
-visible = false
 
 [node name="Building_208565491" type="Node3D" parent="Buildings/Buildings_E4" unique_id=902007213]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 111.9869, 8.942391, 1084.0913)
@@ -61221,7 +61220,6 @@ roof_color = Color(0.6, 0.36, 0.26, 1)
 osm_id = 1233879931
 
 [node name="Buildings_B4" type="Node3D" parent="Buildings" unique_id=954219511]
-visible = false
 
 [node name="Building_293495587" type="Node3D" parent="Buildings/Buildings_B4" unique_id=505678559]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 518.52454, 24.03379, -1245.6251)
@@ -62909,7 +62907,6 @@ roof_color = Color(0.6, 0.36, 0.26, 1)
 osm_id = 1348832061
 
 [node name="Buildings_B5" type="Node3D" parent="Buildings" unique_id=1804693933]
-visible = false
 
 [node name="Building_293495588" type="Node3D" parent="Buildings/Buildings_B5" unique_id=1580942709]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1239.2097, 38.941113, -1163.3467)
@@ -65080,7 +65077,6 @@ wall_color = Color(0.82153165, 0.74139166, 0.62118167, 1)
 osm_id = 1366084618
 
 [node name="Buildings_D3" type="Node3D" parent="Buildings" unique_id=322435902]
-visible = false
 
 [node name="Building_293495591" type="Node3D" parent="Buildings/Buildings_D3" unique_id=1559497590]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -404.024, -5.873055, 33.789715)
@@ -67727,7 +67723,7 @@ roof_color = Color(0.6, 0.36, 0.26, 1)
 osm_id = 293497658
 
 [node name="Building_293497662" type="Node3D" parent="Buildings/Buildings_D3" unique_id=1490060449]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -195.7651, -10.382517, 602.8572)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -195.7651, -10.382517, 600.267)
 script = ExtResource("2_u3wvt")
 footprint = PackedVector2Array(-7.1775513, -3.8253784, 2.1460266, -7.8450317, 7.1775208, 3.8253174, -2.1460419, 7.8450317)
 height = 3.6
@@ -67794,7 +67790,7 @@ roof_color = Color(0.42, 0.44, 0.4, 1)
 osm_id = 293497686
 
 [node name="Building_293497692" type="Node3D" parent="Buildings/Buildings_D3" unique_id=1407816884]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -154.51875, -9.590821, 587.0431)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -160.08218, -9.61948, 583.3632)
 script = ExtResource("2_u3wvt")
 footprint = PackedVector2Array(-8.919861, -3.901245, 5.2907104, -10.286072, 11.0616455, 2.5613403, 0.53118896, 7.291687, -2.1460419, 1.3399048, -5.8176727, 2.9943848)
 height = 3.6
