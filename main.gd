@@ -35,6 +35,8 @@ const FUEL_EMPTY := Color(0.9, 0.15, 0.1)
 @onready var money_label: Label = $HUD/Money
 ## Your money.
 @onready var wallet: Wallet = $Wallet
+## What you carry; the selected item is in your hand (see game/inventory.gd).
+var inventory: Inventory
 ## Only cars built with lamps have this node. Null while on foot.
 var lamps: Node
 var on_foot := false
@@ -55,6 +57,19 @@ func _ready() -> void:
 	# has not been placed, so it goes to the spawn point on the road instead.
 	if start_car:
 		car = start_car
+	inventory = Inventory.new()
+	inventory.name = "Inventory"
+	add_child(inventory)
+	inventory.changed.connect(_hold_selected)
+	_hold_selected()
+	var bar := preload("res://hud/inventory_bar.gd").new()
+	bar.name = "Inventory"
+	$HUD.add_child(bar)
+	bar.inventory = inventory
+	# The key help wraps short of the inventory in the top right corner.
+	var help := $HUD/Help as Label
+	help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	help.offset_right = help.offset_left + 740.0
 	await get_tree().physics_frame
 	for other: VehicleBody3D in get_tree().get_nodes_in_group("cars"):
 		if other.position.is_zero_approx():
@@ -91,7 +106,25 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		wallet.earn(10000.0)
 		wallet.save()
 		return
-	# F gets you in or out; E (the starter) belongs to the car, see car.gd.
+	# On foot, E takes a Duet coffee off the shelf in front of you, or uses
+	# (drinks) the item in your hand; in a car E is the starter, see car.gd.
+	if key.physical_keycode == KEY_E and on_foot:
+		var stand := _stand_in_reach()
+		if stand:
+			_buy_from(stand)
+		elif inventory.selected_id() != "":
+			inventory.remove_selected()
+		return
+	# On foot with a drink in hand, Q starts a smoke break standing and C one
+	# squatting (player.gd); the other key switches, the same key again ends it.
+	if (key.physical_keycode == KEY_Q or key.physical_keycode == KEY_C) and on_foot:
+		var squat := key.physical_keycode == KEY_C
+		if player.on_break and player.break_squat == squat:
+			player.end_break()
+		else:
+			player.start_break(squat)
+		return
+	# F gets you in or out.
 	if key.physical_keycode != KEY_F:
 		return
 	if on_foot:
@@ -262,6 +295,7 @@ func _process(delta: float) -> void:
 	var hints := PackedStringArray()
 	if on_foot:
 		_end_pump_visit()
+		_shop_hints(hints)
 		if _car_in_reach():
 			hints.append("Press F to get in")
 	else:
@@ -297,6 +331,75 @@ func _process(delta: float) -> void:
 			"<<" if lamps.signal_left and blink else "    ",
 			BEAM_NAMES[lamps.beam],
 			">>" if lamps.signal_right and blink else "    "]
+
+
+## The nearest shop shelf you stand in front of (world/duet_stand.gd), or null.
+func _stand_in_reach() -> Node3D:
+	var best: Node3D = null
+	var best_distance := INF
+	for stand: Node3D in get_tree().get_nodes_in_group("shop_stands"):
+		var d: float = stand.shopper_distance(player)
+		if stand.in_reach(player) and d < best_distance:
+			best = stand
+			best_distance = d
+	return best
+
+
+## Pays for a cup and puts it in your inventory.
+func _buy_from(stand: Node3D) -> void:
+	if inventory.is_full_for(stand.item_id) or not wallet.can_afford(stand.price):
+		return
+	if not stand.take(player.global_position):
+		return
+	wallet.spend(stand.price)
+	wallet.save()
+	inventory.add(stand.item_id)
+
+
+## Shows the selected item in your hand (it hides with you while you drive).
+func _hold_selected() -> void:
+	var id := inventory.selected_id()
+	if player.held and player.held.get_meta("item_id", "") == id:
+		return
+	player.drop_held()
+	if id != "":
+		var item: Node3D = (load(Inventory.ITEMS[id]["scene"]) as PackedScene).instantiate()
+		item.set_meta("item_id", id)
+		item.set_meta("item_scale", Inventory.ITEMS[id].get("scale", 1.0))
+		player.hold(item)
+
+
+## On foot the mouse wheel picks the item in your hand (Ctrl + wheel zooms).
+func _unhandled_input(event: InputEvent) -> void:
+	var button := event as InputEventMouseButton
+	if button == null or not button.pressed or not on_foot or button.ctrl_pressed:
+		return
+	if button.button_index == MOUSE_BUTTON_WHEEL_UP:
+		inventory.select_step(-1)
+	elif button.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+		inventory.select_step(1)
+
+
+func _shop_hints(hints: PackedStringArray) -> void:
+	var stand := _stand_in_reach()
+	var id := inventory.selected_id()
+	if player.on_break:
+		hints.append("Smoke break: %s, %s or walk to stop" % ["Q to stand up" if player.break_squat else "C to squat", "C" if player.break_squat else "Q"])
+	elif player.can_take_break() and stand == null:
+		hints.append("Press Q for a smoke break, C to squat")
+	if stand == null:
+		if id != "" and Inventory.ITEMS[id]["use"] == "drink":
+			hints.append("Press E to drink your %s" % Inventory.item_name(id))
+		return
+	var price := Wallet.format(stand.price)
+	if inventory.is_full_for(stand.item_id):
+		hints.append("No room in your inventory for another %s" % stand.item_name)
+	elif stand.sold_out():
+		hints.append("%s is sold out, more soon" % stand.item_name)
+	elif not wallet.can_afford(stand.price):
+		hints.append("Not enough money for a %s  (%s)" % [stand.item_name, price])
+	else:
+		hints.append("Press E to grab a %s  (%s)" % [stand.item_name, price])
 
 
 ## Whether the car you are in stands at a fuel pump (see tools/build_gas_station.gd).

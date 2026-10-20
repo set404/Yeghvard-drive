@@ -1,9 +1,11 @@
 extends SceneTree
 ## Builds res://player/character.scn, the figure of the walker (player/player.gd),
-## from the Mixamo character "Adam" and his animations in data/models/adam
+## from the Mixamo character "Adam" (data/models/adam) and the animations in
+## the shared data/models/animations, which the townspeople use too
 ## (FBX files downloaded from mixamo.com, see data/models/CREDITS.txt):
 ##
-##   Ch08_nonPBR.fbx  the character, with skin
+##   adam/Ch08_nonPBR.fbx  the character, with skin
+## and in data/models/animations:
 ##   Walking.fbx, Running.fbx, Jumping.fbx  animations, without skin
 ##   Driving.fbx  seated with his hands on a steering wheel, for the driver
 ##            (main.gd seats him in the car you drive)
@@ -21,6 +23,8 @@ extends SceneTree
 ## Run:  godot --path . --script res://tools/build_character.gd
 
 const DIR := "res://data/models/adam/"
+## Shared with tools/build_npcs.gd.
+const ANIM_DIR := "res://data/models/animations/"
 const CHARACTER := "Ch08_nonPBR.fbx"
 const ANIMATIONS := {"idle": "Standing Idle.fbx", "walk": "Walking.fbx", "run": "Running.fbx", "jump": "Jumping.fbx",
 	"drive": "Driving.fbx", "enter": "Entering Car.fbx", "exit": "Exiting Car.fbx"}
@@ -32,29 +36,45 @@ const MOVING := ["enter", "exit"]
 const DRIVE_LEG_LIFT := 30.0
 ## How far into getting in (share of its length) his hand is on the door handle.
 const REACH := 0.18
-const LOOPED := ["idle", "walk", "run", "drive"]
+const LOOPED := ["idle", "walk", "run", "drive", "smoke_drink"]
+## "smoke_drink", merged by tools/anim_merge.gd: smoking with his right hand and
+## drinking with his left at once. His body, legs, head and right arm smoke
+## (SMOKE); his left arm drinks (DRINK), once a loop, starting DRINK_START
+## seconds in so that he sips (DRINK_SIP, in the drinking's own time) while the
+## cigarette is away from his mouth. While he sips his neck and head tip back
+## with the drink.
+const SMOKE := "Smoking.fbx"
+const DRINK := "Drinking.fbx"
+const DRINK_START := 9.0
+const DRINK_SIP := Vector2(2.4, 5.4)
+## "smoke_drink_squat": the same, squatting. His hips and legs hold still where
+## GATHER (bending down to pick something up) is lowest, SQUAT_AT seconds in.
+const GATHER := "Gathering Objects.fbx"
+const SQUAT_AT := 2.0
+const AnimMerge := preload("res://tools/anim_merge.gd")
 const OUT_PATH := "res://player/character.scn"
 ## Textures are stored at most this big.
 const MAX_TEXTURE := 1024
 
 
 func _initialize() -> void:
-	var err := _build()
+	var err: Error = await _build()
 	quit(0 if err == OK else 1)
 
 
-func _load(file: String) -> Node3D:
+## `path` is a res:// path to an FBX file.
+func _load(path: String) -> Node3D:
 	var doc := FBXDocument.new()
 	var state := FBXState.new()
-	var err := doc.append_from_file(ProjectSettings.globalize_path(DIR + file), state)
+	var err := doc.append_from_file(ProjectSettings.globalize_path(path), state)
 	if err != OK:
-		push_error("Loading %s failed: %s" % [file, error_string(err)])
+		push_error("Loading %s failed: %s" % [path, error_string(err)])
 		return null
 	return doc.generate_scene(state)
 
 
 func _build() -> Error:
-	var source := _load(CHARACTER)
+	var source := _load(DIR + CHARACTER)
 	if source == null:
 		return FAILED
 	var skeleton := source.find_children("*", "Skeleton3D", true, false)[0] as Skeleton3D
@@ -90,23 +110,38 @@ func _build() -> Error:
 	for anim_name: String in ANIMATIONS:
 		var file: String = ANIMATIONS[anim_name]
 		var anim: Animation = null
-		if FileAccess.file_exists(ProjectSettings.globalize_path(DIR + file)) or ResourceLoader.exists(DIR + file):
-			anim = _take(file)
+		if FileAccess.file_exists(ProjectSettings.globalize_path(ANIM_DIR + file)) or ResourceLoader.exists(ANIM_DIR + file):
+			anim = _take(ANIM_DIR + file)
 		if anim == null and anim_name == "idle":
 			anim = _standing_pose(skeleton)
 		if anim == null:
 			push_warning("No %s animation (%s)" % [anim_name, file])
 			continue
+		AnimMerge.point_at(anim, skeleton)
 		speeds[anim_name] = 0.0 if anim_name in MOVING else _pin_hips(anim, "Skeleton3D:" + hips_name, anim_name)
 		anim.loop_mode = Animation.LOOP_LINEAR if anim_name in LOOPED else Animation.LOOP_NONE
 		library.add_animation(anim_name, anim)
 		print("%s: %.2f s, %.2f m/s" % [anim_name, anim.length, speeds[anim_name]])
+	var smoke_drink := _smoke_drink()
+	var merged := {"smoke_drink": smoke_drink, "smoke_drink_squat": _squat(smoke_drink) if smoke_drink else null}
+	for anim_name: String in merged:
+		var anim: Animation = merged[anim_name]
+		if anim == null:
+			continue
+		AnimMerge.point_at(anim, skeleton)
+		_pin_hips(anim, "Skeleton3D:" + hips_name, anim_name)
+		anim.loop_mode = Animation.LOOP_LINEAR
+		library.add_animation(anim_name, anim)
+		speeds[anim_name] = 0.0
+		print("%s: %.2f s" % [anim_name, anim.length])
 	player.add_animation_library("", library)
 	character.set_meta("speeds", speeds)
 	if library.has_animation("drive"):
 		_lift_legs(library.get_animation("drive"), "Skeleton3D:" + hips_name, skeleton)
 		_measure_seat(character, player, skeleton)
 		_seat_paths(character, library, "Skeleton3D:" + hips_name)
+	if smoke_drink:
+		await _measure_props(character, player, skeleton)
 
 	_own(character, character)
 	var scene := PackedScene.new()
@@ -141,6 +176,102 @@ func _measure_seat(character: Node3D, player: AnimationPlayer, skeleton: Skeleto
 	character.set_meta("drive_hands", hands)
 	character.set_meta("drive_feet", (at.call("_LeftToeBase") + at.call("_RightToeBase")) * 0.5)
 	print("seated: eyes %s, hands %s, hips %s, feet %s" % [eyes, hands, at.call("_Hips"), character.get_meta("drive_feet")])
+	player.stop()
+	root.remove_child(character)
+
+
+## SMOKE and DRINK merged (see SMOKE above), or null without both files.
+func _smoke_drink() -> Animation:
+	for file in [SMOKE, DRINK]:
+		if not FileAccess.file_exists(ProjectSettings.globalize_path(ANIM_DIR + file)):
+			push_warning("No smoke_drink animation without %s" % file)
+			return null
+	var smoke := _take(ANIM_DIR + SMOKE)
+	var drink := _take(ANIM_DIR + DRINK)
+	if smoke == null or drink == null:
+		return null
+	var left_arm := func(bone: String) -> bool: return AnimMerge.is_arm(bone, "Left")
+	var neck := func(bone: String) -> bool: return bone == "Neck" or bone == "Head"
+	return AnimMerge.merge(smoke, drink, left_arm, neck, DRINK_START, DRINK_SIP)
+
+
+## smoke_drink with his hips and legs squatting (see GATHER), or null without GATHER.
+func _squat(smoke_drink: Animation) -> Animation:
+	if not FileAccess.file_exists(ProjectSettings.globalize_path(ANIM_DIR + GATHER)):
+		push_warning("No smoke_drink_squat animation without %s" % GATHER)
+		return null
+	var gather := _take(ANIM_DIR + GATHER)
+	if gather == null:
+		return null
+	var low := AnimMerge.still(gather, SQUAT_AT, smoke_drink.length)
+	var legs := func(bone: String) -> bool: return AnimMerge.is_hips_or_leg(bone)
+	return AnimMerge.merge(smoke_drink, low, legs, func(_bone: String) -> bool: return false, 0.0)
+
+
+## Where player/break_props.gd puts the cup and the cigarette for smoke_drink,
+## as transforms in the space of his left and right hand bones (metadata
+## "left_palm_in_hand", "cigarette_in_right_hand"):
+## - the middle of his left palm as he holds the cup at the start: +Y up then,
+##   +Z out of the palm (level), where the cup's side rests;
+## - the cigarette's filter end (its origin; it runs along its +Y) between his
+##   right index and middle fingers, pointing at his lips when the hand is
+##   nearest his mouth, so that the filter meets them.
+func _measure_props(character: Node3D, player: AnimationPlayer, skeleton: Skeleton3D) -> void:
+	root.add_child(character)
+	player.play("smoke_drink")
+	player.pause()
+	var bone := func(suffix: String) -> int:
+		for b in skeleton.get_bone_count():
+			if skeleton.get_bone_name(b).ends_with(suffix):
+				return b
+		return -1
+	var pose := func(suffix: String) -> Transform3D:
+		return skeleton.transform * skeleton.get_bone_global_pose(bone.call(suffix))
+	var pose_at := func(t: float) -> void:
+		player.seek(t, true)
+		await process_frame
+		skeleton.force_update_all_bone_transforms()
+
+	await pose_at.call(0.0)
+	var hand: Transform3D = pose.call("_LeftHand")
+	var knuckle: Vector3 = pose.call("_LeftHandMiddle1").origin
+	var across: Vector3 = pose.call("_LeftHandIndex1").origin - pose.call("_LeftHandPinky1").origin
+	# The palm faces this way on the left hand (the right hand's is the opposite).
+	var palm_normal := (knuckle - hand.origin).normalized().cross(across.normalized()).normalized()
+	var centre := hand.origin.lerp(knuckle, 0.6)
+	var facing := Basis(Vector3.UP, atan2(palm_normal.x, palm_normal.z))
+	character.set_meta("left_palm_in_hand", hand.affine_inverse() * Transform3D(facing, centre))
+
+	# The puff: the moment his right fingers come nearest his lips.
+	var best := INF
+	var best_t := 0.0
+	var anim := player.get_animation("smoke_drink")
+	var t := 0.0
+	while t < anim.length:
+		await pose_at.call(t)
+		var head: Transform3D = pose.call("_Head")
+		var lips := head * Vector3(0.0, 0.06, 0.1)
+		var grip: Vector3 = (pose.call("_RightHandIndex2").origin + pose.call("_RightHandMiddle2").origin) * 0.5
+		var d := grip.distance_to(lips)
+		if d < best:
+			best = d
+			best_t = t
+		t += 0.1
+	await pose_at.call(best_t)
+	var head: Transform3D = pose.call("_Head")
+	var lips := head * Vector3(0.0, 0.06, 0.1)
+	var right: Transform3D = pose.call("_RightHand")
+	var grip: Vector3 = (pose.call("_RightHandIndex2").origin + pose.call("_RightHandMiddle2").origin) * 0.5
+	var to_lips := (lips - grip).normalized()
+	# The filter just past the fingers towards his lips; the lit end away from him.
+	var filter := grip + to_lips * 0.02
+	var along := -to_lips
+	var side := along.cross(Vector3.UP)
+	if side.length() < 0.01:
+		side = along.cross(Vector3.FORWARD)
+	var cig := Transform3D(Basis(side.normalized(), along, side.normalized().cross(along)), filter)
+	character.set_meta("cigarette_in_right_hand", right.affine_inverse() * cig)
+	print("props: cup in the left palm; nearest puff at %.1f s, fingers %.2f m from his lips" % [best_t, best])
 	player.stop()
 	root.remove_child(character)
 
@@ -187,9 +318,9 @@ func _seat_paths(character: Node3D, library: AnimationLibrary, hips_path: String
 					character.set_meta("%s_facing_%s" % [anim_name, end], Vector2(f.x, f.z).normalized())
 
 
-## The animation in an FBX file downloaded without skin.
-func _take(file: String) -> Animation:
-	var scene := _load(file)
+## The animation in an FBX file (res:// path) downloaded without skin.
+func _take(path: String) -> Animation:
+	var scene := _load(path)
 	if scene == null:
 		return null
 	var anim: Animation = null

@@ -209,7 +209,7 @@ offset_bottom = 116.0
 text = "W/S or arrows: drive   A/D: steer   Space: handbrake   R: reset car   M: zoom map   K: camera   F: get in / out   E: start / stop engine   G: gate   P: park
 On foot: W/A/S/D walk   Shift: run   Space: jump
 Z / C / X: left, right, hazard signals   L: lights (park, low, high)   T: refuel at a pump (you pay as it fills)
-Mouse: look around (click to grab)   Wheel: zoom   Esc: pause
+Mouse: look around (click to grab)   Wheel: zoom (on foot: Ctrl+wheel; wheel picks the item in your hand)   E on foot: buy / drink   Q / C: smoke break standing / squatting   Esc: pause
 1-5: jump into a car (testing): 1 E50   2 E55   3 Volga   4 Land Cruiser   5 Compass   =: +10 000 AMD (testing)"
 
 [node name="Power" type="ProgressBar" parent="HUD" unique_id=123988569]

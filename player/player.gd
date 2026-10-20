@@ -76,6 +76,14 @@ var _hips_bone := -1
 var _door_shift := Vector3.ZERO
 ## How far open the door has been pulled so far (0..1).
 var _door_open := 0.0
+## What you carry in your right hand (a Duet coffee from the supermarket), or null.
+var held: Node3D
+## On a smoke break: standing still, smoking with his right hand and drinking
+## what he carries from his left (the character's smoke_drink animation).
+var on_break := false
+## Squatting on the break (the character's smoke_drink_squat).
+var break_squat := false
+var _cigarette: Node3D
 
 ## Getting in and out play this much faster than they came from Mixamo (five
 ## or six seconds each).
@@ -103,6 +111,7 @@ func _ready() -> void:
 
 ## Shows the walker and gives it the keys, or hides it while you are in a car.
 func set_active(on: bool) -> void:
+	end_break()
 	player_controlled = on
 	visible = on
 	_shape.disabled = not on
@@ -135,6 +144,8 @@ func _physics_process(delta: float) -> void:
 	forward = forward.normalized()
 	var right := forward.cross(Vector3.UP)
 	var wish := (right * input.x + forward * input.y).limit_length(1.0)
+	if on_break and (wish.length() > 0.05 or Input.is_action_just_pressed("jump")):
+		end_break()
 
 	var speed := run_speed if Input.is_action_pressed("run") else walk_speed
 	var ground := Vector3(velocity.x, 0.0, velocity.z)
@@ -161,6 +172,183 @@ func _physics_process(delta: float) -> void:
 		place(_safe_spot + Vector3.UP * 2.0, global_basis.z)
 
 	_animate(delta)
+
+
+func _process(_delta: float) -> void:
+	# The character's hold pose (player/hold_pose.gd) places what you carry itself.
+	if held and _hold_pose() == null:
+		_place_held()
+
+
+## Whether you can start a smoke break now: on the ground, with a drink in hand.
+func can_take_break() -> bool:
+	return not on_break and held != null and is_on_floor() and _anim != null and _anim.has_animation("smoke_drink")
+
+
+## The animation for the smoke break: standing, or squatting when the character has that.
+func _break_animation() -> String:
+	return "smoke_drink_squat" if break_squat and _anim.has_animation("smoke_drink_squat") else "smoke_drink"
+
+
+## Starts the smoke break, standing or squatting (or switches between them on
+## one): the drink goes to his left hand, a cigarette appears in his right
+## (player/break_props.gd places them).
+func start_break(squat := false) -> void:
+	if on_break:
+		break_squat = squat
+		return
+	if not can_take_break():
+		return
+	on_break = true
+	break_squat = squat
+	var pose := _hold_pose()
+	if pose:
+		pose.item = null
+	_cigarette = _make_cigarette()
+	_cigarette.top_level = true
+	add_child(_cigarette)
+	var props := _break_props()
+	props.cup = held
+	props.cup_scale = held.get_meta("item_scale", 1.0)
+	props.cigarette = _cigarette
+
+
+## Ends the smoke break: the cigarette goes, the drink goes back to his right hand.
+func end_break() -> void:
+	if not on_break:
+		return
+	on_break = false
+	var props := _break_props()
+	props.cup = null
+	props.cigarette = null
+	if _cigarette:
+		_cigarette.queue_free()
+		_cigarette = null
+	var pose := _hold_pose()
+	if pose and held:
+		pose.item = held
+
+
+## The modifier that keeps the props in his hands on a break, made on first use.
+func _break_props() -> SkeletonModifier3D:
+	var skeleton := get_node("Model/Skeleton3D") as Skeleton3D
+	var props := skeleton.get_node_or_null("BreakProps") as SkeletonModifier3D
+	if props == null:
+		props = preload("res://player/break_props.gd").new()
+		props.name = "BreakProps"
+		skeleton.add_child(props)
+	return props
+
+
+## A lit cigarette, 8.5 cm long: its filter end at the origin, the rest along +Y,
+## a glowing tip and a thin trail of smoke.
+static func _make_cigarette() -> Node3D:
+	var cig := Node3D.new()
+	cig.name = "Cigarette"
+	var parts := [[0.0, 0.022, Color(0.85, 0.55, 0.25), 0.0], [0.022, 0.08, Color(0.95, 0.95, 0.93), 0.0],
+		[0.08, 0.085, Color(1.0, 0.35, 0.05), 3.0]]
+	for p: Array in parts:
+		var mesh := CylinderMesh.new()
+		mesh.top_radius = 0.0042
+		mesh.bottom_radius = 0.0042
+		mesh.height = p[1] - p[0]
+		mesh.radial_segments = 8
+		mesh.rings = 1
+		var mat := StandardMaterial3D.new()
+		mat.albedo_color = p[2]
+		mat.roughness = 0.8
+		if p[3] > 0.0:
+			mat.emission_enabled = true
+			mat.emission = p[2]
+			mat.emission_energy_multiplier = p[3]
+		mesh.material = mat
+		var mi := MeshInstance3D.new()
+		mi.mesh = mesh
+		mi.position.y = (p[0] + p[1]) * 0.5
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		cig.add_child(mi)
+	var smoke := CPUParticles3D.new()
+	smoke.name = "Smoke"
+	smoke.position.y = 0.085
+	smoke.amount = 24
+	smoke.lifetime = 2.2
+	smoke.local_coords = false
+	smoke.direction = Vector3.UP
+	smoke.spread = 12.0
+	smoke.gravity = Vector3(0.0, 0.18, 0.0)
+	smoke.initial_velocity_min = 0.04
+	smoke.initial_velocity_max = 0.08
+	smoke.scale_amount_min = 0.6
+	smoke.scale_amount_max = 1.0
+	var grow := Curve.new()
+	grow.max_value = 3.0
+	grow.add_point(Vector2(0.0, 0.2))
+	grow.add_point(Vector2(1.0, 3.0))
+	smoke.scale_amount_curve = grow
+	var fade := Gradient.new()
+	fade.set_color(0, Color(0.85, 0.85, 0.85, 0.16))
+	fade.set_color(1, Color(0.85, 0.85, 0.85, 0.0))
+	smoke.color_ramp = fade
+	var puff := SphereMesh.new()
+	puff.radius = 0.012
+	puff.height = 0.024
+	puff.radial_segments = 8
+	puff.rings = 4
+	var puff_mat := StandardMaterial3D.new()
+	puff_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	puff_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	puff_mat.vertex_color_use_as_albedo = true
+	puff_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	puff.material = puff_mat
+	smoke.mesh = puff
+	cig.add_child(smoke)
+	return cig
+
+
+## Puts `item` in your right hand (it hides with you while you drive).
+func hold(item: Node3D) -> void:
+	end_break()
+	drop_held()
+	held = item
+	item.top_level = true
+	add_child(item)
+	var pose := _hold_pose(true)
+	if pose:
+		pose.item = item
+	else:
+		_place_held()
+
+
+## Lets go of what you carry; it is gone.
+func drop_held() -> void:
+	end_break()
+	if held:
+		held.queue_free()
+		held = null
+	var pose := _hold_pose()
+	if pose:
+		pose.item = null
+
+
+## The modifier that bends his arm round what he carries, made on first use;
+## null for the figure made of shapes.
+func _hold_pose(make := false) -> SkeletonModifier3D:
+	var skeleton := get_node_or_null("Model/Skeleton3D") as Skeleton3D
+	if skeleton == null:
+		return null
+	var pose := skeleton.get_node_or_null("HoldPose") as SkeletonModifier3D
+	if pose == null and make:
+		pose = preload("res://player/hold_pose.gd").new()
+		pose.name = "HoldPose"
+		skeleton.add_child(pose)
+	return pose
+
+
+## The figure made of shapes: upright at the end of his right arm.
+func _place_held() -> void:
+	var grip := _arm_r.global_transform * Vector3(0.0, -0.7, 0.05) if _arm_r else global_transform * Vector3(-0.3, 0.9, 0.1)
+	var facing := Basis(Vector3.UP, rotation.y)
+	held.global_transform = Transform3D(facing, grip - Vector3.UP * 0.1)
 
 
 ## Swings the arms and legs in step with how fast you are going.
@@ -427,6 +615,15 @@ func show_seated(on: bool) -> void:
 ## Plays the character's idle, walk or run, at the pace you are going; the
 ## jump while you are in the air.
 func _animate_character(delta: float) -> void:
+	if on_break:
+		var wanted_break := _break_animation()
+		if _anim.current_animation != wanted_break:
+			# Standing and squatting keep time together, so switching carries on from the same moment.
+			var at := _anim.current_animation_position if _anim.current_animation.begins_with("smoke_drink") else 0.0
+			_anim.play(wanted_break, 0.7)
+			_anim.seek(at)
+		_anim.speed_scale = 1.0
+		return
 	_air_time = 0.0 if is_on_floor() else _air_time + delta
 	var ground_speed := Vector2(velocity.x, velocity.z).length()
 	if not is_on_floor():

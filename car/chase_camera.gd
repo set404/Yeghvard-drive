@@ -57,6 +57,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if button and button.pressed:
 		if button.button_index == MOUSE_BUTTON_LEFT or button.button_index == MOUSE_BUTTON_RIGHT:
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		elif _on_foot() and not button.ctrl_pressed:
+			# On foot the wheel picks the item in your hand (main.gd); Ctrl + wheel zooms.
+			pass
 		elif button.button_index == MOUSE_BUTTON_WHEEL_UP:
 			_zoom = maxf(_zoom / 1.12, 0.45)
 		elif button.button_index == MOUSE_BUTTON_WHEEL_DOWN:

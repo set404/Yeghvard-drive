@@ -75,12 +75,28 @@ const SHELF_DEPTH := 0.5 ## one side of a gondola, and the shelves along the wal
 const SHELF_HEIGHT := 1.9
 const FRIDGE_DEPTH := 0.75
 ## Fruit and vegetable tables: centres (u, v); each 1.2 x 2.0 m along v.
-const PRODUCE := [Vector2(18.0, 9.3), Vector2(20.4, 9.3), Vector2(18.0, 12.3), Vector2(20.4, 12.3)]
+## Kept clear of the Duet section on the store room's front wall behind them.
+const PRODUCE := [Vector2(18.0, 8.6), Vector2(20.4, 8.6), Vector2(18.0, 11.6), Vector2(20.4, 11.6)]
+## The Duet iced coffee (props/duet.glb) on the store room's front wall, straight
+## ahead as you come in through the main doors: what a cup costs in drams, and
+## the brand's colours.
+const DUET_PRICE := 150.0
+const DUET_BROWN := Color(0.25, 0.13, 0.08)
+const DUET_RED := Color(0.9, 0.12, 0.14)
 
 # --- the booth --------------------------------------------------------------------
 const BOOTH_WALL := 0.15
 const BOOTH_DOOR := Vector2(1.75, 2.6) ## u range in its front wall
 const BOOTH_CEILING := 2.45
+## The booth as world/map/map.tscn had it before the map edits of 2026-10-20
+## took it out of the map: its outline in world metres (x, z), height and colours.
+const BOOTH_FALLBACK := {
+	"outline": [Vector2(-777.034585, 1738.4102666), Vector2(-774.2298365, 1737.688587),
+		Vector2(-773.1759425, 1741.7082402), Vector2(-775.9891749, 1742.4410283)],
+	"height": 2.9685752,
+	"wall": Color(0.49569857, 0.4857761, 0.4857761, 1),
+	"roof": Color(0.66, 0.66, 0.64, 1),
+}
 
 # --- the parking lot --------------------------------------------------------------
 ## Its outline in world metres (x, z), measured off the roads: 0.7 m off the
@@ -163,6 +179,10 @@ func _run() -> void:
 			var outline: PackedVector2Array = b.call("world_footprint")
 			found[id] = {"outline": outline, "height": b.get("height"), "wall": b.get("wall_color"), "roof": b.get("roof_color")}
 	map.free()
+	if not found.has(BOOTH_ID):
+		print("Building %d is not in %s; building the booth as the map last had it" % [BOOTH_ID, MAP_PATH])
+		found[BOOTH_ID] = BOOTH_FALLBACK.duplicate()
+		found[BOOTH_ID]["outline"] = PackedVector2Array(BOOTH_FALLBACK["outline"])
 	for id: int in [STORE_ID, BOOTH_ID]:
 		if not found.has(id):
 			push_error("Building %d is not in %s" % [id, MAP_PATH])
@@ -245,6 +265,9 @@ func _make_materials() -> void:
 	_mats["upright"] = _plain(Color(0.12, 0.27, 0.55), 0.5, 0.3)
 	_mats["cardboard"] = _plain(Color(0.62, 0.47, 0.3), 0.95)
 	_mats["pallet"] = _plain(Color(0.66, 0.53, 0.36), 0.9)
+	_mats["duet"] = _plain(DUET_BROWN, 0.6)
+	_mats["duet_red"] = _plain(DUET_RED, 0.45)
+	_mats["chill"] = _glow(Color(0.85, 0.93, 1.0), 1.4)
 	var goods := StandardMaterial3D.new()
 	goods.vertex_color_use_as_albedo = true
 	goods.roughness = 0.55
@@ -839,6 +862,7 @@ func _build_shop(world_outline: PackedVector2Array, info: Dictionary) -> Node3D:
 	_ceiling_lights(lights, inner, rooms)
 
 	_shop_fittings(fp, inner, doors)
+	_duet_section(shop, inner)
 	_signs(shop, fp)
 	_finish(shop)
 	return shop
@@ -1027,7 +1051,8 @@ func _goods(o: Vector2, a: Vector2, s0: float, s1: float, c0: float, c1: float, 
 
 ## Shelving against a wall: along `a` from `o` (s0..s1), the shelves to the
 ## left of the line, back panel on it.
-func _shelf_run(o: Vector2, a: Vector2, s0: float, s1: float, depth := SHELF_DEPTH, levels := 4) -> void:
+## Without `stocked` the shelves are left empty (for world/duet_stand.gd to fill).
+func _shelf_run(o: Vector2, a: Vector2, s0: float, s1: float, depth := SHELF_DEPTH, levels := 4, stocked := true) -> void:
 	if s1 - s0 < 0.6:
 		return
 	var mm := {"sides": "metal", "top": "metal", "bottom": ""}
@@ -1038,13 +1063,77 @@ func _shelf_run(o: Vector2, a: Vector2, s0: float, s1: float, depth := SHELF_DEP
 	for k in bays + 1:
 		var s := lerpf(s0, s1, float(k) / bays)
 		_obox(mm, o, a, s - 0.015, s + 0.015, 0.0, depth, 0.0, SHELF_HEIGHT)
-	_goods(o, a, s0, s1, 0.06, depth, 0.12, step - 0.06)
+	if stocked:
+		_goods(o, a, s0, s1, 0.06, depth, 0.12, step - 0.06)
 	for k in range(1, levels + 1):
 		var y := 0.12 + step * k
 		_obox(mm, o, a, s0, s1, 0.04, depth, y - 0.025, y)
-		if k < levels:
+		if k < levels and stocked:
 			_goods(o, a, s0, s1, 0.06, depth, y, step - 0.06)
 	_solid(o, a, s0, s1, 0.0, depth, 0.0, SHELF_HEIGHT)
+
+
+## The Duet iced coffee section on the store room's front wall, facing you as
+## you come in through the main doors: empty shelving with a brown back, a light
+## under each shelf and a DUET board over it. The node DuetStand
+## (world/duet_stand.gd) puts the cups on the shelves when the game runs and
+## sells them.
+func _duet_section(shop: Node3D, inner: PackedVector2Array) -> void:
+	var h := INNER * 0.5
+	var v := STORE_ROOM.y - h
+	var u0 := STORE_ROOM.x + 0.15
+	# Up to the shelves along the right-hand wall.
+	var u1 := STORE_ROOM.x + _hit(inner, Vector2(STORE_ROOM.x, v - SHELF_DEPTH - 0.05), Vector2.RIGHT) - SHELF_DEPTH - 0.1
+	var length := u1 - u0
+	var o := Vector2(u1, v)
+	var a := Vector2.LEFT
+	var levels := 4
+	_shelf_run(o, a, 0.0, length, SHELF_DEPTH, levels, false)
+	var step := (SHELF_HEIGHT - 0.35) / levels
+	_obox({"sides": "duet", "top": "", "bottom": ""}, o, a, 0.0, length, 0.04, 0.045, 0.12, SHELF_HEIGHT)
+	for k in range(1, levels + 1):
+		var y := 0.12 + step * k - 0.025
+		_obox({"sides": "metal", "top": "", "bottom": "chill"}, o, a, 0.0, length, SHELF_DEPTH - 0.08, SHELF_DEPTH - 0.04, y - 0.015, y)
+
+	# The board over the shelves, brown with a red edge.
+	var y0 := SHELF_HEIGHT + 0.15
+	var y1 := y0 + 0.75
+	_obox({"sides": "duet", "top": "duet", "bottom": "duet"}, o, a, 0.0, length, 0.0, 0.08, y0, y1)
+	_obox({"sides": "duet_red", "top": "duet_red", "bottom": "duet_red"}, o, a, 0.0, length, 0.08, 0.09, y0, y0 + 0.07)
+	var mid := Vector2((u0 + u1) * 0.5, v - 0.1)
+	var brand := Label3D.new()
+	brand.name = "DuetSign"
+	brand.text = "DUET"
+	brand.font_size = 72
+	brand.pixel_size = 0.006
+	brand.modulate = DUET_RED
+	brand.outline_modulate = Color(1, 1, 1)
+	brand.outline_size = 14
+	brand.position = _p(mid, y1 - 0.26)
+	shop.add_child(brand)
+	var line := Label3D.new()
+	line.name = "DuetPrice"
+	line.text = "ICE COFFEE   %d AMD" % roundi(DUET_PRICE)
+	line.font_size = 28
+	line.pixel_size = 0.006
+	line.modulate = Color(1, 0.97, 0.9)
+	line.outline_size = 0
+	line.position = _p(mid, y0 + 0.17)
+	shop.add_child(line)
+
+	var stand := Node3D.new()
+	stand.name = "DuetStand"
+	stand.set_script(load("res://world/duet_stand.gd"))
+	# +X along the shelves from their left end as you face them, +Z out of their front.
+	stand.position = _p(Vector2(u0, v), 0.0)
+	stand.set("length", length)
+	stand.set("depth", SHELF_DEPTH)
+	var heights := PackedFloat32Array()
+	for k in levels:
+		heights.append(0.12 + step * k)
+	stand.set("levels", heights)
+	stand.set("price", DUET_PRICE)
+	shop.add_child(stand)
 
 
 ## A double-sided run of shelves down the shop, centred on u = uc from v0 to v1.

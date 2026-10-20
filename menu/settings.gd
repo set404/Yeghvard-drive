@@ -6,17 +6,22 @@ const PATH := "user://settings.cfg"
 
 const QUALITY_NAMES := ["Low", "Medium", "High", "Ultra", "Custom"]
 const CUSTOM := 4
-const AA_NAMES := ["Off", "FXAA", "MSAA 2x", "MSAA 4x"]
+const AA_NAMES := ["Off", "FXAA", "SMAA", "TAA", "MSAA 4x + SMAA", "MSAA 4x + TAA"]
+const AA_FXAA := 1
+const AA_SMAA := 2
+const AA_TAA := 3
+const AA_MSAA_SMAA := 4
+const AA_MSAA_TAA := 5
 const SHADOW_NAMES := ["Off", "Low", "Medium", "High"]
 const FPS_NAMES := ["30", "60", "120", "Unlimited"]
 const FPS_VALUES := [30, 60, 120, 0]
 
 ## What each quality preset sets. Medium is the default.
 const PRESETS := [
-	{"render_scale": 0.6, "aa": 0, "shadows": 1, "ssao": false, "ssil": false, "glow": false},
-	{"render_scale": 0.75, "aa": 1, "shadows": 2, "ssao": false, "ssil": false, "glow": true},
-	{"render_scale": 1.0, "aa": 2, "shadows": 3, "ssao": true, "ssil": false, "glow": true},
-	{"render_scale": 1.0, "aa": 3, "shadows": 3, "ssao": true, "ssil": true, "glow": true},
+	{"render_scale": 0.6, "antialiasing": AA_FXAA, "shadows": 1, "ssao": false, "ssil": false, "ssr": false, "glow": false, "post_fx": false},
+	{"render_scale": 0.75, "antialiasing": AA_TAA, "shadows": 2, "ssao": false, "ssil": false, "ssr": false, "glow": true, "post_fx": true},
+	{"render_scale": 1.0, "antialiasing": AA_TAA, "shadows": 3, "ssao": true, "ssil": false, "ssr": true, "glow": true, "post_fx": true},
+	{"render_scale": 1.0, "antialiasing": AA_MSAA_TAA, "shadows": 3, "ssao": true, "ssil": true, "ssr": true, "glow": true, "post_fx": true},
 ]
 ## Shadow atlas size and how far the sun casts shadows, per shadow level.
 const SHADOW_ATLAS := [0, 2048, 4096, 8192]
@@ -27,11 +32,15 @@ var vsync := true
 var max_fps := 1
 var quality := 1
 var render_scale := 0.75
-var aa := 1
+## An index into AA_NAMES. Saved under a new key so old "aa" indices are ignored.
+var antialiasing := AA_TAA
 var shadows := 2
 var ssao := false
 var ssil := false
+var ssr := false
 var glow := true
+## Sharpen, colour grade and vignette (menu/post_fx.gdshader).
+var post_fx := true
 var volume := 0.8
 
 
@@ -79,11 +88,27 @@ static func is_embedded() -> bool:
 
 ## Applies the graphics options to the window's viewport and to the world.
 func apply_graphics(viewport: Viewport, main: Node) -> void:
+	var temporal := antialiasing == AA_TAA or antialiasing == AA_MSAA_TAA
 	viewport.scaling_3d_scale = render_scale
-	# FSR sharpens a lowered render scale; at full scale plain is cheaper.
-	viewport.scaling_3d_mode = Viewport.SCALING_3D_MODE_FSR if render_scale < 1.0 else Viewport.SCALING_3D_MODE_BILINEAR
-	viewport.screen_space_aa = Viewport.SCREEN_SPACE_AA_FXAA if aa == 1 else Viewport.SCREEN_SPACE_AA_DISABLED
-	viewport.msaa_3d = [Viewport.MSAA_DISABLED, Viewport.MSAA_DISABLED, Viewport.MSAA_2X, Viewport.MSAA_4X][aa]
+	# Below full scale, FSR 2 upscales and does the temporal AA itself (so plain
+	# TAA stays off); FSR 1 sharpens the upscale for the other modes. At full
+	# scale plain is cheaper.
+	if render_scale >= 1.0:
+		viewport.scaling_3d_mode = Viewport.SCALING_3D_MODE_BILINEAR
+	elif temporal:
+		viewport.scaling_3d_mode = Viewport.SCALING_3D_MODE_FSR2
+	else:
+		viewport.scaling_3d_mode = Viewport.SCALING_3D_MODE_FSR
+	viewport.use_taa = temporal and render_scale >= 1.0
+	viewport.screen_space_aa = {
+		AA_FXAA: Viewport.SCREEN_SPACE_AA_FXAA,
+		AA_SMAA: Viewport.SCREEN_SPACE_AA_SMAA,
+		AA_MSAA_SMAA: Viewport.SCREEN_SPACE_AA_SMAA,
+	}.get(antialiasing, Viewport.SCREEN_SPACE_AA_DISABLED)
+	viewport.msaa_3d = Viewport.MSAA_4X if antialiasing >= AA_MSAA_SMAA else Viewport.MSAA_DISABLED
+	# Smooths the banding in the sky gradient and fog.
+	viewport.use_debanding = post_fx
+	_apply_post_fx(main)
 
 	if shadows > 0:
 		RenderingServer.directional_shadow_atlas_set_size(SHADOW_ATLAS[shadows], true)
@@ -100,10 +125,37 @@ func apply_graphics(viewport: Viewport, main: Node) -> void:
 		var env := world_env.environment
 		env.ssao_enabled = ssao
 		env.ssil_enabled = ssil
+		env.ssr_enabled = ssr
+		env.ssr_max_steps = 48
+		env.ssr_fade_in = 0.2
+		env.ssr_fade_out = 2.0
 		env.glow_enabled = glow
 		env.glow_intensity = 0.4
 		env.glow_bloom = 0.05
 
 
+## Adds (once) a full-screen sharpen/grade/vignette pass over the 3D image.
+## Its layer sits under the HUD (1) and the menu (10), so text stays untouched.
+func _apply_post_fx(main: Node) -> void:
+	var layer := main.get_node_or_null("PostFX") as CanvasLayer
+	if not post_fx:
+		if layer:
+			layer.visible = false
+		return
+	if layer == null:
+		layer = CanvasLayer.new()
+		layer.name = "PostFX"
+		layer.layer = -1
+		var rect := ColorRect.new()
+		rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+		rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var mat := ShaderMaterial.new()
+		mat.shader = preload("res://menu/post_fx.gdshader")
+		rect.material = mat
+		layer.add_child(rect)
+		main.add_child(layer)
+	layer.visible = true
+
+
 func _keys() -> PackedStringArray:
-	return ["fullscreen", "vsync", "max_fps", "quality", "render_scale", "aa", "shadows", "ssao", "ssil", "glow", "volume"]
+	return ["fullscreen", "vsync", "max_fps", "quality", "render_scale", "antialiasing", "shadows", "ssao", "ssil", "ssr", "glow", "post_fx", "volume"]

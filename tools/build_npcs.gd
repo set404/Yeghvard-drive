@@ -3,8 +3,8 @@ extends SceneTree
 ## res://npc/<name>.scn for each Mixamo character in data/models/npc (FBX, with
 ## skin), each with the same set of animations:
 ##
-##   idle   standing          from data/models/adam/Standing Idle.fbx
-##   walk   walking, in place from data/models/adam/Walking.fbx
+##   idle   standing          from data/models/animations/Standing Idle.fbx
+##   walk   walking, in place from data/models/animations/Walking.fbx
 ##   talk   talking, waving a hand and nodding
 ##   listen listening, nodding now and then
 ##   look   looking about
@@ -12,8 +12,9 @@ extends SceneTree
 ##   die    (only from an FBX) falling down dead, when a car hits them; without
 ##          it npc/npc.gd topples the figure over instead
 ##
-## Mixamo rigs all share their bone names, so Adam's animations fit them all.
-## For talk, listen, look and phone an FBX of that name in data/models/npc/animations
+## Mixamo rigs all share their bone names, so the animations in the shared
+## data/models/animations (Adam's too, see tools/build_character.gd) fit them all.
+## For talk, listen, look and phone an FBX of that name in data/models/animations
 ## (downloaded from Mixamo without skin, e.g. "Talking.fbx", "Texting.fbx") is used
 ## when there is one; otherwise they are made here by moving the head and arms on
 ## top of the standing idle.
@@ -21,8 +22,8 @@ extends SceneTree
 ## Run:  godot --path . --script res://tools/build_npcs.gd
 
 const DIR := "res://data/models/npc/"
-const ANIM_DIR := "res://data/models/npc/animations/"
-const ADAM := "res://data/models/adam/"
+## Shared with tools/build_character.gd.
+const ANIM_DIR := "res://data/models/animations/"
 const OUT_DIR := "res://npc/"
 ## Optional Mixamo animations, by the names tried for each.
 const OPTIONAL := {
@@ -42,10 +43,10 @@ const RATE := 15.0
 func _initialize() -> void:
 	var failed := false
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUT_DIR))
-	var walk := _take(ADAM + "Walking.fbx")
-	var idle := _take(ADAM + "Standing Idle.fbx")
+	var walk := _take(ANIM_DIR + "Walking.fbx")
+	var idle := _take(ANIM_DIR + "Standing Idle.fbx")
 	if walk == null or idle == null:
-		push_error("Needs Walking.fbx and Standing Idle.fbx in " + ADAM)
+		push_error("Needs Walking.fbx and Standing Idle.fbx in " + ANIM_DIR)
 		quit(1)
 		return
 	for file in DirAccess.get_files_at(ProjectSettings.globalize_path(DIR)):
