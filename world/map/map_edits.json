@@ -1,2645 +1,281 @@
 {
-	"buildings": {
-		"Buildings/Buildings_B5/Building_293497828": {
-			"height": 6.6,
-			"offset": [
-				3.07,
-				-0.11
-			],
-			"plain": false,
-			"poly": [
-				824.647,
-				-874.646,
-				832.704,
-				-872.448,
-				829.721,
-				-861.499,
-				821.655,
-				-863.698
-			],
-			"removed": false,
-			"roof": "8c8f94ff",
-			"tuff": false,
-			"wall": "cfba9cff",
-			"yaw": 0.0
-		},
-		"Buildings/Buildings_C4/Building_293496505": {
-			"height": 3.6,
-			"offset": [
-				-0.12,
-				-3.26
-			],
-			"plain": false,
-			"poly": [
-				429.836,
-				-149.683,
-				443.749,
-				-152.67,
-				445.712,
-				-143.52,
-				431.791,
-				-140.533
-			],
-			"removed": false,
-			"roof": "995c42ff",
-			"tuff": false,
-			"wall": "c1836eff",
-			"yaw": 0.10471975511966
-		},
-		"Buildings/Buildings_C4/Building_293496795": {
-			"height": 3.6,
-			"offset": [
-				-2.53,
-				0.33
-			],
-			"plain": false,
-			"poly": [
-				454.228,
-				-149.317,
-				447.446,
-				-157.789,
-				457.943,
-				-166.184,
-				464.716,
-				-157.711
-			],
-			"removed": false,
-			"roof": "525257ff",
-			"tuff": false,
-			"wall": "7a7777ff",
-			"yaw": 0.0
-		},
-		"Buildings/Buildings_C4/Building_293496838": {
-			"height": 3.6,
-			"offset": [
-				1.5,
-				-1.77
-			],
-			"plain": false,
-			"poly": [
-				618.738,
-				-208.734,
-				634.81,
-				-214.464,
-				639.756,
-				-200.629,
-				623.684,
-				-194.888
-			],
-			"removed": false,
-			"roof": "8c8f94ff",
-			"tuff": false,
-			"wall": "ca927eff",
-			"yaw": 0.0174532925199433
-		},
-		"Buildings/Buildings_C4/Building_293496851": {
-			"height": 6.6,
-			"offset": [
-				0.0,
-				0.0
-			],
-			"plain": false,
-			"poly": [
-				536.407,
-				-177.654,
-				552.394,
-				-183.972,
-				557.459,
-				-171.136,
-				541.472,
-				-164.829
-			],
-			"removed": false,
-			"roof": "6b7066ff",
-			"tuff": false,
-			"wall": "c7907cff",
-			"yaw": -0.0523598775598299
-		},
-		"Buildings/Buildings_C4/Building_293496914": {
-			"height": 6.6,
-			"offset": [
-				1.58,
-				0.69
-			],
-			"plain": false,
-			"poly": [
-				638.38,
-				-560.112,
-				647.958,
-				-572.648,
-				653.279,
-				-568.573,
-				643.7,
-				-556.048
-			],
-			"removed": false,
-			"roof": "6b7066ff",
-			"tuff": false,
-			"wall": "ca927eff",
-			"yaw": 0.0
-		},
-		"Buildings/Buildings_C4/Building_293496940": {
-			"height": 6.6,
-			"offset": [
-				0.76,
-				1.09
-			],
-			"plain": false,
-			"poly": [
-				707.937,
-				-645.947,
-				716.138,
-				-655.452,
-				725.521,
-				-647.357,
-				717.328,
-				-637.852
-			],
-			"removed": false,
-			"roof": "8c8f94ff",
-			"tuff": false,
-			"wall": "d5a173ff",
-			"yaw": 0.0
-		},
-		"Buildings/Buildings_C4/Building_464532288": {
-			"height": 6.6,
-			"offset": [
-				1.78,
-				2.13
-			],
-			"plain": false,
-			"poly": [
-				164.306,
-				-3.231,
-				170.977,
-				-12.414,
-				175.575,
-				-8.894,
-				168.827,
-				0.056
-			],
-			"removed": false,
-			"roof": "804233ff",
-			"tuff": false,
-			"wall": "dbd1bdff",
-			"yaw": -0.10471975511966
-		},
-		"Buildings/Buildings_C4/Building_464532289": {
-			"height": 6.6,
-			"offset": [
-				2.07,
-				2.36
-			],
-			"plain": false,
-			"poly": [
-				170.977,
-				-12.414,
-				177.42,
-				-20.765,
-				185.298,
-				-14.735,
-				181.984,
-				-10.427,
-				178.695,
-				-12.947,
-				175.575,
-				-8.894
-			],
-			"removed": false,
-			"roof": "8c8f94ff",
-			"tuff": false,
-			"wall": "c8b497ff",
-			"yaw": 0.0
-		},
-		"Buildings/Buildings_C5/Building_293496517": {
-			"height": 6.6,
-			"offset": [
-				1.76,
-				1.27
-			],
-			"plain": false,
-			"poly": [
-				1054.685,
-				-462.252,
-				1062.759,
-				-474.844,
-				1073.043,
-				-468.259,
-				1064.969,
-				-455.656
-			],
-			"removed": false,
-			"roof": "995c42ff",
-			"tuff": false,
-			"wall": "ca927eff",
-			"yaw": 0.0
-		},
-		"Buildings/Buildings_C5/Building_293496533": {
-			"height": 3.6,
-			"offset": [
-				2.46,
-				2.27
-			],
-			"plain": false,
-			"poly": [
-				1035.944,
-				-435.802,
-				1047.223,
-				-429.217,
-				1041.018,
-				-418.579,
-				1029.731,
-				-425.153
-			],
-			"removed": false,
-			"roof": "804233ff",
-			"tuff": false,
-			"wall": "c9b598ff",
-			"yaw": -0.0349065850398866
-		},
-		"Buildings/Buildings_C5/Building_293496683": {
-			"height": 3.6,
-			"offset": [
-				4.32,
-				1.38
-			],
-			"plain": false,
-			"poly": [
-				925.617,
-				-733.202,
-				933.07,
-				-745.717,
-				950.426,
-				-735.39,
-				942.972,
-				-722.865
-			],
-			"removed": false,
-			"roof": "804233ff",
-			"tuff": false,
-			"wall": "c6907cff",
-			"yaw": -0.0349065850398866
-		},
-		"Buildings/Buildings_C5/Building_293496701": {
-			"height": 3.6,
-			"offset": [
-				3.4,
-				2.08
-			],
-			"plain": false,
-			"poly": [
-				942.598,
-				-758.786,
-				951.573,
-				-771.245,
-				967.195,
-				-759.997,
-				958.219,
-				-747.538
-			],
-			"removed": false,
-			"roof": "525257ff",
-			"tuff": false,
-			"wall": "c9927eff",
-			"yaw": 0.0349065850398866
-		},
-		"Buildings/Buildings_D3/Building_293495686": {
-			"height": 6.6,
-			"offset": [
-				0.69,
-				-3.56
-			],
-			"plain": false,
-			"poly": [
-				-398.712,
-				178.32,
-				-389.932,
-				192.656,
-				-399.324,
-				198.363,
-				-408.112,
-				184.039
-			],
-			"removed": false,
-			"roof": "6b7066ff",
-			"tuff": false,
-			"wall": "d6a273ff",
-			"yaw": -0.226892802759263
-		},
-		"Buildings/Buildings_D3/Building_293496835": {
-			"height": 3.6,
-			"offset": [
-				1.84,
-				0.46
-			],
-			"plain": false,
-			"poly": [
-				-551.391,
-				362.937,
-				-549.929,
-				351.289,
-				-536.9,
-				353.121,
-				-538.54,
-				364.758
-			],
-			"removed": false,
-			"roof": "6b7066ff",
-			"tuff": false,
-			"wall": "cf9c6fff",
-			"yaw": 0.0
-		},
-		"Buildings/Buildings_D3/Building_293496836": {
-			"height": 3.6,
-			"offset": [
-				1.86,
-				0.52
-			],
-			"plain": false,
-			"poly": [
-				-552.776,
-				373.475,
-				-551.391,
-				362.937,
-				-538.54,
-				364.758,
-				-540.027,
-				375.273
-			],
-			"removed": false,
-			"roof": "8c8f94ff",
-			"tuff": false,
-			"wall": "b9ae9fff",
-			"yaw": 0.0
-		},
-		"Buildings/Buildings_D3/Building_293496891": {
-			"height": 6.6,
-			"offset": [
-				0.27,
-				1.7
-			],
-			"plain": false,
-			"poly": [
-				-463.79,
-				245.633,
-				-468.55,
-				236.95,
-				-449.596,
-				226.557,
-				-444.837,
-				235.24
-			],
-			"removed": false,
-			"roof": "525257ff",
-			"tuff": false,
-			"wall": "bbb0a1ff",
-			"yaw": 0.0
-		},
-		"Buildings/Buildings_D3/Building_293496977": {
-			"height": 6.6,
-			"id": 293496977.0,
-			"offset": [
-				-3.67,
-				3.51
-			],
-			"plain": false,
-			"poly": [
-				-633.492,
-				681.246,
-				-625.265,
-				672.419,
-				-620.276,
-				677.071,
-				-628.503,
-				685.899
-			],
-			"removed": false,
-			"roof": "8c8f94ff",
-			"tuff": false,
-			"wall": "a17e65ff",
-			"yaw": 0.0
-		},
-		"Buildings/Buildings_D3/Building_293497077": {
-			"height": 3.6,
-			"id": 293497077.0,
-			"offset": [
-				0.08,
-				-1.77
-			],
-			"plain": false,
-			"poly": [
-				-546.359,
-				657.983,
-				-533.313,
-				653.22,
-				-530.024,
-				662.236,
-				-543.07,
-				667.0
-			],
-			"removed": false,
-			"roof": "804233ff",
-			"tuff": false,
-			"wall": "d0bb9dff",
-			"yaw": 0.0
-		},
-		"Buildings/Buildings_D3/Building_293497128": {
-			"height": 3.6,
-			"offset": [
-				1.96,
-				0.74
-			],
-			"plain": false,
-			"poly": [
-				-552.776,
-				373.475,
-				-540.027,
-				375.273,
-				-541.039,
-				382.447,
-				-548.187,
-				381.436,
-				-549.886,
-				393.451,
-				-555.487,
-				392.662
-			],
-			"removed": false,
-			"roof": "525257ff",
-			"tuff": false,
-			"wall": "b4aa9bff",
-			"yaw": 0.0
-		},
-		"Buildings/Buildings_D3/Building_293497675": {
-			"height": 3.6,
-			"id": 293497675.0,
-			"offset": [
-				-2.23,
-				-4.29
-			],
-			"plain": false,
-			"poly": [
-				-332.453,
-				653.286,
-				-328.407,
-				650.099,
-				-320.494,
-				660.126,
-				-324.531,
-				663.313
-			],
-			"removed": false,
-			"roof": "995c42ff",
-			"tuff": false,
-			"wall": "d3be9fff",
-			"yaw": -0.0872664625997165
-		},
-		"Buildings/Buildings_D3/Building_293497700": {
-			"height": 6.6,
-			"offset": [
-				1.04,
-				0.58
-			],
-			"plain": false,
-			"poly": [
-				-218.386,
-				181.507,
-				-201.821,
-				173.224,
-				-199.398,
-				178.076,
-				-215.963,
-				186.36
-			],
-			"removed": false,
-			"roof": "6b7066ff",
-			"tuff": false,
-			"wall": "ca996cff",
-			"yaw": -0.0872664625997165
-		},
-		"Buildings/Buildings_D3/Building_293497707": {
-			"height": 3.6,
-			"offset": [
-				-3.26,
-				-4.01
-			],
-			"plain": false,
-			"poly": [
-				-176.587,
-				138.501,
-				-169.422,
-				141.932,
-				-174.046,
-				151.604,
-				-181.219,
-				148.173
-			],
-			"removed": false,
-			"roof": "804233ff",
-			"tuff": false,
-			"wall": "c0826dff",
-			"yaw": 0.0
-		},
-		"Buildings/Buildings_D3/Building_293497709": {
-			"height": 3.6,
-			"offset": [
-				-3.76,
-				-2.88
-			],
-			"plain": false,
-			"poly": [
-				-186.267,
-				134.237,
-				-178.992,
-				137.668,
-				-183.548,
-				147.318,
-				-181.219,
-				148.173,
-				-174.046,
-				151.604,
-				-176.57,
-				157.067,
-				-192.293,
-				147.262
-			],
-			"removed": false,
-			"roof": "995c42ff",
-			"tuff": false,
-			"wall": "ce9581ff",
-			"yaw": 0.0
-		},
-		"Buildings/Buildings_D3/Building_293497727": {
-			"height": 6.6,
-			"offset": [
-				0.38,
-				2.84
-			],
-			"plain": false,
-			"poly": [
-				-148.089,
-				156.057,
-				-136.879,
-				152.115,
-				-135.0,
-				158.91,
-				-141.553,
-				160.654,
-				-139.87,
-				165.895,
-				-144.452,
-				167.361
-			],
-			"removed": false,
-			"roof": "a8a8a3ff",
-			"tuff": false,
-			"wall": "7f7d7dff",
-			"yaw": -0.122173047639603
-		},
-		"Buildings/Buildings_D3/Building_293497797": {
-			"height": 3.6,
-			"id": 293497797.0,
-			"offset": [
-				-1.74,
-				-3.66
-			],
-			"plain": false,
-			"poly": [
-				-324.506,
-				653.253,
-				-319.508,
-				649.755,
-				-314.528,
-				656.351,
-				-313.398,
-				657.861,
-				-318.251,
-				661.092
-			],
-			"removed": false,
-			"roof": "8c8f94ff",
-			"tuff": false,
-			"wall": "9b7961ff",
-			"yaw": -0.0872664625997165
-		},
-		"Buildings/Buildings_D3/Building_293497799": {
-			"height": 3.6,
-			"id": 293497799.0,
-			"offset": [
-				-1.83,
-				-3.27
-			],
-			"plain": false,
-			"poly": [
-				-349.213,
-				671.075,
-				-361.137,
-				642.615,
-				-345.346,
-				635.997,
-				-337.331,
-				655.13,
-				-334.747,
-				654.041,
-				-330.829,
-				663.38
-			],
-			"removed": false,
-			"roof": "6b7066ff",
-			"tuff": false,
-			"wall": "bf816cff",
-			"yaw": 0.0
-		},
-		"Buildings/Buildings_D3/Building_293497833": {
-			"height": 3.6,
-			"offset": [
-				2.02,
-				-2.16
-			],
-			"plain": false,
-			"poly": [
-				-36.572,
-				162.319,
-				-23.866,
-				158.233,
-				-20.032,
-				170.148,
-				-32.739,
-				174.234
-			],
-			"removed": false,
-			"roof": "995c42ff",
-			"tuff": false,
-			"wall": "cab698ff",
-			"yaw": 0.0
-		},
-		"Buildings/Buildings_D3/Building_293497849": {
-			"height": 3.6,
-			"offset": [
-				2.58,
-				2.71
-			],
-			"plain": false,
-			"poly": [
-				-33.351,
-				132.016,
-				-18.8,
-				120.701,
-				-13.922,
-				126.975,
-				-28.294,
-				138.079
-			],
-			"removed": false,
-			"roof": "995c42ff",
-			"tuff": false,
-			"wall": "bbb1a1ff",
-			"yaw": 0.0
-		},
-		"Buildings/Buildings_D3/Building_293497862": {
-			"height": 6.6,
-			"offset": [
-				-2.24,
-				-2.15
-			],
-			"plain": false,
-			"poly": [
-				-41.221,
-				129.462,
-				-47.247,
-				120.49,
-				-40.779,
-				116.171,
-				-43.677,
-				111.851,
-				-36.58,
-				107.132,
-				-27.656,
-				120.424
-			],
-			"removed": false,
-			"roof": "6b7066ff",
-			"tuff": false,
-			"wall": "7e7b7bff",
-			"yaw": 0.10471975511966
-		},
-		"Buildings/Buildings_D3/Building_293497924": {
-			"height": 6.6,
-			"offset": [
-				0.57,
-				-3.77
-			],
-			"plain": false,
-			"poly": [
-				-168.436,
-				143.265,
-				-151.676,
-				139.678,
-				-149.594,
-				149.305,
-				-166.362,
-				152.892
-			],
-			"removed": false,
-			"roof": "804233ff",
-			"tuff": false,
-			"wall": "c68f7cff",
-			"yaw": 0.0
-		},
-		"Buildings/Buildings_D3/Building_293497932": {
-			"height": 3.6,
-			"offset": [
-				1.31,
-				1.7
-			],
-			"plain": false,
-			"poly": [
-				-135.0,
-				158.91,
-				-135.731,
-				151.915,
-				-118.113,
-				150.072,
-				-117.382,
-				157.067
-			],
-			"removed": false,
-			"roof": "995c42ff",
-			"tuff": false,
-			"wall": "9e7b62ff",
-			"yaw": 0.122173047639603
-		},
-		"Buildings/Buildings_D3/Building_293497936": {
-			"height": 3.6,
-			"offset": [
-				-0.19,
-				-2.62
-			],
-			"plain": false,
-			"poly": [
-				-145.769,
-				131.272,
-				-139.955,
-				126.842,
-				-130.156,
-				139.7,
-				-135.969,
-				144.131
-			],
-			"removed": false,
-			"roof": "a8a8a3ff",
-			"tuff": false,
-			"wall": "c58f7bff",
-			"yaw": -0.436332312998582
-		},
-		"Buildings/Buildings_D3/Building_293497997": {
-			"height": 3.6,
-			"offset": [
-				-1.11,
-				-0.9
-			],
-			"plain": false,
-			"poly": [
-				-10.768,
-				93.718,
-				-6.502,
-				90.154,
-				0.255,
-				98.182,
-				-9.723,
-				106.499,
-				-13.913,
-				101.525,
-				-8.21,
-				96.772
-			],
-			"removed": false,
-			"roof": "995c42ff",
-			"tuff": false,
-			"wall": "dfd5c0ff",
-			"yaw": -0.122173047639603
-		},
-		"Buildings/Buildings_D3/Building_568214273": {
-			"height": 6.6,
-			"id": 568214273.0,
-			"offset": [
-				-1.5,
-				-2.45
-			],
-			"plain": false,
-			"poly": [
-				-389.21,
-				664.513,
-				-359.99,
-				651.732,
-				-353.089,
-				668.854,
-				-381.909,
-				681.768
-			],
-			"removed": false,
-			"roof": "525257ff",
-			"tuff": false,
-			"wall": "b97d69ff",
-			"yaw": 0.0
-		},
-		"Buildings/Buildings_D4/Building_293495729": {
-			"height": 3.6,
-			"id": 293495729,
-			"offset": [
-				1.01,
-				-1.51
-			],
-			"plain": false,
-			"poly": [
-				456.549,
-				360.372,
-				464.019,
-				350.034,
-				476.488,
-				359.05,
-				469.008,
-				369.388
-			],
-			"removed": false,
-			"roof": "804233ff",
-			"tuff": false,
-			"wall": "ddd2beff",
-			"yaw": 0.0
-		},
-		"Buildings/Buildings_D4/Building_293495972": {
-			"height": 3.6,
-			"offset": [
-				-0.28,
-				-0.79
-			],
-			"plain": false,
-			"poly": [
-				-1.53,
-				88.677,
-				12.613,
-				79.183,
-				17.865,
-				86.456,
-				3.519,
-				96.161
-			],
-			"removed": false,
-			"roof": "6b7066ff",
-			"tuff": false,
-			"wall": "cdb99bff",
-			"yaw": -0.0174532925199433
-		},
-		"Buildings/Buildings_D4/Building_293496187": {
-			"height": 3.6,
-			"id": 293496187,
-			"offset": [
-				0.0,
-				0.0
-			],
-			"plain": false,
-			"poly": [
-				571.304,
-				489.357,
-				579.157,
-				479.807,
-				590.997,
-				489.523,
-				583.144,
-				499.084
-			],
-			"removed": false,
-			"roof": "a8a8a3ff",
-			"tuff": false,
-			"wall": "a795a4",
-			"yaw": 0.0
-		},
-		"Buildings/Buildings_D4/Building_293496304": {
-			"height": 3.6,
-			"id": 293496304.0,
-			"offset": [
-				-0.77,
-				2.07
-			],
-			"plain": false,
-			"poly": [
-				628.894,
-				562.966,
-				636.697,
-				552.561,
-				649.437,
-				562.111,
-				641.626,
-				572.515
-			],
-			"removed": false,
-			"roof": "995c42ff",
-			"tuff": false,
-			"wall": "c48e7b",
-			"yaw": 0.0
-		},
-		"Buildings/Buildings_D4/Building_293497440": {
-			"height": 6.6,
-			"offset": [
-				2.47,
-				-1.55
-			],
-			"plain": false,
-			"poly": [
-				424.405,
-				252.14,
-				432.199,
-				241.358,
-				445.772,
-				251.163,
-				437.987,
-				261.945
-			],
-			"removed": false,
-			"roof": "805644",
-			"tuff": false,
-			"wall": "423e3c",
-			"yaw": -0.139626340159546
-		},
-		"Buildings/Buildings_D4/Building_293497871": {
-			"height": 3.6,
-			"offset": [
-				0.69,
-				2.95
-			],
-			"plain": false,
-			"poly": [
-				77.232,
-				67.213,
-				84.626,
-				64.548,
-				88.179,
-				74.386,
-				80.784,
-				77.062
-			],
-			"removed": false,
-			"roof": "804233ff",
-			"tuff": false,
-			"wall": "cc9a6dff",
-			"yaw": 0.0
-		},
-		"Buildings/Buildings_D4/Building_464532240": {
-			"height": 3.6,
-			"offset": [
-				0.78,
-				-0.33
-			],
-			"plain": false,
-			"poly": [
-				522.825,
-				57.897,
-				527.058,
-				49.025,
-				534.494,
-				52.545,
-				530.262,
-				61.417
-			],
-			"removed": false,
-			"roof": "804233ff",
-			"tuff": false,
-			"wall": "a27f66ff",
-			"yaw": -0.523598775598299
-		},
-		"Buildings/Buildings_D4/Building_464532241": {
-			"height": 3.6,
-			"id": 464532241.0,
-			"offset": [
-				2.85,
-				1.07
-			],
-			"plain": false,
-			"poly": [
-				561.93,
-				69.156,
-				558.683,
-				77.673,
-				552.445,
-				75.319,
-				555.7,
-				66.791
-			],
-			"removed": false,
-			"roof": "995c42ff",
-			"tuff": false,
-			"wall": "d7cdbaff",
-			"yaw": -0.139626340159546
-		},
-		"Buildings/Buildings_D4/Building_464532286": {
-			"height": 3.6,
-			"offset": [
-				0.53,
-				0.58
-			],
-			"plain": false,
-			"poly": [
-				158.756,
-				4.397,
-				163.243,
-				7.651,
-				168.649,
-				11.515,
-				164.187,
-				17.655,
-				154.302,
-				10.538
-			],
-			"removed": false,
-			"roof": "a8a8a3ff",
-			"tuff": false,
-			"wall": "d3a072ff",
-			"yaw": -0.0174532925199433
-		},
-		"Buildings/Buildings_D4/Building_464532287": {
-			"height": 3.6,
-			"offset": [
-				0.39,
-				1.12
-			],
-			"plain": false,
-			"poly": [
-				158.756,
-				4.397,
-				164.306,
-				-3.231,
-				168.827,
-				0.056,
-				163.243,
-				7.651
-			],
-			"removed": false,
-			"roof": "6b7066ff",
-			"tuff": false,
-			"wall": "a48067ff",
-			"yaw": -0.10471975511966
-		},
-		"Buildings/Buildings_F2/Building_1256383569": {
-			"height": 2.9685752,
-			"id": 1256383569.0,
-			"offset": [
-				2.81,
-				7.31
-			],
-			"plain": true,
-			"poly": [
-				-777.035,
-				1738.41,
-				-774.23,
-				1737.689,
-				-773.176,
-				1741.708,
-				-775.989,
-				1742.441
-			],
-			"removed": true,
-			"roof": "a8a8a3ff",
-			"tuff": false,
-			"wall": "7e7c7cff",
-			"yaw": 0.0
-		}
-	},
+	"buildings": {},
 	"props": [
 		{
 			"key": "",
 			"pos": [
-				661.497009277344,
-				17.9806098937988,
-				-209.707214355469
+				580.1552734375,
+				17.2722282409668,
+				-384.518341064454
 			],
-			"removed": false,
-			"scale": 1.0,
-			"scene": "res://props/busStop.glb",
-			"yaw": 1.16258594760229
-		},
-		{
-			"key": "",
-			"pos": [
-				537.981018066406,
-				11.7716617584229,
-				70.2220687866211
-			],
-			"removed": false,
-			"scale": 1.0,
-			"scene": "res://props/busStop.glb",
-			"yaw": 1.14401725733716
-		},
-		{
-			"key": "",
-			"pos": [
-				-542.3642578125,
-				-18.5257472991943,
-				954.5
-			],
-			"removed": false,
-			"scale": 1.0,
-			"scene": "res://props/besedka.glb",
-			"yaw": 4.24032657146059
-		},
-		{
-			"key": "",
-			"pos": [
-				-574.099182128906,
-				-17.8034763336182,
-				909.25927734375
-			],
-			"removed": false,
-			"scale": 1.0,
-			"scene": "res://props/besedka.glb",
-			"yaw": 8.55420621995356
-		},
-		{
-			"key": "",
-			"pos": [
-				-622.565002441406,
-				-18.650857925415,
-				900.2822265625
-			],
-			"removed": false,
-			"scale": 1.0,
-			"scene": "res://props/besedka.glb",
-			"yaw": 9.19018172025285
-		},
-		{
-			"key": "",
-			"pos": [
-				-590.046203613281,
-				-17.4239025115967,
-				860.134155273438
-			],
-			"removed": false,
-			"scale": 1.0,
-			"scene": "res://props/besedka.glb",
-			"yaw": 6.10193999210862
-		},
-		{
-			"key": "",
-			"pos": [
-				-652.2021484375,
-				-20.3505897521973,
-				961.473510742188
-			],
-			"removed": false,
-			"scale": 1.0,
-			"scene": "res://props/busStop.glb",
-			"yaw": 4.44188461652507
-		},
-		{
-			"key": "",
-			"pos": [
-				-677.224548339844,
-				-20.533260345459,
-				963.407043457031
-			],
-			"removed": false,
-			"scale": 1.0,
-			"scene": "res://props/busStop.glb",
-			"yaw": 1.31268747550467
-		},
-		{
-			"key": "",
-			"pos": [
-				-615.328186035156,
-				-16.3640460968018,
-				672.473754882813
-			],
-			"removed": false,
-			"scale": 1.0,
-			"scene": "res://props/busStop.glb",
-			"yaw": -4.88465316118988
-		},
-		{
-			"key": "",
-			"pos": [
-				-812.071228027344,
-				-20.9451160430908,
-				1488.02478027344
-			],
-			"removed": false,
-			"scale": 1.0,
-			"scene": "res://props/busStop.glb",
-			"yaw": 1.3442255142444
-		},
-		{
-			"key": "",
-			"pos": [
-				-792.868225097656,
-				-20.4958419799805,
-				1492.88586425781
-			],
-			"removed": false,
-			"scale": 1.0,
-			"scene": "res://props/busStop.glb",
-			"yaw": -8.1040530727967
-		},
-		{
-			"key": "",
-			"pos": [
-				-778.073364257813,
-				-18.6187171936035,
-				1734.88696289063
-			],
-			"removed": false,
-			"scale": 1.0,
-			"scene": "res://props/busStop.glb",
-			"yaw": -7.53873387778241
-		},
-		{
-			"key": "",
-			"pos": [
-				-789.346069335938,
-				-19.1557922363281,
-				1761.56518554688
-			],
-			"removed": false,
-			"scale": 1.0,
-			"scene": "res://props/busStop.glb",
-			"yaw": -4.50691577903059
-		},
-		{
-			"key": "",
-			"pos": [
-				-346.156524658203,
-				-12.3649082183838,
-				686.349670410156
-			],
-			"removed": false,
-			"scale": 1.0,
-			"scene": "res://props/busStop.glb",
-			"yaw": -2.77740903598288
-		},
-		{
-			"key": "",
-			"pos": [
-				44.420467376709,
-				-6.12423324584961,
-				480.835968017578
-			],
-			"removed": false,
-			"scale": 1.0,
-			"scene": "res://props/busStop.glb",
-			"yaw": -12.2853531023307
-		},
-		{
-			"key": "",
-			"pos": [
-				432.464263916016,
-				3.53017139434814,
-				212.77001953125
-			],
-			"removed": false,
-			"scale": 1.0,
-			"scene": "res://props/busStop.glb",
-			"yaw": 0.916149869185745
+			"removed": true,
+			"scale": 13.1099941915,
+			"scene": "res://props/duet.glb",
+			"yaw": 4.79271474679048
 		}
 	],
 	"walls": {
-		"Walls/Walls_C4/Wall_131": {
-			"color": "9d7b62eb",
-			"gate_at": 0.9,
-			"gate_color": "3d664dff",
-			"height": 2.252489,
-			"kind": 0.0,
-			"offset": [
-				0.0,
-				0.0
-			],
-			"orig": [
-				593.325,
-				-198.983,
-				614.325,
-				-207.983
-			],
-			"pts": [
-				593.325,
-				-198.983,
-				594.52,
-				-199.495
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_C4/Wall_1813": {
-			"color": "a27f65fb",
-			"gate_at": 6.0,
-			"gate_color": "385785ff",
-			"height": 2.2944617,
+		"Walls/Walls_E2/Wall_1926": {
+			"color": "98775fdb",
+			"gate_at": 9.7045965,
+			"gate_color": "704d33ff",
+			"height": 2.1465178,
 			"kind": 0.0,
 			"offset": [
 				0.0,
 				0.0
 			],
 			"pts": [
-				635.325,
-				-552.983,
-				660.825,
-				-584.483
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_C4/Wall_25": {
-			"color": "7d7b7bf5",
-			"gate_at": 7.965887,
-			"gate_color": "4d7a85ff",
-			"height": 2.2178411,
-			"kind": 0.0,
-			"offset": [
-				-0.06,
-				0.99
-			],
-			"pts": [
-				593.325,
-				-198.983,
-				564.825,
-				-188.483
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_C4/Wall_258": {
-			"color": "b07763da",
-			"gate_at": 9.39501,
-			"gate_color": "4d7a85ff",
-			"height": 2.0434108,
-			"kind": 0.0,
-			"offset": [
-				0.0,
-				0.0
-			],
-			"pts": [
-				429.825,
-				-140.483,
-				449.325,
-				-146.483
+				-861.675,
+				1184.017,
+				-872.475,
+				1231.177
 			],
 			"removed": true,
 			"swing": 0.0,
 			"yaw": 0.0
 		},
-		"Walls/Walls_C4/Wall_400": {
-			"color": "c6907cef",
-			"gate_at": 9.76001,
-			"gate_color": "385785ff",
-			"height": 2.1002443,
-			"kind": 0.0,
-			"offset": [
-				0.0,
-				0.0
-			],
-			"pts": [
-				467.325,
-				-158.483,
-				449.325,
-				-146.483
-			],
-			"removed": true,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_C4/Wall_51": {
-			"color": "bf8a77db",
-			"gate_at": 4.554298,
-			"gate_color": "3d664dff",
-			"height": 2.1987014,
-			"kind": 0.0,
-			"offset": [
-				0.8,
-				0.51
-			],
-			"pts": [
-				173.325,
-				-11.483,
-				185.085,
-				-26.603,
-				192.825,
-				-21.983
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_C4/Wall_584": {
-			"color": "c48e7aea",
-			"gate_at": 11.775995,
-			"gate_color": "3d664dff",
-			"height": 2.0532513,
-			"kind": 0.0,
-			"offset": [
-				0.46,
-				1.2
-			],
-			"pts": [
-				533.325,
-				-177.983,
-				564.825,
-				-188.483
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_C4/Wall_793": {
-			"color": "c6907cef",
-			"gate_at": -1.0,
-			"gate_color": "385785ff",
-			"height": 1.8014504,
-			"kind": 0.0,
-			"offset": [
-				0.0,
-				0.0
-			],
-			"pts": [
-				449.325,
-				-146.483,
-				431.325,
-				-174.983
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_C4/Wall_817": {
-			"color": "d09d70",
-			"gate_at": -1.0,
-			"gate_color": "3d664dff",
-			"height": 1.8591228,
-			"kind": 0.0,
-			"offset": [
-				0.0,
-				0.0
-			],
-			"orig": [
-				614.325,
-				-207.983,
-				620.325,
-				-180.983
-			],
-			"pts": [
-				611.951,
-				-207.436,
-				608.967,
-				-205.607
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_C4/Wall_818": {
-			"color": "d09d70fc",
-			"gate_at": -1.0,
-			"gate_color": "704d33ff",
-			"height": 2.0457656,
-			"kind": 0.0,
-			"offset": [
-				-2.28,
-				0.85
-			],
-			"pts": [
-				614.325,
-				-207.983,
-				664.905,
-				-226.703,
-				666.165,
-				-219.143,
-				657.825,
-				-200.483
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_C5/Wall_1451": {
-			"color": "98775fdb",
-			"gate_at": 23.2,
-			"gate_color": "385785ff",
-			"height": 1.85,
-			"kind": 0.0,
-			"offset": [
-				0.27,
-				0.79
-			],
-			"pts": [
-				941.325,
-				-749.483,
-				918.825,
-				-716.483
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_C5/Wall_2961": {
-			"color": "9b7961e5",
-			"gate_at": 12.520852,
-			"gate_color": "3d664dff",
-			"height": 2.1414454,
-			"kind": 0.0,
-			"offset": [
-				0.55,
-				0.38
-			],
-			"pts": [
-				899.325,
-				-687.983,
-				918.825,
-				-716.483
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_D3/Wall_1244": {
-			"color": "b57a67e9",
-			"gate_at": 11.441141,
-			"gate_color": "8c8f8cff",
-			"height": 2.25,
-			"kind": 0.0,
-			"offset": [
-				0.0,
-				0.0
-			],
-			"pts": [
-				-125.175,
-				140.017,
-				-144.675,
-				144.517
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_D3/Wall_1264": {
-			"color": "c9986be9",
-			"gate_at": 13.080699,
-			"gate_color": "4d7a85ff",
-			"height": 2.2441535,
-			"kind": 0.0,
-			"offset": [
-				-0.61,
-				-1.14
-			],
-			"pts": [
-				-384.675,
-				189.517,
-				-417.675,
-				201.517
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_D3/Wall_1482": {
-			"color": "9c7a61e6",
-			"gate_at": 12.561154,
-			"gate_color": "853d2eff",
-			"height": 2.05724,
-			"kind": 0.0,
-			"offset": [
-				0.0,
-				0.0
-			],
-			"orig": [
-				-552.675,
-				662.017,
-				-521.175,
-				675.517
-			],
-			"pts": [
-				-552.675,
-				662.017,
-				-521.148,
-				675.528
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_D3/Wall_1727": {
-			"color": "c48e7ae9",
-			"gate_at": -1.0,
-			"gate_color": "3d664dff",
-			"height": 1.9636726,
-			"kind": 0.0,
-			"offset": [
-				-0.2,
-				-1.42
-			],
-			"pts": [
-				-189.675,
-				158.017,
-				-197.175,
-				131.017
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_D3/Wall_1728": {
-			"color": "ba7e6af8",
-			"gate_at": 22.727787,
-			"gate_color": "4d7a85ff",
-			"height": 2.267745,
-			"kind": 0.0,
-			"offset": [
-				-0.29,
-				-1.32
-			],
-			"pts": [
-				-189.675,
-				158.017,
-				-204.075,
-				161.557,
-				-221.175,
-				143.017
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_D3/Wall_174": {
-			"color": "ca937efa",
-			"gate_at": -1.0,
-			"gate_color": "4d7a85ff",
-			"height": 2.0779905,
-			"kind": 0.0,
-			"offset": [
-				-0.15,
-				-1.25
-			],
-			"pts": [
-				-174.675,
-				153.517,
-				-170.175,
-				152.017
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_D3/Wall_1967": {
-			"color": "7d7a7af4",
-			"gate_at": 13.909502,
-			"gate_color": "4d7a85ff",
-			"height": 2.164665,
-			"kind": 0.0,
-			"offset": [
-				-0.43,
-				-1.45
-			],
-			"pts": [
-				-456.675,
-				183.517,
-				-439.395,
-				206.737,
-				-417.675,
-				201.517
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_D3/Wall_227": {
-			"color": "b47966e5",
-			"gate_at": -1.0,
-			"gate_color": "385785ff",
-			"height": 1.864466,
-			"kind": 0.0,
-			"offset": [
-				-0.34,
-				-1.01
-			],
-			"pts": [
-				2.325,
-				96.517,
-				-6.675,
-				81.517
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_D3/Wall_26": {
-			"color": "ca986ceb",
-			"gate_at": 8.297948,
-			"gate_color": "853d2eff",
-			"height": 2.1051762,
-			"kind": 0.0,
-			"offset": [
-				0.0,
-				0.0
-			],
-			"pts": [
-				-552.675,
-				374.017,
-				-557.175,
-				404.017
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_D3/Wall_2846": {
-			"color": "c9927ef7",
-			"gate_at": 19.77186,
-			"gate_color": "3d664dff",
-			"height": 2.1035674,
-			"kind": 0.0,
-			"offset": [
-				-0.38,
-				-0.9
-			],
-			"pts": [
-				-20.175,
-				110.017,
-				-43.275,
-				128.917,
-				-68.175,
-				140.017
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_D3/Wall_2847": {
-			"color": "b47966e5",
-			"gate_at": -1.0,
-			"gate_color": "385785ff",
-			"height": 1.864466,
-			"kind": 0.0,
-			"offset": [
-				-1.01,
-				-1.05
-			],
-			"pts": [
-				-20.175,
-				110.017,
-				-24.435,
-				105.277,
-				-27.675,
-				92.017
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_D3/Wall_3033": {
-			"color": "385785ff",
-			"gate_at": 2.5,
-			"gate_color": "385785ff",
-			"height": 2.0864942,
-			"kind": 1.0,
-			"offset": [
-				0.24,
-				0.72
-			],
-			"pts": [
-				-189.675,
-				170.017,
-				-170.175,
-				164.017
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_D3/Wall_3195": {
-			"color": "bc7f6afc",
-			"gate_at": 25.0627903938293,
-			"gate_color": "385785ff",
-			"height": 2.0682707,
-			"kind": 0.0,
-			"offset": [
-				0.54,
-				2.21
-			],
-			"pts": [
-				-38.175,
-				147.517,
-				-37.155,
-				139.537,
-				-30.255,
-				132.937,
-				1.005,
-				111.397,
-				3.645,
-				119.197,
-				3.825,
-				141.517
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_D3/Wall_34": {
-			"color": "3d664dff",
-			"gate_at": 4.764778,
-			"gate_color": "3d664dff",
-			"height": 2.0374148,
-			"kind": 1.0,
-			"offset": [
-				-0.37,
-				-1.01
-			],
-			"orig": [
-				-174.675,
-				153.517,
-				-189.675,
-				158.017
-			],
-			"pts": [
-				-174.675,
-				153.517,
-				-189.33,
-				157.913
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_D3/Wall_35": {
-			"color": "c58e7beb",
-			"gate_at": -1.0,
-			"gate_color": "385785ff",
-			"height": 1.954369,
-			"kind": 0.0,
-			"offset": [
-				0.44,
-				0.94
-			],
-			"pts": [
-				-135.675,
-				155.017,
-				-134.595,
-				164.437,
-				-127.155,
-				173.497,
-				-122.175,
-				186.517
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_D3/Wall_36": {
-			"color": "98775fdb",
-			"gate_at": 6.426807,
-			"gate_color": "8c8f8cff",
-			"height": 2.224308,
-			"kind": 0.0,
-			"offset": [
-				0.22,
-				1.14
-			],
-			"pts": [
-				-135.675,
-				155.017,
-				-170.175,
-				164.017
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_D3/Wall_37": {
-			"color": "9d7b62eb",
-			"gate_at": 5.79426,
-			"gate_color": "4d7a85ff",
-			"height": 2.0142047,
-			"kind": 0.0,
-			"offset": [
-				1.29,
-				1.57
-			],
-			"pts": [
-				-36.675,
-				576.517,
-				-32.355,
-				555.337,
-				-12.075,
-				538.117,
-				-4.395,
-				535.357
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_D3/Wall_3780": {
-			"color": "9c7a61e8",
-			"gate_at": 17.325695,
-			"gate_color": "4d7a85ff",
-			"height": 2.0981548,
-			"kind": 0.0,
-			"offset": [
-				2.25,
-				3.44
-			],
-			"pts": [
-				-315.675,
-				674.017,
-				-354.675,
-				689.017
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_D3/Wall_464": {
-			"color": "9d7b62eb",
-			"gate_at": -1.0,
-			"gate_color": "704d33ff",
-			"height": 1.8315573,
-			"kind": 0.0,
-			"offset": [
-				-0.04,
-				-1.68
-			],
-			"pts": [
-				-170.175,
-				152.017,
-				-164.175,
-				120.517
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_D3/Wall_4683": {
-			"color": "c9986be9",
-			"gate_at": -1.0,
-			"gate_color": "4d7a85ff",
-			"height": 1.9893044,
-			"kind": 0.0,
-			"offset": [
-				-0.5,
-				-2.41
-			],
-			"pts": [
-				-417.675,
-				201.517,
-				-420.675,
-				179.017,
-				-419.175,
-				156.517
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_D3/Wall_482": {
-			"color": "b47966e5",
-			"gate_at": 9.641102,
-			"gate_color": "385785ff",
-			"height": 2.1996334,
-			"kind": 0.0,
-			"offset": [
-				-0.17,
-				-0.77
-			],
-			"pts": [
-				2.325,
-				96.517,
-				-20.175,
-				110.017
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_D3/Wall_5417": {
+		"Walls/Walls_E2/Wall_1927": {
 			"color": "98775fdb",
 			"gate_at": -1.0,
+			"gate_color": "704d33ff",
+			"height": 1.9635758,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-872.475,
+				1231.177,
+				-849.675,
+				1238.017,
+				-835.275,
+				1235.917,
+				-827.175,
+				1232.017
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E2/Wall_1934": {
+			"color": "b37965e3",
+			"gate_at": 11.352732,
+			"gate_color": "704d33ff",
+			"height": 2.1167047,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-818.175,
+				996.517,
+				-807.675,
+				960.517
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E2/Wall_1935": {
+			"color": "9d7a62ea",
+			"gate_at": -1.0,
+			"gate_color": "3d664dff",
+			"height": 1.8731482,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-818.175,
+				996.517,
+				-854.175,
+				983.017
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E2/Wall_1936": {
+			"color": "9d7a62ea",
+			"gate_at": 10.011434,
+			"gate_color": "3d664dff",
+			"height": 2.1579738,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-818.175,
+				996.517,
+				-828.975,
+				1039.717,
+				-832.215,
+				1043.977
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E2/Wall_1937": {
+			"color": "9d7a62ea",
+			"gate_at": -1.0,
+			"gate_color": "3d664dff",
+			"height": 1.8731482,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-832.215,
+				1043.977,
+				-861.075,
+				1036.417,
+				-873.075,
+				1024.417,
+				-876.675,
+				1013.017
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E2/Wall_4580": {
+			"color": "b57a66e8",
+			"gate_at": -1.0,
+			"gate_color": "704d33ff",
+			"height": 1.8775064,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-854.175,
+				983.017,
+				-849.675,
+				957.517
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E2/Wall_4778": {
+			"color": "9d7a62ea",
+			"gate_at": -1.0,
+			"gate_color": "3d664dff",
+			"height": 1.8731482,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-854.175,
+				983.017,
+				-876.675,
+				1013.017
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E2/Wall_4878": {
+			"color": "a17e64f7",
+			"gate_at": 24.562332,
+			"gate_color": "853d2eff",
+			"height": 2.0139942,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-798.675,
+				924.517,
+				-783.375,
+				866.317,
+				-784.815,
+				861.157
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E2/Wall_4879": {
+			"color": "a17e64f7",
+			"gate_at": -1.0,
+			"gate_color": "853d2eff",
+			"height": 1.8002222,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-784.815,
+				861.157,
+				-806.235,
+				855.577,
+				-825.075,
+				860.617,
+				-838.575,
+				874.117,
+				-845.175,
+				896.017
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E2/Wall_4880": {
+			"color": "ca996ced",
+			"gate_at": -1.0,
 			"gate_color": "8c8f8cff",
-			"height": 1.9331304,
-			"kind": 0.0,
-			"offset": [
-				0.23,
-				1.04
-			],
-			"pts": [
-				-168.675,
-				168.517,
-				-170.175,
-				164.017
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_D3/Wall_644": {
-			"color": "9d7b62eb",
-			"gate_at": 12.322064,
-			"gate_color": "704d33ff",
-			"height": 2.1945746,
-			"kind": 0.0,
-			"offset": [
-				0.4,
-				-2.06
-			],
-			"pts": [
-				-170.175,
-				152.017,
-				-144.675,
-				144.517
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_D3/Wall_7816": {
-			"color": "c08b78e0",
-			"gate_at": 5.2541914,
-			"gate_color": "704d33ff",
-			"height": 2.106803,
+			"height": 1.8107517,
 			"kind": 0.0,
 			"offset": [
 				0.0,
 				0.0
 			],
 			"pts": [
-				-626.175,
-				672.517,
-				-656.835,
-				704.017
+				-798.675,
+				924.517,
+				-823.575,
+				911.917,
+				-845.175,
+				896.017
 			],
 			"removed": true,
 			"swing": 0.0,
 			"yaw": 0.0
 		},
-		"Walls/Walls_D3/Wall_7818": {
-			"color": "c08b78e0",
-			"gate_at": -1.0,
-			"gate_color": "704d33ff",
-			"height": 2.106803,
-			"kind": 0.0,
-			"offset": [
-				-2.58,
-				3.14
-			],
-			"pts": [
-				-625.275,
-				719.917,
-				-622.875,
-				716.317,
-				-613.455,
-				663.637,
-				-626.175,
-				672.517
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_D4/Wall_191": {
-			"color": "b67b67ea",
-			"gate_at": -1.0,
-			"gate_color": "853d2eff",
-			"height": 2.1037655,
-			"kind": 0.0,
-			"offset": [
-				-3.49,
-				5.87
-			],
-			"orig": [
-				158.325,
-				5.017,
-				152.325,
-				12.517
-			],
-			"pts": [
-				158.325,
-				5.017,
-				156.764,
-				6.969
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_D4/Wall_242": {
-			"color": "c18c78e1",
-			"gate_at": 3.9,
-			"gate_color": "704d33ff",
-			"height": 2.2774198,
-			"kind": 0,
-			"offset": [
-				0.16,
-				0.38
-			],
-			"orig": [
-				630.825,
-				437.017,
-				605.325,
-				471.517
-			],
-			"pts": [
-				617.435,
-				450.367,
-				589.03,
-				488.812
-			],
-			"removed": false,
-			"swing": 0,
-			"yaw": 0.0523598775598299
-		},
-		"Walls/Walls_D4/Wall_363": {
-			"color": "7b7979ec",
-			"gate_at": -1.0,
-			"gate_color": "3d664dff",
-			"height": 1.85,
-			"kind": 0.0,
-			"offset": [
-				0.0,
-				0.0
-			],
-			"orig": [
-				602.325,
-				489.517,
-				629.325,
-				513.517
-			],
-			"pts": [
-				602.325,
-				489.517,
-				632.147,
-				516.025
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_D4/Wall_38": {
-			"color": "9d7b62eb",
-			"gate_at": -1.0,
-			"gate_color": "4d7a85ff",
-			"height": 1.8512964,
-			"kind": 0.0,
-			"offset": [
-				1.81,
-				2.11
-			],
-			"orig": [
-				-4.395,
-				535.357,
-				6.825,
-				546.517
-			],
-			"pts": [
-				-4.395,
-				535.357,
-				4.609,
-				544.314
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_D4/Wall_4153": {
-			"color": "9d7a62e9",
-			"gate_at": 62.214096,
-			"gate_color": "853d2eff",
-			"height": 2.1654336,
-			"kind": 0.0,
-			"offset": [
-				1.66,
-				0.4
-			],
-			"pts": [
-				572.325,
-				86.017,
-				567.885,
-				76.957,
-				567.825,
-				49.717,
-				546.525,
-				90.637
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_D4/Wall_4154": {
-			"color": "9d7a62e9",
-			"gate_at": -1.0,
-			"gate_color": "853d2eff",
-			"height": 1.9198811,
-			"kind": 0.0,
-			"offset": [
-				0.0,
-				0.0
-			],
-			"orig": [
-				546.525,
-				90.637,
-				561.825,
-				99.517
-			],
-			"pts": [
-				548.585,
-				90.677,
-				562.25,
-				98.608
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_D4/Wall_4392": {
-			"color": "ba7e6af8",
-			"gate_at": 18.538647,
-			"gate_color": "853d2eff",
-			"height": 2.2252982,
-			"kind": 0.0,
-			"offset": [
-				-1.11,
-				-4.38
-			],
-			"pts": [
-				564.825,
-				12.517,
-				547.065,
-				50.197,
-				533.925,
-				34.417,
-				516.825,
-				3.517
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_D4/Wall_4653": {
-			"color": "949994ff",
-			"gate_at": -1.0,
-			"gate_color": "853d2eff",
-			"height": 1.8344996,
+		"Walls/Walls_E2/Wall_5098": {
+			"color": "ca996ced",
+			"gate_at": 17.090797,
+			"gate_color": "8c8f8cff",
+			"height": 2.2236478,
 			"kind": 0.0,
 			"offset": [
 				0.0,
 				0.0
 			],
 			"pts": [
-				564.825,
-				12.517,
-				527.325,
-				-2.483
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_D4/Wall_4812": {
-			"color": "bf8a77dc",
-			"gate_at": -1.0,
-			"gate_color": "385785ff",
-			"height": 1.8743271,
-			"kind": 0.0,
-			"offset": [
-				0.0,
-				0.0
-			],
-			"pts": [
-				516.825,
-				33.517,
-				537.345,
-				72.457
+				-798.675,
+				924.517,
+				-807.675,
+				960.517
 			],
 			"removed": true,
 			"swing": 0.0,
 			"yaw": 0.0
 		},
-		"Walls/Walls_D4/Wall_4813": {
-			"color": "bf8a77",
-			"gate_at": 26.1629076004028,
-			"gate_color": "385785ff",
-			"height": 2.0655422,
-			"kind": 0.0,
-			"offset": [
-				-3.47,
-				3.2
-			],
-			"pts": [
-				537.345,
-				72.457,
-				542.985,
-				58.237,
-				522.825,
-				30.517
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_D4/Wall_4924": {
-			"color": "c9927df6",
-			"gate_at": -1.0,
-			"gate_color": "853d2eff",
-			"height": 1.80407,
-			"kind": 0.0,
-			"offset": [
-				0.0,
-				0.0
-			],
-			"pts": [
-				515.325,
-				44.017,
-				532.605,
-				77.617
-			],
-			"removed": true,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_D4/Wall_4925": {
-			"color": "c9927df6",
-			"gate_at": 28.2137930393219,
-			"gate_color": "853d2eff",
-			"height": 2.1676385,
-			"kind": 0.0,
-			"offset": [
-				0.93,
-				-2.87
-			],
-			"pts": [
-				532.605,
-				77.617,
-				529.245,
-				87.937,
-				526.245,
-				89.617,
-				505.725,
-				82.117,
-				489.825,
-				80.017
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": -0.0698131700797732
-		},
-		"Walls/Walls_D4/Wall_4969": {
-			"color": "ca927ef9",
-			"gate_at": 16.5,
-			"gate_color": "959595",
-			"height": 2.119574,
-			"kind": 0.0,
-			"offset": [
-				2.01,
-				-1.6
-			],
-			"orig": [
-				554.325,
-				479.017,
-				583.065,
-				500.437,
-				605.325,
-				471.517
-			],
-			"pts": [
-				553.545,
-				478.257,
-				569.821,
-				490.389
-			],
-			"removed": false,
-			"swing": 2,
-			"yaw": 0.0
-		},
-		"Walls/Walls_D4/Wall_5230": {
-			"color": "b07764db",
-			"gate_at": 18.753695,
-			"gate_color": "385785ff",
-			"height": 2.1072967,
-			"kind": 0.0,
-			"offset": [
-				-1.57,
-				-1.33
-			],
-			"pts": [
-				461.325,
-				179.017,
-				431.325,
-				215.017
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_D4/Wall_5250": {
-			"color": "b07764db",
-			"gate_at": -1.0,
-			"gate_color": "385785ff",
-			"height": 1.803401,
-			"kind": 0.0,
-			"offset": [
-				-1.59,
-				-2.52
-			],
-			"pts": [
-				413.325,
-				159.517,
-				416.145,
-				179.197,
-				431.325,
-				215.017
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_D4/Wall_553": {
-			"color": "9a7860e0",
-			"gate_at": -1.0,
-			"gate_color": "385785ff",
-			"height": 2.0889182,
-			"kind": 0.0,
-			"offset": [
-				6.98,
-				4.54
-			],
-			"orig": [
-				602.325,
-				489.517,
-				591.345,
-				506.857,
-				617.325,
-				528.517
-			],
-			"pts": [
-				595.02,
-				509.0,
-				614.671,
-				522.427
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_D4/Wall_5602": {
-			"color": "c18c78e1",
-			"gate_at": -1.0,
-			"gate_color": "704d33ff",
-			"height": 1.9848368,
-			"kind": 0,
-			"offset": [
-				0.0,
-				0.0
-			],
-			"orig": [
-				605.325,
-				471.517,
-				576.825,
-				449.017
-			],
-			"pts": [
-				603.415,
-				469.127,
-				576.886,
-				448.183
-			],
-			"removed": false,
-			"swing": 0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_D4/Wall_6399": {
-			"color": "a17e65f8",
-			"gate_at": 38.2482538223267,
-			"gate_color": "853d2eff",
-			"height": 2.271167,
-			"kind": 0.0,
-			"offset": [
-				-1.55,
-				-1.77
-			],
-			"pts": [
-				431.325,
-				215.017,
-				424.545,
-				220.177,
-				393.165,
-				202.177,
-				362.925,
-				196.417,
-				361.125,
-				193.837
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_D4/Wall_82": {
-			"color": "9e7b63ed",
-			"gate_at": 9.754496,
-			"gate_color": "3d664dff",
-			"height": 2.275548,
-			"kind": 0.0,
-			"offset": [
-				-0.47,
-				-0.87
-			],
-			"pts": [
-				2.325,
-				96.517,
-				24.825,
-				81.517
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_D4/Wall_94": {
-			"color": "cf9c6ff9",
-			"gate_at": 9.3393,
-			"gate_color": "3d664dff",
-			"height": 2.031601,
-			"kind": 0.0,
-			"offset": [
-				0.0,
-				0.0
-			],
-			"orig": [
-				575.325,
-				527.017,
-				586.485,
-				513.337,
-				614.325,
-				534.517
-			],
-			"pts": [
-				575.325,
-				527.017,
-				586.485,
-				513.337,
-				637.535,
-				552.177
-			],
-			"removed": false,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_E2/Wall_5073": {
-			"color": "b27865e0",
-			"gate_at": 25.343176,
-			"gate_color": "385785ff",
-			"height": 2.2780764,
-			"kind": 0.0,
-			"offset": [
-				0.0,
-				0.0
-			],
-			"pts": [
-				-842.175,
-				1425.517,
-				-849.435,
-				1452.397,
-				-845.895,
-				1472.737,
-				-837.015,
-				1488.517
-			],
-			"removed": true,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_E2/Wall_5074": {
-			"color": "b27865e0",
-			"gate_at": -1.0,
-			"gate_color": "385785ff",
-			"height": 1.8980114,
-			"kind": 0.0,
-			"offset": [
-				0.0,
-				0.0
-			],
-			"pts": [
-				-837.015,
-				1488.517,
-				-842.355,
-				1492.837,
-				-857.115,
-				1495.957,
-				-880.575,
-				1489.417,
-				-894.075,
-				1474.417,
-				-897.495,
-				1454.197,
-				-888.675,
-				1424.017
-			],
-			"removed": true,
-			"swing": 0.0,
-			"yaw": 0.0
-		},
-		"Walls/Walls_E2/Wall_5075": {
+		"Walls/Walls_E2/Wall_5216": {
 			"color": "b27865e0",
 			"gate_at": -1.0,
 			"gate_color": "3d664dff",
@@ -2650,40 +286,98 @@
 				0.0
 			],
 			"pts": [
-				-842.175,
-				1425.517,
-				-864.675,
-				1421.017,
-				-888.675,
-				1424.017
+				-848.775,
+				1354.117,
+				-866.175,
+				1352.017
 			],
 			"removed": true,
 			"swing": 0.0,
 			"yaw": 0.0
 		},
-		"Walls/Walls_E2/Wall_5215": {
-			"color": "b27865e0",
-			"gate_at": 26.860868,
-			"gate_color": "3d664dff",
-			"height": 2.2740047,
+		"Walls/Walls_E2/Wall_5253": {
+			"color": "98775fdb",
+			"gate_at": -1.0,
+			"gate_color": "704d33ff",
+			"height": 1.9635758,
 			"kind": 0.0,
 			"offset": [
 				0.0,
 				0.0
 			],
 			"pts": [
-				-842.175,
-				1425.517,
-				-826.575,
-				1362.697,
-				-848.775,
-				1354.117
+				-822.675,
+				1196.017,
+				-827.175,
+				1232.017
 			],
 			"removed": true,
 			"swing": 0.0,
 			"yaw": 0.0
 		},
-		"Walls/Walls_E2/Wall_5412": {
+		"Walls/Walls_E2/Wall_5335": {
+			"color": "b37965e3",
+			"gate_at": -1.0,
+			"gate_color": "704d33ff",
+			"height": 1.98097,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-807.675,
+				960.517,
+				-849.675,
+				957.517
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E2/Wall_5411": {
+			"color": "7e7c7cf9",
+			"gate_at": 26.84737,
+			"gate_color": "8c8f8cff",
+			"height": 2.0506005,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-902.175,
+				1311.517,
+				-919.335,
+				1370.857,
+				-922.215,
+				1373.977
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E2/Wall_5484": {
+			"color": "9f7c63f0",
+			"gate_at": 2.5,
+			"gate_color": "385785ff",
+			"height": 2.2706456,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-902.175,
+				1311.517,
+				-899.175,
+				1299.517
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E2/Wall_5485": {
 			"color": "7e7c7cf9",
 			"gate_at": -1.0,
 			"gate_color": "8c8f8cff",
@@ -2694,14 +388,12 @@
 				0.0
 			],
 			"pts": [
-				-922.215,
-				1373.977,
-				-934.575,
-				1372.417,
-				-954.255,
-				1365.097,
-				-965.115,
-				1353.457,
+				-902.175,
+				1311.517,
+				-918.855,
+				1318.837,
+				-936.075,
+				1321.117,
 				-969.675,
 				1334.017
 			],
@@ -2709,51 +401,557 @@
 			"swing": 0.0,
 			"yaw": 0.0
 		},
-		"Walls/Walls_E2/Wall_7512": {
-			"color": "b27865e0",
+		"Walls/Walls_E2/Wall_5599": {
+			"color": "d09e70fd",
 			"gate_at": -1.0,
-			"gate_color": "3d664dff",
-			"height": 1.876822,
+			"gate_color": "385785ff",
+			"height": 1.867437,
 			"kind": 0.0,
 			"offset": [
 				0.0,
 				0.0
 			],
 			"pts": [
-				-866.175,
-				1352.017,
-				-880.275,
-				1391.917,
-				-893.175,
-				1419.517
+				-935.175,
+				1277.017,
+				-941.175,
+				1244.017
 			],
 			"removed": true,
 			"swing": 0.0,
 			"yaw": 0.0
 		},
-		"Walls/Walls_E2/Wall_7514": {
-			"color": "777575dc",
-			"gate_at": 41.797149181366,
-			"gate_color": "3d664dff",
-			"height": 2.283768,
+		"Walls/Walls_E2/Wall_5600": {
+			"color": "9f7c63f0",
+			"gate_at": -1.0,
+			"gate_color": "385785ff",
+			"height": 1.9928595,
 			"kind": 0.0,
 			"offset": [
 				0.0,
 				0.0
 			],
 			"pts": [
-				-899.715,
-				1336.177,
-				-903.795,
-				1338.397,
-				-923.895,
-				1410.457
+				-935.175,
+				1277.017,
+				-899.175,
+				1299.517
 			],
 			"removed": true,
 			"swing": 0.0,
 			"yaw": 0.0
 		},
-		"Walls/Walls_E2/Wall_7515": {
+		"Walls/Walls_E2/Wall_5626": {
+			"color": "b57a66e8",
+			"gate_at": -1.0,
+			"gate_color": "704d33ff",
+			"height": 1.8775064,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-849.675,
+				957.517,
+				-867.675,
+				935.017
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E2/Wall_5702": {
+			"color": "d09e70fd",
+			"gate_at": -1.0,
+			"gate_color": "385785ff",
+			"height": 1.867437,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-935.175,
+				1277.017,
+				-959.535,
+				1303.657,
+				-975.675,
+				1317.517
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E2/Wall_5934": {
+			"color": "704d33ff",
+			"gate_at": 28.997923,
+			"gate_color": "704d33ff",
+			"height": 2.1539774,
+			"kind": 1.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-899.175,
+				1299.517,
+				-883.275,
+				1244.917,
+				-882.315,
+				1234.657
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E2/Wall_5935": {
+			"color": "7c7979ef",
+			"gate_at": -1.0,
+			"gate_color": "704d33ff",
+			"height": 1.808132,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-882.315,
+				1234.657,
+				-904.275,
+				1228.117,
+				-913.815,
+				1227.877,
+				-928.575,
+				1232.617,
+				-941.175,
+				1244.017
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E2/Wall_6150": {
+			"color": "bb7e6afa",
+			"gate_at": 7.42912,
+			"gate_color": "853d2eff",
+			"height": 2.0562372,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-884.175,
+				935.017,
+				-889.095,
+				934.717,
+				-891.675,
+				941.017
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E2/Wall_6161": {
+			"color": "b57a66e8",
+			"gate_at": -1.0,
+			"gate_color": "704d33ff",
+			"height": 1.8775064,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-884.175,
+				935.017,
+				-867.675,
+				935.017
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E2/Wall_6346": {
+			"color": "b57a66e8",
+			"gate_at": 32.678196,
+			"gate_color": "704d33ff",
+			"height": 2.0610912,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-884.175,
+				935.017,
+				-903.075,
+				1002.637,
+				-900.075,
+				1006.417
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E2/Wall_6347": {
+			"color": "b57a66e8",
+			"gate_at": -1.0,
+			"gate_color": "704d33ff",
+			"height": 1.8775064,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-900.075,
+				1006.417,
+				-876.675,
+				1013.017
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E2/Wall_6668": {
+			"color": "c7976be5",
+			"gate_at": -1.0,
+			"gate_color": "853d2eff",
+			"height": 1.9712251,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-824.106,
+				1556.295,
+				-833.775,
+				1517.617,
+				-846.735,
+				1505.077,
+				-868.995,
+				1500.697,
+				-885.075,
+				1505.617,
+				-900.495,
+				1523.197,
+				-903.615,
+				1540.957,
+				-896.175,
+				1581.517
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E2/Wall_6677": {
+			"color": "bb7e6afa",
+			"gate_at": -1.0,
+			"gate_color": "853d2eff",
+			"height": 1.9586668,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-867.675,
+				935.017,
+				-848.175,
+				896.017
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E2/Wall_6913": {
+			"color": "9f7c63f0",
+			"gate_at": -1.0,
+			"gate_color": "385785ff",
+			"height": 1.9928595,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-975.675,
+				1317.517,
+				-969.675,
+				1334.017
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E2/Wall_7038": {
+			"color": "d09e70fd",
+			"gate_at": -1.0,
+			"gate_color": "385785ff",
+			"height": 1.867437,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-975.675,
+				1317.517,
+				-987.735,
+				1314.697
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E2/Wall_7039": {
+			"color": "d09e70fd",
+			"gate_at": 41.7638444900513,
+			"gate_color": "385785ff",
+			"height": 2.0080411,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-987.735,
+				1314.697,
+				-989.535,
+				1312.177,
+				-969.315,
+				1239.877,
+				-964.215,
+				1237.177
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E2/Wall_7040": {
+			"color": "d09e70fd",
+			"gate_at": -1.0,
+			"gate_color": "385785ff",
+			"height": 1.867437,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-964.215,
+				1237.177,
+				-941.175,
+				1244.017
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E2/Wall_7111": {
+			"color": "c6956ae1",
+			"gate_at": -1.0,
+			"gate_color": "853d2eff",
+			"height": 1.9728168,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-752.175,
+				890.017,
+				-773.115,
+				883.957,
+				-779.655,
+				876.697
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E2/Wall_7112": {
+			"color": "c6956ae1",
+			"gate_at": 35.448483,
+			"gate_color": "853d2eff",
+			"height": 2.0474875,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-779.655,
+				876.697,
+				-761.535,
+				808.657
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E2/Wall_7230": {
+			"color": "98775fdb",
+			"gate_at": -1.0,
+			"gate_color": "4d7a85ff",
+			"height": 1.8840241,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-915.675,
+				1194.517,
+				-906.495,
+				1200.337,
+				-883.995,
+				1206.337,
+				-874.815,
+				1205.377
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E2/Wall_7231": {
+			"color": "98775fdb",
+			"gate_at": 37.5479340553284,
+			"gate_color": "4d7a85ff",
+			"height": 2.1785169,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-874.815,
+				1205.377,
+				-871.275,
+				1199.917,
+				-855.015,
+				1135.237
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E2/Wall_7233": {
+			"color": "98775fdb",
+			"gate_at": -1.0,
+			"gate_color": "4d7a85ff",
+			"height": 1.8840241,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-896.175,
+				1122.517,
+				-915.675,
+				1194.517
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E2/Wall_7235": {
+			"color": "385785ff",
+			"gate_at": 37.003456,
+			"gate_color": "385785ff",
+			"height": 2.0036561,
+			"kind": 1.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-932.535,
+				1111.657,
+				-946.575,
+				1157.617,
+				-952.575,
+				1180.117,
+				-951.735,
+				1185.577
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E2/Wall_7236": {
+			"color": "c49469dc",
+			"gate_at": -1.0,
+			"gate_color": "385785ff",
+			"height": 1.876963,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-951.735,
+				1185.577,
+				-927.075,
+				1193.917,
+				-915.675,
+				1194.517
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E2/Wall_7387": {
+			"color": "777474da",
+			"gate_at": 40.173447,
+			"gate_color": "385785ff",
+			"height": 2.2938452,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-891.675,
+				941.017,
+				-912.555,
+				1014.637,
+				-915.855,
+				1017.217
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E2/Wall_7500": {
+			"color": "99775fdc",
+			"gate_at": -1.0,
+			"gate_color": "853d2eff",
+			"height": 1.8770393,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-827.175,
+				1232.017,
+				-819.075,
+				1238.917,
+				-807.135,
+				1243.477,
+				-795.555,
+				1246.417
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E2/Wall_7513": {
 			"color": "777575dc",
 			"gate_at": -1.0,
 			"gate_color": "3d664dff",
@@ -2764,12 +962,390 @@
 				0.0
 			],
 			"pts": [
-				-923.895,
-				1410.457,
-				-915.075,
-				1415.917,
+				-866.175,
+				1352.017,
+				-879.855,
+				1341.697,
+				-899.715,
+				1336.177
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E2/Wall_7516": {
+			"color": "b27865e0",
+			"gate_at": -1.0,
+			"gate_color": "3d664dff",
+			"height": 1.876822,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-888.675,
+				1424.017,
 				-893.175,
 				1419.517
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E2/Wall_7672": {
+			"color": "bb7e6afa",
+			"gate_at": -1.0,
+			"gate_color": "853d2eff",
+			"height": 1.9586668,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-848.175,
+				896.017,
+				-853.275,
+				878.617,
+				-866.235,
+				866.077,
+				-893.235,
+				858.577,
+				-914.115,
+				863.077,
+				-927.615,
+				876.577,
+				-933.615,
+				899.077,
+				-930.075,
+				919.417,
+				-918.675,
+				933.517
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E2/Wall_7926": {
+			"color": "7f7c7cfb",
+			"gate_at": -1.0,
+			"gate_color": "4d7a85ff",
+			"height": 1.8334349,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-888.975,
+				1105.597,
+				-880.275,
+				1102.417,
+				-866.775,
+				1088.917,
+				-860.775,
+				1070.917,
+				-860.535,
+				1058.377,
+				-865.275,
+				1043.617,
+				-877.275,
+				1031.617,
+				-898.275,
+				1024.117,
+				-907.575,
+				1024.117
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E3/Wall_5849": {
+			"color": "c68f7bed",
+			"gate_at": 35.9878091812134,
+			"gate_color": "853d2eff",
+			"height": 2.079638,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-659.175,
+				840.517,
+				-681.615,
+				837.457,
+				-718.695,
+				810.157
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E3/Wall_7034": {
+			"color": "a17d64f6",
+			"gate_at": -1.0,
+			"gate_color": "853d2eff",
+			"height": 1.992188,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-752.175,
+				890.017,
+				-735.015,
+				875.677,
+				-718.815,
+				855.877,
+				-705.675,
+				845.017
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E3/Wall_7035": {
+			"color": "a17d64f6",
+			"gate_at": -1.0,
+			"gate_color": "853d2eff",
+			"height": 1.992188,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-705.675,
+				845.017,
+				-689.055,
+				849.397
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E3/Wall_7036": {
+			"color": "a17d64f6",
+			"gate_at": 41.75164270401,
+			"gate_color": "853d2eff",
+			"height": 2.1097004,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-689.055,
+				849.397,
+				-686.775,
+				852.397,
+				-706.815,
+				926.377
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E3/Wall_7037": {
+			"color": "a17d64f6",
+			"gate_at": -1.0,
+			"gate_color": "853d2eff",
+			"height": 1.992188,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-706.815,
+				926.377,
+				-723.075,
+				923.917,
+				-736.755,
+				918.097,
+				-747.615,
+				906.457,
+				-752.175,
+				890.017
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E3/Wall_7113": {
+			"color": "c6956ae1",
+			"gate_at": -1.0,
+			"gate_color": "853d2eff",
+			"height": 1.9728168,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-761.535,
+				808.657,
+				-749.235,
+				806.077,
+				-731.475,
+				810.817
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E3/Wall_7114": {
+			"color": "c6956ae1",
+			"gate_at": -1.0,
+			"gate_color": "853d2eff",
+			"height": 2.0474875,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-731.475,
+				810.817,
+				-710.775,
+				826.117
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E3/Wall_7115": {
+			"color": "c6956ae1",
+			"gate_at": -1.0,
+			"gate_color": "853d2eff",
+			"height": 1.9728168,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-710.775,
+				826.117,
+				-705.675,
+				845.017
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E3/Wall_7518": {
+			"color": "98765fda",
+			"gate_at": -1.0,
+			"gate_color": "704d33ff",
+			"height": 1.9786122,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-645.675,
+				1140.517,
+				-637.275,
+				1151.617,
+				-634.035,
+				1170.157,
+				-639.675,
+				1191.517,
+				-659.775,
+				1229.917,
+				-671.775,
+				1241.917,
+				-679.275,
+				1244.917,
+				-692.115,
+				1246.957,
+				-710.175,
+				1242.517
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E3/Wall_7519": {
+			"color": "d09d70fc",
+			"gate_at": -1.0,
+			"gate_color": "385785ff",
+			"height": 1.9121864,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-659.175,
+				1112.017,
+				-667.575,
+				1102.417,
+				-670.815,
+				1083.877,
+				-660.195,
+				1055.497,
+				-649.815,
+				1043.377,
+				-639.075,
+				1037.617,
+				-624.735,
+				1035.577,
+				-610.275,
+				1039.117
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_E3/Wall_7523": {
+			"color": "d09d70fc",
+			"gate_at": -1.0,
+			"gate_color": "385785ff",
+			"height": 1.9121864,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-585.375,
+				1097.857,
+				-592.275,
+				1114.417,
+				-604.275,
+				1126.417,
+				-617.775,
+				1130.917,
+				-627.075,
+				1130.917,
+				-645.675,
+				1125.517
+			],
+			"removed": true,
+			"swing": 0.0,
+			"yaw": 0.0
+		},
+		"Walls/Walls_F2/Wall_6667": {
+			"color": "c7976be5",
+			"gate_at": 13.680103,
+			"gate_color": "853d2eff",
+			"height": 2.0570529,
+			"kind": 0.0,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"pts": [
+				-825.344,
+				1572.427,
+				-824.106,
+				1556.295
 			],
 			"removed": true,
 			"swing": 0.0,

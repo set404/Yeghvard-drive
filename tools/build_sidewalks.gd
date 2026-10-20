@@ -8,7 +8,7 @@ extends SceneTree
 ## The road lines come from tools/build_world.gd itself (OpenStreetMap, with the
 ## two halves of the dual carriageway slid apart the way it lays them), so the
 ## sidewalks sit right on the road edges. They break where another road joins,
-## where a building, wall, gate, the house or the gas station is in the way, and
+## where something solid is still in the way (the gas station), and
 ## on the inner side of the dual carriageway.
 ##
 ## Run:  godot --path . --script res://tools/build_sidewalks.gd
@@ -25,14 +25,17 @@ const ROUTE := [1328842574, 568252353, 568252354, 899170835, 902993586, 88174826
 ## The paving on the walkway, and how many metres one copy of the image covers.
 const PAVERS := "res://data/textures/sidewalk_pavers.webp"
 const PAVER_SIZE := Vector2(2.4, 1.67)
-## Metres: the walkway (narrowed down to MIN_WIDTH where a wall stands closer),
+## Metres: the walkway (the same all along: tools/clear_sidewalks.gd keeps the walls back),
 ## its height above the road edge, and the gap to the road.
 const WIDTH := 2.2
-const MIN_WIDTH := 0.9
 const KERB := 0.15
 const GAP := 0.05
 ## How far out the bank on the outer side may reach.
 const SKIRT := 3.0
+## How far out the kerb's collision ramps up onto the walkway (four times its
+## height, at least this and at most 2 m), so you walk and drive up onto the
+## sidewalk without a step. The kerb and the ends still look square.
+const RAMP := 0.6
 ## Spacing of the points along each side.
 const STEP := 1.5
 ## Room left round a road that joins, beyond its half width.
@@ -45,6 +48,8 @@ const MIN_RUN := 6.0
 var _space: PhysicsDirectSpaceState3D
 var _ground_skip: Array[RID] = []
 var _solid: Array[RID] = []
+## Where something solid still stands on the sidewalk (10 m spots) -> what it is.
+var _blocked := {}
 
 
 func _initialize() -> void:
@@ -85,6 +90,8 @@ func _run() -> void:
 			continue
 		if main.get_node("Sidewalks").is_ancestor_of(body):
 			continue # the sidewalks from an earlier run
+		if world.has_node("Props") and world.get_node("Props").is_ancestor_of(body):
+			continue # the bus stops stand at the kerb, the sidewalk runs on under them
 		_solid.append(body.get_rid())
 
 	var faces := PackedVector3Array()
@@ -115,6 +122,8 @@ func _run() -> void:
 	concrete.roughness = 0.92
 	mesh.surface_set_material(1, concrete)
 	print("Sidewalks: %d pieces, %.1f km" % [pieces, length / 1000.0])
+	for spot: Vector2i in _blocked:
+		print("  in the way at (%d, %d): %s" % [spot.x, spot.y, _blocked[spot]])
 	main.free()
 
 	var walks := Node3D.new()
@@ -144,7 +153,7 @@ func _run() -> void:
 
 
 ## The route's ways as lines in world metres, straight from OpenStreetMap.
-func _route_lines() -> Array[PackedVector2Array]:
+static func _route_lines() -> Array[PackedVector2Array]:
 	var p := deg_to_rad(BuildWorld.LAT0)
 	var mz := 111132.92 - 559.82 * cos(2.0 * p) + 1.175 * cos(4.0 * p)
 	var mx := 111412.84 * cos(p) - 93.5 * cos(3.0 * p)
@@ -159,7 +168,7 @@ func _route_lines() -> Array[PackedVector2Array]:
 	return out
 
 
-func _distance_to_line(p: Vector2, line: PackedVector2Array) -> float:
+static func _distance_to_line(p: Vector2, line: PackedVector2Array) -> float:
 	var best := INF
 	for k in line.size() - 1:
 		best = minf(best, p.distance_to(Geometry2D.get_closest_point_to_segment(p, line[k], line[k + 1])))
@@ -181,11 +190,11 @@ func _side_runs(road: Dictionary, side: float, roads: Array, on_route: Dictionar
 		var sample := _along(pts, at)
 		var c: Vector2 = sample[0]
 		var n := Vector2(-sample[1].y, sample[1].x) * side
+		# The same width all along: tools/clear_sidewalks.gd keeps walls and
+		# buildings back from it.
 		var inner := c + n * (hw + GAP)
-		# Narrower where a wall or fence stands closer to the road than WIDTH.
-		var width := _free_width(inner, n)
-		var outer := c + n * (hw + GAP + width)
-		if width >= MIN_WIDTH and not _median(c + n * (hw + MEDIAN), road, roads, on_route) and _clear(inner, outer, road, roads, on_route):
+		var outer := c + n * (hw + GAP + WIDTH)
+		if not _median(c + n * (hw + MEDIAN), road, roads, on_route) and _clear(inner, outer, road, roads, on_route):
 			cur.append([inner, outer])
 		else:
 			if cur.size() * STEP >= MIN_RUN:
@@ -215,7 +224,7 @@ func _along(pts: PackedVector2Array, at: float) -> Array:
 
 ## Whether a spot beside a one-way half of the dual carriageway lies towards the
 ## other half (in the median), where no sidewalk goes.
-func _median(probe: Vector2, road: Dictionary, roads: Array, on_route: Dictionary) -> bool:
+static func _median(probe: Vector2, road: Dictionary, roads: Array, on_route: Dictionary) -> bool:
 	if not road.get("oneway", false):
 		return false
 	for i: int in on_route:
@@ -258,28 +267,11 @@ func _clear(inner: Vector2, outer: Vector2, road: Dictionary, roads: Array, on_r
 			if hit.is_empty():
 				break
 			if (hit["collider"] as CollisionObject3D).get_rid() in _solid:
+				var spot := Vector2i(roundi(p.x / 10.0) * 10, roundi(p.y / 10.0) * 10)
+				_blocked[spot] = "%s, hit at %s" % [(hit["collider"] as Node).get_path(), hit["position"]]
 				return false
 			down.exclude = down.exclude + [hit["rid"]]
 	return true
-
-
-## How wide the sidewalk can be from this point of the road edge outwards (n):
-## WIDTH, or up to 10 cm short of the first wall, fence or building in the way,
-## looked for at waist height from just inside the road edge.
-func _free_width(inner: Vector2, n: Vector2) -> float:
-	var from := inner - n * 0.3
-	var to := inner + n * WIDTH
-	var y := _ground(inner) + 0.9
-	var across := PhysicsRayQueryParameters3D.create(Vector3(from.x, y, from.y), Vector3(to.x, y, to.y))
-	while true:
-		var hit := _space.intersect_ray(across)
-		if hit.is_empty():
-			return WIDTH
-		if (hit["collider"] as CollisionObject3D).get_rid() in _solid:
-			var at: Vector3 = hit["position"]
-			return Vector2(at.x, at.z).distance_to(inner) * (1.0 if (Vector2(at.x, at.z) - inner).dot(n) > 0.0 else -1.0) - 0.1
-		across.exclude = across.exclude + [hit["rid"]]
-	return WIDTH
 
 
 func _ground(p: Vector2) -> float:
@@ -327,7 +319,10 @@ func _add_walk(tops: SurfaceTool, edges: SurfaceTool, faces: PackedVector3Array,
 		var bank: Vector3 = (r0[3] - r0[2]).cross(r1[2] - r0[2]).normalized()
 		if bank.dot(out + Vector3.UP) < 0.0:
 			bank = -bank
-		_quad(edges, faces, r0[0], r0[1], r1[1], r1[0], -out, kerb) # kerb face, towards the road
+		_quad(edges, PackedVector3Array(), r0[0], r0[1], r1[1], r1[0], -out, kerb) # kerb face, towards the road
+		var f0 := _ramp_foot(r0[1], -out)
+		var f1 := _ramp_foot(r1[1], -out)
+		_quad_faces(faces, f0, r0[1], r1[1], f1, -out + Vector3.UP) # the ramp up it, felt but not seen
 		_quad(tops, faces, r0[1], r0[2], r1[2], r1[1], Vector3.UP, Color.WHITE,
 			[Vector2(u0, 0.0), Vector2(u0, w0), Vector2(u1, w1), Vector2(u1, 0.0)]) # walkway
 		_quad(edges, faces, r0[2], r0[3], r1[3], r1[2], bank, side) # bank down to the ground
@@ -337,7 +332,25 @@ func _add_walk(tops: SurfaceTool, edges: SurfaceTool, faces: PackedVector3Array,
 		var away: Vector3 = r[1] - end[1][1]
 		away.y = 0.0
 		away = away.normalized()
-		_quad(edges, faces, r[0], r[1], r[2], r[3], away, side)
+		_quad(edges, PackedVector3Array(), r[0], r[1], r[2], r[3], away, side)
+		_quad_faces(faces, r[1], r[2], _ramp_foot(r[2], away), _ramp_foot(r[1], away), away + Vector3.UP)
+
+
+## Where the collision ramp from a top edge of the walkway meets the ground, out
+## along `out` (level), a little under the road surface so there is no lip.
+func _ramp_foot(top: Vector3, out: Vector3) -> Vector3:
+	var p := top + out * RAMP
+	var ground := _ground(Vector2(p.x, p.z))
+	p = top + out * clampf((top.y - ground) * 4.0, RAMP, 2.0)
+	return Vector3(p.x, _ground(Vector2(p.x, p.z)) - 0.01, p.z)
+
+
+## Two triangles of collision only, facing n.
+func _quad_faces(faces: PackedVector3Array, a: Vector3, b: Vector3, c: Vector3, d: Vector3, n: Vector3) -> void:
+	for tri: Array in [[a, b, c], [a, c, d]]:
+		if (tri[1] - tri[0]).cross(tri[2] - tri[0]).dot(n) > 0.0:
+			tri = [tri[0], tri[2], tri[1]]
+		faces.append_array(PackedVector3Array(tri))
 
 
 ## Two triangles facing the given normal. Godot's front faces wind clockwise, so

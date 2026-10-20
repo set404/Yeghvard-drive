@@ -17,7 +17,7 @@
 [ext_resource type="PackedScene" path="res://world/supermarket.scn" id="15"]
 [ext_resource type="Script" uid="uid://dts5anr4xag8" path="res://game/wallet.gd" id="16"]
 [ext_resource type="Script" uid="uid://djli0m1af50kx" path="res://world/townsfolk.gd" id="17"]
-[ext_resource type="PackedScene" uid="uid://dp6noop2trhd0" path="res://world/map_parts.scn" id="18"]
+[ext_resource type="PackedScene" path="res://world/map_parts.scn" id="18"]
 [ext_resource type="Script" uid="uid://cf15qswjb81l6" path="res://world/map_editor.gd" id="19"]
 
 [sub_resource type="ProceduralSkyMaterial" id="sky_mat"]
@@ -117,6 +117,7 @@ transform = Transform3D(-0.74989367, -0.03650205, 0.66055053, -0.027390908, 0.99
 paint_color = Color(0.043137256, 0.09411765, 0.14901961, 1)
 starter_seconds = 0.45
 fuel = 52.0
+engine_layer_rpms = []
 
 [node name="Car2" parent="." unique_id=1300135129 instance=ExtResource("6")]
 transform = Transform3D(0.7602329, -0.06117464, -0.64676505, 0.043261614, 0.99811393, -0.043555934, 0.6482097, 0.0051325336, 0.7614456, 662.89667, 0.9793341, 545.1871)
@@ -124,6 +125,7 @@ player_controlled = false
 paint_color = Color(0.22745098, 0.23137255, 0.23137255, 1)
 starter_seconds = 0.35
 fuel = 30.0
+engine_layer_rpms = []
 
 [node name="Car3" parent="." unique_id=27463107 instance=ExtResource("7")]
 transform = Transform3D(0.0803, 0, -0.9968, 0, 1, 0, 0.9968, 0, 0.0803, 592.08, 17.85, -398.67)
@@ -132,6 +134,7 @@ paint_color = Color(0.007280823, 0.3030038, 0.0073056705, 1)
 starter_seconds = 2.2
 start_fail_chance = 0.5
 fuel = 12.0
+engine_layer_rpms = []
 
 [node name="Car4" parent="." unique_id=669761671 instance=ExtResource("8")]
 transform = Transform3D(0.7602329, 0, -0.64676505, 0, 1, 0, 0.6482097, 0, 0.7614456, -815.60516, -20.148405, 1556.3846)
@@ -139,6 +142,7 @@ player_controlled = false
 paint_color = Color(0.05, 0.17, 0.52, 1)
 starter_seconds = 1.1
 fuel = 48.0
+engine_layer_rpms = []
 
 [node name="Car5" parent="." unique_id=1838205611 instance=ExtResource("12")]
 transform = Transform3D(0.152, 0, -0.9884, 0, 1, 0, 0.9884, 0, 0.152, 593.4, 17.85, -402.55)
@@ -146,6 +150,7 @@ player_controlled = false
 paint_color = Color(0.408, 0.416, 0.424, 1)
 starter_seconds = 0.5
 fuel = 41.0
+engine_layer_rpms = []
 
 [node name="Player" type="CharacterBody3D" parent="." unique_id=1187892447]
 script = ExtResource("9")

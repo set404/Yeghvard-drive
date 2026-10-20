@@ -53,6 +53,8 @@ function Run-Tool($script) {
 }
 
 # 3. The world (not --headless: the trees need the renderer), then the sidewalks.
+Write-Host "Moving walls and buildings back off the sidewalks..."
+Run-Tool "res://tools/clear_sidewalks.gd"
 Write-Host "Building the world from world/map/map.tscn (a few minutes)..."
 Run-Tool "res://tools/build_world.gd"
 Write-Host "Building the sidewalks..."

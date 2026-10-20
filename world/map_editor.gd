@@ -320,21 +320,21 @@ static func make_prop(scene_path: String, solid := true) -> StaticBody3D:
 	body.set_meta("scene", scene_path)
 	body.add_child(model)
 	if solid:
-		var box := AABB()
-		var first := true
+		# The model's own surfaces, not a box round it, so you can walk into a
+		# besedka or under a bus stop's roof.
 		var meshes: Array = model.find_children("*", "MeshInstance3D", true, false)
 		if model is MeshInstance3D:
 			meshes.append(model)
 		for mi: MeshInstance3D in meshes:
-			var b := _relative_xf(mi, body) * mi.get_aabb()
-			box = b if first else box.merge(b)
-			first = false
-		if not first and box.size.length() > 0.01:
+			if mi.mesh == null:
+				continue
+			var shape := mi.mesh.create_trimesh_shape()
+			if shape == null:
+				continue
+			shape.backface_collision = true
 			var cs := CollisionShape3D.new()
-			var shape := BoxShape3D.new()
-			shape.size = box.size
 			cs.shape = shape
-			cs.position = box.get_center()
+			cs.transform = _relative_xf(mi, body)
 			body.add_child(cs)
 	return body
 
