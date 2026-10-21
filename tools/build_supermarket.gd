@@ -65,6 +65,15 @@ const STORE_DOOR := Vector2(15.0, 16.0)
 ## The tills: u of the middle of each, and the v range they take up.
 const TILLS := [7.5, 9.5, 11.5, 13.5]
 const TILL_V := Vector2(2.0, 5.0)
+## The cashier (world/cashier.gd) at the last till, by the main doors: where
+## she stands (plan), and the cigarette rack behind her: u of its front, its
+## v range, how deep and tall, and the heights of its shelves.
+const CASHIER := Vector2(14.3, 3.0)
+const RACK_U := 14.78
+const RACK_V := Vector2(1.75, 3.95)
+const RACK_DEPTH := 0.26
+const RACK_HEIGHT := 2.15
+const RACK_SHELVES := [0.95, 1.2, 1.45, 1.7, 1.95]
 ## Double-sided shelving down the shop: u of the middle of each run, where they
 ## start (v), the cross aisle, and the clear space left before a wall.
 const GONDOLAS := [7.2, 9.9, 12.6, 15.3]
@@ -81,6 +90,8 @@ const PRODUCE := [Vector2(18.0, 8.6), Vector2(20.4, 8.6), Vector2(18.0, 11.6), V
 ## ahead as you come in through the main doors: what a cup costs in drams, and
 ## the brand's colours.
 const DUET_PRICE := 150.0
+## Shelves the cups stand on (the other shop shelving has 4), as far apart as elsewhere.
+const DUET_LEVELS := 2
 const DUET_BROWN := Color(0.25, 0.13, 0.08)
 const DUET_RED := Color(0.9, 0.12, 0.14)
 
@@ -131,6 +142,7 @@ var _va := Vector2(0, 1)
 var _floor_y := 0.0 ## world height of the shop floor
 var _wall_col := Color.WHITE ## for building.gdshader: the walls' colour, alpha 0.5 (plain)
 var _roof_col := Color.WHITE
+var _shop_top := 5.0 ## height of the shop's roof above its floor
 
 
 class Buf:
@@ -780,6 +792,7 @@ func _build_shop(world_outline: PackedVector2Array, info: Dictionary) -> Node3D:
 	_floor_y = front_high + FLOOR_RISE
 	var height: float = info["height"]
 	var top := high + height - _floor_y
+	_shop_top = top
 	var base := low - 0.6 - _floor_y
 	var wall_color: Color = info["wall"]
 	var roof_color: Color = info["roof"]
@@ -863,6 +876,7 @@ func _build_shop(world_outline: PackedVector2Array, info: Dictionary) -> Node3D:
 
 	_shop_fittings(fp, inner, doors)
 	_duet_section(shop, inner)
+	_cashier(shop)
 	_signs(shop, fp)
 	_finish(shop)
 	return shop
@@ -929,23 +943,36 @@ func _ceiling_lights(lights: Node3D, inner: PackedVector2Array, rooms: Dictionar
 			lights.add_child(lamp)
 
 
-## Red boards over the shopfront and the main doors, and the pharmacy's green
-## cross over its doors.
+## The shopfront's white board with "ՄԻՇՏ ՑԱԾՐ ԳՆԵՐ" in blue, the CITY logo
+## over the main doors, and the pharmacy's green cross over its doors.
+const SIGN_BLUE := Color(0.0, 0.141, 0.29, 1.0)
+const SIGN_FONT := "res://props/NotoSansArmenian-Bold.ttf"
+const LOGO_PATH := "res://props/city_logo.png"
+
 func _signs(shop: Node3D, fp: PackedVector2Array) -> void:
 	var front_len := fp[0].distance_to(fp[1])
-	_board(shop, "ShopSign", fp[0], fp[1], PHARMACY.x - 0.6, front_len - 0.5, "SUPERMARKET", 110, 1.1)
-	var corner_len := fp[1].distance_to(fp[2])
-	_board(shop, "EntranceSign", fp[1], fp[2], corner_len * 0.5 - 1.6, corner_len * 0.5 + 1.6, "ENTRANCE", 80, 0.75)
+	var shop_sign := _board(shop, "ShopSign", fp[0], fp[1], PHARMACY.x - 0.6, front_len - 0.5, 1.1, "white")
+	var font := FontFile.new()
+	if font.load_dynamic_font(SIGN_FONT) == OK:
+		shop_sign.font = font
+	else:
+		push_warning("Could not load %s: the Armenian letters may not show." % SIGN_FONT)
+	shop_sign.text = "ՄԻՇՏ ՑԱԾՐ ԳՆԵՐ"
+	shop_sign.font_size = 110
+	shop_sign.modulate = SIGN_BLUE
+	shop_sign.outline_size = 0
+	_logo_board(shop, fp[1], fp[2])
 	# Over the pharmacy's doors in the front wall.
 	var d := Vector2.RIGHT
 	var out := Vector2(0, -1)
 	var mid := Vector2((PHARMACY_DOOR.x + PHARMACY_DOOR.y) * 0.5, 0.0)
 	var y := GLASS_TOP + 1.25
 	_obox({"sides": "white", "top": "white", "bottom": "white"}, mid, d, -0.65, 0.65, -0.12, 0.0, y - 0.65, y + 0.65)
-	var cross := mid + out * 0.12
+	# The cross stands 1 cm proud of the plate's face (v = -0.12), not in it.
+	var cross := mid + out * 0.13
 	var cm := {"sides": "cross", "top": "cross", "bottom": "cross"}
-	_obox(cm, cross, d, -0.48, 0.48, 0.0, 0.08, y - 0.16, y + 0.16)
-	_obox(cm, cross, d, -0.16, 0.16, 0.0, 0.08, y - 0.48, y + 0.48)
+	_obox(cm, cross, d, -0.48, 0.48, -0.08, 0.0, y - 0.16, y + 0.16)
+	_obox(cm, cross, d, -0.16, 0.16, -0.08, 0.0, y - 0.48, y + 0.48)
 	var ph := Label3D.new()
 	ph.name = "PharmacySign"
 	ph.text = "PHARMACY"
@@ -958,24 +985,53 @@ func _signs(shop: Node3D, fp: PackedVector2Array) -> void:
 	shop.add_child(ph)
 
 
-## A red board with white letters on the outside of the wall a..b (plan), from
-## s0 to s1 along it, `tall` metres high above the glass.
-func _board(shop: Node3D, sign_name: String, a: Vector2, b: Vector2, s0: float, s1: float, text: String,
-		font_size: int, tall: float) -> void:
+## A board in material `mat` on the outside of the wall a..b (plan), from s0 to
+## s1 along it, `tall` metres high above the glass, and an empty label centred
+## on its face for the caller to fill in.
+func _board(shop: Node3D, sign_name: String, a: Vector2, b: Vector2, s0: float, s1: float,
+		tall: float, mat: String) -> Label3D:
 	var d := (b - a).normalized()
 	var out := Vector2(d.y, -d.x)
 	var y0 := GLASS_TOP + 0.35
-	_obox({"sides": "red", "top": "red", "bottom": "red"}, a, d, s0, s1, -0.14, 0.0, y0, y0 + tall)
+	_obox({"sides": mat, "top": mat, "bottom": mat}, a, d, s0, s1, -0.14, 0.0, y0, y0 + tall)
 	var label := Label3D.new()
 	label.name = sign_name
-	label.text = text
-	label.font_size = font_size
 	label.pixel_size = 0.0075
-	label.modulate = Color(1, 0.97, 0.9)
 	var x3 := Vector3(d.x, 0.0, -d.y)
 	label.transform = Transform3D(Basis(x3, Vector3.UP, x3.cross(Vector3.UP)),
 		_p(a + d * (s0 + s1) * 0.5 + out * 0.15, y0 + tall * 0.5))
 	shop.add_child(label)
+	return label
+
+
+## The CITY logo (props/city_logo.png) on a white board over the main doors in
+## the cut-off corner a..b, lying horizontally, as tall as the roof allows.
+func _logo_board(shop: Node3D, a: Vector2, b: Vector2) -> void:
+	var img := Image.load_from_file(LOGO_PATH)
+	if img == null or img.is_empty():
+		push_warning("Could not load %s: no logo over the main doors." % LOGO_PATH)
+		return
+	img.generate_mipmaps()
+	var aspect := float(img.get_width()) / img.get_height()
+	var d := (b - a).normalized()
+	var out := Vector2(d.y, -d.x)
+	var corner_len := a.distance_to(b)
+	var y0 := GLASS_TOP + 0.35
+	# Up to 1.5 m tall, staying 0.15 m under the roof and inside the corner wall.
+	var tall := minf(1.5, _shop_top - y0 - 0.15)
+	tall = minf(tall, (corner_len - 0.4) / aspect)
+	var wide := tall * aspect
+	var s0 := (corner_len - wide) * 0.5
+	var s1 := s0 + wide
+	_obox({"sides": "white", "top": "white", "bottom": "white"}, a, d, s0, s1, -0.14, 0.0, y0, y0 + tall)
+	var logo := Sprite3D.new()
+	logo.name = "EntranceLogo"
+	logo.texture = ImageTexture.create_from_image(img)
+	logo.pixel_size = tall / img.get_height()
+	var x3 := Vector3(d.x, 0.0, -d.y)
+	logo.transform = Transform3D(Basis(x3, Vector3.UP, x3.cross(Vector3.UP)),
+		_p(a + d * (s0 + s1) * 0.5 + out * 0.15, y0 + tall * 0.5))
+	shop.add_child(logo)
 
 
 func _shop_fittings(fp: PackedVector2Array, inner: PackedVector2Array, doors: Node3D) -> void:
@@ -1052,17 +1108,18 @@ func _goods(o: Vector2, a: Vector2, s0: float, s1: float, c0: float, c1: float, 
 ## Shelving against a wall: along `a` from `o` (s0..s1), the shelves to the
 ## left of the line, back panel on it.
 ## Without `stocked` the shelves are left empty (for world/duet_stand.gd to fill).
-func _shelf_run(o: Vector2, a: Vector2, s0: float, s1: float, depth := SHELF_DEPTH, levels := 4, stocked := true) -> void:
+func _shelf_run(o: Vector2, a: Vector2, s0: float, s1: float, depth := SHELF_DEPTH, levels := 4, stocked := true,
+		height := SHELF_HEIGHT) -> void:
 	if s1 - s0 < 0.6:
 		return
 	var mm := {"sides": "metal", "top": "metal", "bottom": ""}
 	_obox({"sides": "dark", "top": "dark", "bottom": ""}, o, a, s0, s1, 0.04, depth - 0.02, 0.0, 0.12)
-	_obox(mm, o, a, s0, s1, 0.0, 0.04, 0.0, SHELF_HEIGHT)
-	var step := (SHELF_HEIGHT - 0.35) / levels
+	_obox(mm, o, a, s0, s1, 0.0, 0.04, 0.0, height)
+	var step := (height - 0.35) / levels
 	var bays := maxi(1, roundi((s1 - s0) / 1.0))
 	for k in bays + 1:
 		var s := lerpf(s0, s1, float(k) / bays)
-		_obox(mm, o, a, s - 0.015, s + 0.015, 0.0, depth, 0.0, SHELF_HEIGHT)
+		_obox(mm, o, a, s - 0.015, s + 0.015, 0.0, depth, 0.0, height)
 	if stocked:
 		_goods(o, a, s0, s1, 0.06, depth, 0.12, step - 0.06)
 	for k in range(1, levels + 1):
@@ -1070,7 +1127,7 @@ func _shelf_run(o: Vector2, a: Vector2, s0: float, s1: float, depth := SHELF_DEP
 		_obox(mm, o, a, s0, s1, 0.04, depth, y - 0.025, y)
 		if k < levels and stocked:
 			_goods(o, a, s0, s1, 0.06, depth, y, step - 0.06)
-	_solid(o, a, s0, s1, 0.0, depth, 0.0, SHELF_HEIGHT)
+	_solid(o, a, s0, s1, 0.0, depth, 0.0, height)
 
 
 ## The Duet iced coffee section on the store room's front wall, facing you as
@@ -1087,16 +1144,18 @@ func _duet_section(shop: Node3D, inner: PackedVector2Array) -> void:
 	var length := u1 - u0
 	var o := Vector2(u1, v)
 	var a := Vector2.LEFT
-	var levels := 4
-	_shelf_run(o, a, 0.0, length, SHELF_DEPTH, levels, false)
-	var step := (SHELF_HEIGHT - 0.35) / levels
-	_obox({"sides": "duet", "top": "", "bottom": ""}, o, a, 0.0, length, 0.04, 0.045, 0.12, SHELF_HEIGHT)
+	var levels := DUET_LEVELS
+	# The same gap between shelves as the 4-shelf units, so a lower unit.
+	var step := (SHELF_HEIGHT - 0.35) / 4
+	var height := 0.35 + step * levels
+	_shelf_run(o, a, 0.0, length, SHELF_DEPTH, levels, false, height)
+	_obox({"sides": "duet", "top": "", "bottom": ""}, o, a, 0.0, length, 0.04, 0.045, 0.12, height)
 	for k in range(1, levels + 1):
 		var y := 0.12 + step * k - 0.025
 		_obox({"sides": "metal", "top": "", "bottom": "chill"}, o, a, 0.0, length, SHELF_DEPTH - 0.08, SHELF_DEPTH - 0.04, y - 0.015, y)
 
 	# The board over the shelves, brown with a red edge.
-	var y0 := SHELF_HEIGHT + 0.15
+	var y0 := height + 0.15
 	var y1 := y0 + 0.75
 	_obox({"sides": "duet", "top": "duet", "bottom": "duet"}, o, a, 0.0, length, 0.0, 0.08, y0, y1)
 	_obox({"sides": "duet_red", "top": "duet_red", "bottom": "duet_red"}, o, a, 0.0, length, 0.08, 0.09, y0, y0 + 0.07)
@@ -1134,6 +1193,44 @@ func _duet_section(shop: Node3D, inner: PackedVector2Array) -> void:
 	stand.set("levels", heights)
 	stand.set("price", DUET_PRICE)
 	shop.add_child(stand)
+
+
+## The cashier behind the last till and the cigarette rack behind her: a
+## cabinet of shelves full of packs of Ararat (props/cigarette.gd), their
+## fronts to the till.
+func _cashier(shop: Node3D) -> void:
+	var u0 := RACK_U
+	var u1 := RACK_U + RACK_DEPTH
+	var v0 := RACK_V.x
+	var v1 := RACK_V.y
+	var wood := {"sides": "wood", "top": "wood", "bottom": "wood"}
+	var dm := {"sides": "dark", "top": "dark", "bottom": ""}
+	_abox(dm, u1 - 0.03, u1, v0, v1, 0.0, RACK_HEIGHT)
+	_abox(wood, u0, u1, v0 - 0.03, v0, 0.0, RACK_HEIGHT)
+	_abox(wood, u0, u1, v1, v1 + 0.03, 0.0, RACK_HEIGHT)
+	_abox(wood, u0, u1, v0 - 0.03, v1 + 0.03, RACK_HEIGHT - 0.04, RACK_HEIGHT)
+	_abox(wood, u0, u1, v0, v1, 0.0, RACK_SHELVES[0] - 0.02)
+	for y: float in RACK_SHELVES:
+		_abox(wood, u0, u1 - 0.03, v0, v1, y - 0.02, y)
+	_solid(Vector2.ZERO, Vector2.RIGHT, u0, u1, v0 - 0.03, v1 + 0.03, 0.0, RACK_HEIGHT)
+
+	# The packs (world/cigarette_rack.gd fills the shelves when the game
+	# starts): its +X along the shelves (-v), +Z out of their front (-u).
+	var rack := Node3D.new()
+	rack.name = "CigaretteRack"
+	rack.set_script(load("res://world/cigarette_rack.gd"))
+	rack.transform = Transform3D(Basis(Vector3.UP, -PI * 0.5), _p(Vector2(u0, v1), 0.0))
+	rack.set("length", v1 - v0)
+	rack.set("shelves", PackedFloat32Array(RACK_SHELVES))
+	shop.add_child(rack)
+
+	var cashier := Node3D.new()
+	cashier.name = "Cashier"
+	cashier.set_script(load("res://world/cashier.gd"))
+	# Facing the customers' side of the till (-u).
+	cashier.transform = Transform3D(Basis(Vector3.UP, -PI * 0.5), _p(CASHIER, 0.0))
+	shop.add_child(cashier)
+	print("Cashier at u %.1f, v %.1f" % [CASHIER.x, CASHIER.y])
 
 
 ## A double-sided run of shelves down the shop, centred on u = uc from v0 to v1.

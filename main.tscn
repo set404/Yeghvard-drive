@@ -137,7 +137,7 @@ fuel = 12.0
 engine_layer_rpms = []
 
 [node name="Car4" parent="." unique_id=669761671 instance=ExtResource("8")]
-transform = Transform3D(0.7602329, 0, -0.64676505, 0, 1, 0, 0.6482097, 0, 0.7614456, -815.60516, -20.148405, 1556.3846)
+transform = Transform3D(0.7602329, 0, -0.64676505, 0, 1, 0, 0.6482097, 0, 0.7614456, -760.98364, -18.486435, 1753.7594)
 player_controlled = false
 paint_color = Color(0.05, 0.17, 0.52, 1)
 starter_seconds = 1.1
@@ -165,6 +165,7 @@ target = NodePath("../Car")
 script = ExtResource("16")
 
 [node name="HUD" type="CanvasLayer" parent="." unique_id=2093880468]
+visible = false
 
 [node name="Money" type="Label" parent="HUD" unique_id=730155924]
 anchors_preset = 3
@@ -209,7 +210,7 @@ offset_bottom = 116.0
 text = "W/S or arrows: drive   A/D: steer   Space: handbrake   R: reset car   M: zoom map   K: camera   F: get in / out   E: start / stop engine   G: gate   P: park
 On foot: W/A/S/D walk   Shift: run   Space: jump
 Z / C / X: left, right, hazard signals   L: lights (park, low, high)   T: refuel at a pump (you pay as it fills)
-Mouse: look around (click to grab)   Wheel: zoom (on foot: Ctrl+wheel; wheel picks the item in your hand)   E on foot: buy / drink   Q / C: smoke break standing / squatting   Esc: pause
+Mouse: look around (click to grab)   Wheel: zoom (on foot: Ctrl+wheel; wheel picks the item in your hand)   E on foot: buy / use the item in your hand (drink, smoke)   C: squat on a smoke break   Esc: pause
 1-5: jump into a car (testing): 1 E50   2 E55   3 Volga   4 Land Cruiser   5 Compass   =: +10 000 AMD (testing)"
 
 [node name="Power" type="ProgressBar" parent="HUD" unique_id=123988569]

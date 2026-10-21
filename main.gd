@@ -61,6 +61,8 @@ func _ready() -> void:
 	inventory.name = "Inventory"
 	add_child(inventory)
 	inventory.changed.connect(_hold_selected)
+	player.drink_finished.connect(_on_drink_finished)
+	player.smoke_finished.connect(_on_smoke_finished)
 	_hold_selected()
 	var bar := preload("res://hud/inventory_bar.gd").new()
 	bar.name = "Inventory"
@@ -106,23 +108,31 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		wallet.earn(10000.0)
 		wallet.save()
 		return
+	# For testing: - gives you a pack of 20 cigarettes (the cashier sells them, world/cashier.gd).
+	if key.physical_keycode == KEY_MINUS:
+		inventory.add("cigarette", 20)
+		return
 	# On foot, E takes a Duet coffee off the shelf in front of you, or uses
-	# (drinks) the item in your hand; in a car E is the starter, see car.gd.
+	# the item in your hand: a sip of a drink (the last sip finishes it, see
+	# _on_drink_finished); a cigarette, a smoke break (player.gd), with the
+	# coffee too when the cigarette + coffee slot is chosen; E again ends the
+	# break. In a car E is the starter, see car.gd.
 	if key.physical_keycode == KEY_E and on_foot:
 		var stand := _stand_in_reach()
-		if stand:
+		if stand and not player.on_break:
 			_buy_from(stand)
-		elif inventory.selected_id() != "":
-			inventory.remove_selected()
-		return
-	# On foot with a drink in hand, Q starts a smoke break standing and C one
-	# squatting (player.gd); the other key switches, the same key again ends it.
-	if (key.physical_keycode == KEY_Q or key.physical_keycode == KEY_C) and on_foot:
-		var squat := key.physical_keycode == KEY_C
-		if player.on_break and player.break_squat == squat:
+		elif player.on_break:
 			player.end_break()
-		else:
-			player.start_break(squat)
+		elif not player.is_busy():
+			_use_selected(false)
+		return
+	# C: on a smoke break, squat or stand up; with a cigarette in hand, a smoke
+	# break squatting.
+	if key.physical_keycode == KEY_C and on_foot:
+		if player.on_break:
+			player.start_break(not player.break_squat)
+		elif not player.is_busy() and inventory.selected_use() in ["smoke", "smoke_drink"]:
+			_use_selected(true)
 		return
 	# F gets you in or out.
 	if key.physical_keycode != KEY_F:
@@ -345,7 +355,8 @@ func _stand_in_reach() -> Node3D:
 	return best
 
 
-## Pays for a cup and puts it in your inventory.
+## Pays for what the stand sells (a cup of Duet, a pack of cigarettes from the
+## cashier) and puts it in your inventory: `amount` of its item, if it says.
 func _buy_from(stand: Node3D) -> void:
 	if inventory.is_full_for(stand.item_id) or not wallet.can_afford(stand.price):
 		return
@@ -353,12 +364,52 @@ func _buy_from(stand: Node3D) -> void:
 		return
 	wallet.spend(stand.price)
 	wallet.save()
-	inventory.add(stand.item_id)
+	var amount = stand.get("amount")
+	inventory.add(stand.item_id, amount if amount != null else 1)
+
+
+## Uses the item in your hand (E, or C for a smoke break squatting): it leaves
+## the inventory as he starts. A coffee he drinks (player.drink()), a cigarette
+## he smokes, with cigarette + coffee both, on a smoke break (player.start_break()).
+## Either lasts up to player.ACTION_TIME; what he holds meanwhile stays in his
+## hand till he is done (_hold_selected waits).
+func _use_selected(squat: bool) -> void:
+	var id := inventory.selected_id()
+	match inventory.selected_use():
+		"drink":
+			if player.drink():
+				inventory.use_one(id)
+		"smoke":
+			if player.start_break(squat):
+				inventory.use_one(id)
+		"smoke_drink":
+			if player.start_break(squat):
+				inventory.use_one(Inventory.COMBOS[id]["smoke"])
+				inventory.use_one(Inventory.COMBOS[id]["drink"])
+
+
+## The drink is over: the cup in his hand is drunk.
+func _on_drink_finished() -> void:
+	player.drop_held()
+	_hold_selected()
+
+
+## A smoke break over: the cigarette is smoked, and the drink he had with it drunk.
+func _on_smoke_finished(with_drink: bool) -> void:
+	if with_drink:
+		player.drop_held()
+	_hold_selected()
 
 
 ## Shows the selected item in your hand (it hides with you while you drive).
 func _hold_selected() -> void:
-	var id := inventory.selected_id()
+	# Not while he drinks or smokes: what he holds then is already used up and
+	# goes when he is done (_on_drink_finished, _on_smoke_finished).
+	if player.is_busy():
+		return
+	# A cigarette stays in its pack till a smoke break; with cigarette +
+	# coffee chosen, the coffee is in your hand.
+	var id := inventory.held_id()
 	if player.held and player.held.get_meta("item_id", "") == id:
 		return
 	player.drop_held()
@@ -383,12 +434,13 @@ func _unhandled_input(event: InputEvent) -> void:
 func _shop_hints(hints: PackedStringArray) -> void:
 	var stand := _stand_in_reach()
 	var id := inventory.selected_id()
+	var use := inventory.selected_use()
 	if player.on_break:
-		hints.append("Smoke break: %s, %s or walk to stop" % ["Q to stand up" if player.break_squat else "C to squat", "C" if player.break_squat else "Q"])
-	elif player.can_take_break() and stand == null:
-		hints.append("Press Q for a smoke break, C to squat")
+		hints.append("Smoke break: C to %s, E or walk to stop" % ["stand up" if player.break_squat else "squat"])
+	elif use in ["smoke", "smoke_drink"] and player.can_take_break() and not player.is_busy() and stand == null:
+		hints.append("Press E to %s, C to squat" % ["smoke" if use == "smoke" else "smoke with your coffee"])
 	if stand == null:
-		if id != "" and Inventory.ITEMS[id]["use"] == "drink":
+		if use == "drink" and not player.is_busy():
 			hints.append("Press E to drink your %s" % Inventory.item_name(id))
 		return
 	var price := Wallet.format(stand.price)
@@ -399,7 +451,8 @@ func _shop_hints(hints: PackedStringArray) -> void:
 	elif not wallet.can_afford(stand.price):
 		hints.append("Not enough money for a %s  (%s)" % [stand.item_name, price])
 	else:
-		hints.append("Press E to grab a %s  (%s)" % [stand.item_name, price])
+		var verb = stand.get("verb")
+		hints.append("Press E to %s a %s  (%s)" % [verb if verb != null else "grab", stand.item_name, price])
 
 
 ## Whether the car you are in stands at a fuel pump (see tools/build_gas_station.gd).

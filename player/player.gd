@@ -78,12 +78,33 @@ var _door_shift := Vector3.ZERO
 var _door_open := 0.0
 ## What you carry in your right hand (a Duet coffee from the supermarket), or null.
 var held: Node3D
-## On a smoke break: standing still, smoking with his right hand and drinking
-## what he carries from his left (the character's smoke_drink animation).
+## The longest a drink (sips, one after another) or a smoke break lasts, in
+## seconds, if nothing stops it sooner; and the pause between sips.
+const ACTION_TIME := 10.0
+const HoldPose := preload("res://player/hold_pose.gd")
+const SIP_PAUSE := 1.0
+## Emitted when a drink is over: the cup is drunk (main.gd takes it away; it
+## left the inventory as the drink began).
+signal drink_finished
+## Emitted when a smoke break ends: the cigarette is smoked, and with
+## `with_drink` the drink in his other hand too (main.gd takes it away).
+signal smoke_finished(with_drink: bool)
+## On a smoke break: standing still, smoking with his right hand and, with
+## something to drink, drinking it from his left (the character's smoke_drink
+## animation); with nothing, his left arm rests.
 var on_break := false
 ## Squatting on the break (the character's smoke_drink_squat).
 var break_squat := false
 var _cigarette: Node3D
+## A smoke break to start once the cup is open (0 standing, 1 squatting), or -1.
+var _break_after_opening := -1
+## Seconds left of the drink (-1 when not drinking), and of the pause before the next sip.
+var _drink_left := -1.0
+var _sip_pause := 0.0
+## Seconds left of the smoke break, and seconds spent opening the cup for it
+## (they count towards ACTION_TIME).
+var _break_left := 0.0
+var _opening_time := 0.0
 
 ## Getting in and out play this much faster than they came from Mixamo (five
 ## or six seconds each).
@@ -112,6 +133,14 @@ func _ready() -> void:
 ## Shows the walker and gives it the keys, or hides it while you are in a car.
 func set_active(on: bool) -> void:
 	end_break()
+	if not on:
+		# Driving off: what he was drinking, or opening for a smoke, is done with.
+		if _drink_left >= 0.0:
+			_drink_left = -1.0
+			drink_finished.emit.call_deferred()
+		if _break_after_opening >= 0:
+			_break_after_opening = -1
+			smoke_finished.emit.call_deferred(held != null)
 	player_controlled = on
 	visible = on
 	_shape.disabled = not on
@@ -174,15 +203,80 @@ func _physics_process(delta: float) -> void:
 	_animate(delta)
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	# The character's hold pose (player/hold_pose.gd) places what you carry itself.
 	if held and _hold_pose() == null:
 		_place_held()
+	# A smoke break ends by itself after ACTION_TIME (opening the cup included).
+	if _break_after_opening >= 0:
+		_opening_time += delta
+	if on_break:
+		_break_left -= delta
+		if _break_left <= 0.0:
+			end_break()
+	# Drinking: sips one after another, a pause between, till ACTION_TIME is up.
+	if _drink_left >= 0.0:
+		_drink_left -= delta
+		var pose := _hold_pose()
+		if pose == null or held == null:
+			_finish_drink()
+		elif not pose.is_sipping():
+			_sip_pause -= delta
+			if _sip_pause <= 0.0:
+				if _drink_left > HoldPose.SIP_UP + HoldPose.SIP_HOLD + HoldPose.SIP_DOWN and pose.sip():
+					pass
+				else:
+					_finish_drink()
 
 
-## Whether you can start a smoke break now: on the ground, with a drink in hand.
+## Whether you can start a smoke break now: on the ground (a drink in hand is
+## for drinking along with it, not needed).
 func can_take_break() -> bool:
-	return not on_break and held != null and is_on_floor() and _anim != null and _anim.has_animation("smoke_drink")
+	return not on_break and is_on_floor() and _anim != null and _anim.has_animation("smoke_drink")
+
+
+## Drinks what you carry: (opening it first if its lid is shut) sips, one
+## after another, for up to ACTION_TIME, then drink_finished: it is drunk.
+## False when he cannot now (busy, or nothing in his hand).
+func drink() -> bool:
+	if held == null or is_busy() or not is_on_floor():
+		return false
+	var pose := _hold_pose()
+	if pose == null or not pose.sip():
+		return false
+	_drink_left = ACTION_TIME
+	_sip_pause = 0.0
+	return true
+
+
+func _finish_drink() -> void:
+	_drink_left = -1.0
+	drink_finished.emit()
+
+
+## Whether he is drinking, opening his drink or on a smoke break (main.gd
+## leaves what is in his hand alone till he is done).
+func is_busy() -> bool:
+	return on_break or _drink_left >= 0.0 or _break_after_opening >= 0 or is_sipping()
+
+
+func is_sipping() -> bool:
+	var pose := _hold_pose()
+	return pose != null and pose.is_sipping()
+
+
+## The cup is open: the smoke break asked for meanwhile starts.
+func _on_lid_opened() -> void:
+	var squat := _break_after_opening == 1
+	var wanted := _break_after_opening >= 0
+	_break_after_opening = -1
+	# Already paid for: if the break cannot start now, it is over.
+	if wanted and not start_break(squat):
+		smoke_finished.emit(held != null)
+
+
+func _on_sipped() -> void:
+	_sip_pause = SIP_PAUSE
 
 
 ## The animation for the smoke break: standing, or squatting when the character has that.
@@ -191,26 +285,41 @@ func _break_animation() -> String:
 
 
 ## Starts the smoke break, standing or squatting (or switches between them on
-## one): the drink goes to his left hand, a cigarette appears in his right
-## (player/break_props.gd places them).
-func start_break(squat := false) -> void:
+## one): a cigarette appears in his right hand and the drink, if he has one,
+## goes to his left (player/break_props.gd places them). It lasts up to
+## ACTION_TIME. True if it starts (or will, once the cup is open).
+func start_break(squat := false) -> bool:
 	if on_break:
 		break_squat = squat
-		return
-	if not can_take_break():
-		return
+		return true
+	if not can_take_break() or _drink_left >= 0.0 or _break_after_opening >= 0 or is_sipping():
+		return false
+	# A sealed cup is opened first (player/hold_pose.gd), then the break starts.
+	var opening := _hold_pose()
+	if held and opening and opening.is_sealed():
+		_break_after_opening = 1 if squat else 0
+		_opening_time = 0.0
+		opening.open_lid()
+		return true
 	on_break = true
 	break_squat = squat
+	_break_left = ACTION_TIME - _opening_time
+	_opening_time = 0.0
 	var pose := _hold_pose()
 	if pose:
 		pose.item = null
-	_cigarette = _make_cigarette()
+	_cigarette = preload("res://props/cigarette.gd").make(true)
 	_cigarette.top_level = true
 	add_child(_cigarette)
 	var props := _break_props()
+	if held:
+		props.hand_over(held.global_transform)
 	props.cup = held
-	props.cup_scale = held.get_meta("item_scale", 1.0)
+	props.cup_scale = held.get_meta("item_scale", 1.0) if held else 1.0
 	props.cigarette = _cigarette
+	props.rest_left = held == null
+	props.rest_animation = _anim.get_animation("idle") if _anim.has_animation("idle") else null
+	return true
 
 
 ## Ends the smoke break: the cigarette goes, the drink goes back to his right hand.
@@ -218,9 +327,11 @@ func end_break() -> void:
 	if not on_break:
 		return
 	on_break = false
+	smoke_finished.emit.call_deferred(held != null)
 	var props := _break_props()
 	props.cup = null
 	props.cigarette = null
+	props.rest_left = false
 	if _cigarette:
 		_cigarette.queue_free()
 		_cigarette = null
@@ -240,71 +351,6 @@ func _break_props() -> SkeletonModifier3D:
 	return props
 
 
-## A lit cigarette, 8.5 cm long: its filter end at the origin, the rest along +Y,
-## a glowing tip and a thin trail of smoke.
-static func _make_cigarette() -> Node3D:
-	var cig := Node3D.new()
-	cig.name = "Cigarette"
-	var parts := [[0.0, 0.022, Color(0.85, 0.55, 0.25), 0.0], [0.022, 0.08, Color(0.95, 0.95, 0.93), 0.0],
-		[0.08, 0.085, Color(1.0, 0.35, 0.05), 3.0]]
-	for p: Array in parts:
-		var mesh := CylinderMesh.new()
-		mesh.top_radius = 0.0042
-		mesh.bottom_radius = 0.0042
-		mesh.height = p[1] - p[0]
-		mesh.radial_segments = 8
-		mesh.rings = 1
-		var mat := StandardMaterial3D.new()
-		mat.albedo_color = p[2]
-		mat.roughness = 0.8
-		if p[3] > 0.0:
-			mat.emission_enabled = true
-			mat.emission = p[2]
-			mat.emission_energy_multiplier = p[3]
-		mesh.material = mat
-		var mi := MeshInstance3D.new()
-		mi.mesh = mesh
-		mi.position.y = (p[0] + p[1]) * 0.5
-		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		cig.add_child(mi)
-	var smoke := CPUParticles3D.new()
-	smoke.name = "Smoke"
-	smoke.position.y = 0.085
-	smoke.amount = 24
-	smoke.lifetime = 2.2
-	smoke.local_coords = false
-	smoke.direction = Vector3.UP
-	smoke.spread = 12.0
-	smoke.gravity = Vector3(0.0, 0.18, 0.0)
-	smoke.initial_velocity_min = 0.04
-	smoke.initial_velocity_max = 0.08
-	smoke.scale_amount_min = 0.6
-	smoke.scale_amount_max = 1.0
-	var grow := Curve.new()
-	grow.max_value = 3.0
-	grow.add_point(Vector2(0.0, 0.2))
-	grow.add_point(Vector2(1.0, 3.0))
-	smoke.scale_amount_curve = grow
-	var fade := Gradient.new()
-	fade.set_color(0, Color(0.85, 0.85, 0.85, 0.16))
-	fade.set_color(1, Color(0.85, 0.85, 0.85, 0.0))
-	smoke.color_ramp = fade
-	var puff := SphereMesh.new()
-	puff.radius = 0.012
-	puff.height = 0.024
-	puff.radial_segments = 8
-	puff.rings = 4
-	var puff_mat := StandardMaterial3D.new()
-	puff_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	puff_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	puff_mat.vertex_color_use_as_albedo = true
-	puff_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-	puff.material = puff_mat
-	smoke.mesh = puff
-	cig.add_child(smoke)
-	return cig
-
-
 ## Puts `item` in your right hand (it hides with you while you drive).
 func hold(item: Node3D) -> void:
 	end_break()
@@ -322,6 +368,7 @@ func hold(item: Node3D) -> void:
 ## Lets go of what you carry; it is gone.
 func drop_held() -> void:
 	end_break()
+	_break_after_opening = -1
 	if held:
 		held.queue_free()
 		held = null
@@ -341,6 +388,8 @@ func _hold_pose(make := false) -> SkeletonModifier3D:
 		pose = preload("res://player/hold_pose.gd").new()
 		pose.name = "HoldPose"
 		skeleton.add_child(pose)
+		pose.sipped.connect(_on_sipped)
+		pose.lid_opened.connect(_on_lid_opened)
 	return pose
 
 

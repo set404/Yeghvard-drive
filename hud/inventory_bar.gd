@@ -2,12 +2,14 @@ extends Control
 ## The inventory (game/inventory.gd) in the top right corner of the HUD: a row
 ## of slots, each with a picture of its item and how many you have, the one in
 ## your hand framed in gold and named underneath. Hidden while it is empty.
+## The first slot is your empty hand (game/inventory.gd), shown as a hand.
 ## main.gd adds it to the HUD and sets `inventory`.
 
 const SLOT := 68.0
 const GAP := 6.0
 const GOLD := Color(1, 0.85, 0.45)
 const ICON_SIZE := 128
+const EMPTY_HAND_ICON := "res://hud/empty_hand.png"
 
 var inventory: Inventory:
 	set(value):
@@ -24,7 +26,7 @@ var _icons := {}
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	offset_left = -SLOT * Inventory.MAX_SLOTS - 24.0
+	offset_left = -(SLOT + GAP) * (Inventory.MAX_SLOTS + Inventory.COMBOS.size() + 1) - 24.0
 	offset_right = -24.0
 	offset_top = 20.0
 	offset_bottom = 20.0 + SLOT + 40.0
@@ -53,12 +55,14 @@ func _refresh() -> void:
 		return
 	for child in _row.get_children():
 		child.queue_free()
-	visible = not inventory.slots.is_empty()
-	for k in inventory.slots.size():
-		var slot: Dictionary = inventory.slots[k]
+	# The stacks, then a slot for each pair you can use together (cigarette + coffee).
+	var all := inventory.entries()
+	visible = not all.is_empty()
+	for k in all.size():
+		var slot: Dictionary = all[k]
 		_row.add_child(_slot(slot["id"], slot["count"], k == inventory.selected))
 	var id := inventory.selected_id()
-	_name.text = "%s  (wheel to switch)" % Inventory.item_name(id) if inventory.slots.size() > 1 else Inventory.item_name(id)
+	_name.text = "%s  (wheel to switch)" % Inventory.item_name(id) if all.size() > 1 else Inventory.item_name(id)
 
 
 func _slot(id: String, count: int, chosen: bool) -> Control:
@@ -96,13 +100,16 @@ func _slot(id: String, count: int, chosen: bool) -> Control:
 func _icon(id: String) -> Texture2D:
 	if _icons.has(id):
 		return _icons[id]
+	if id == Inventory.EMPTY_HAND:
+		_icons[id] = _empty_hand_icon()
+		return _icons[id]
 	var view := SubViewport.new()
 	view.size = Vector2i(ICON_SIZE, ICON_SIZE)
 	view.own_world_3d = true
 	view.transparent_bg = true
 	view.render_target_update_mode = SubViewport.UPDATE_ONCE
 	add_child(view)
-	var scene_path: String = Inventory.ITEMS[id]["scene"]
+	var scene_path: String = (Inventory.COMBOS[id] if Inventory.COMBOS.has(id) else Inventory.ITEMS[id])["scene"]
 	var model: Node3D = (load(scene_path) as PackedScene).instantiate()
 	view.add_child(model)
 	var box := AABB()
@@ -130,3 +137,11 @@ func _icon(id: String) -> Texture2D:
 	sun.look_at_from_position(centre + Vector3(1.0, 2.0, 2.0), centre)
 	_icons[id] = view.get_texture()
 	return _icons[id]
+
+
+static func _empty_hand_icon() -> Texture2D:
+	if ResourceLoader.exists(EMPTY_HAND_ICON):
+		return load(EMPTY_HAND_ICON)
+	# Not imported yet (before the editor has seen it).
+	var img := Image.load_from_file(EMPTY_HAND_ICON)
+	return ImageTexture.create_from_image(img) if img and not img.is_empty() else null
