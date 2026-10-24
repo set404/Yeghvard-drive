@@ -17,6 +17,9 @@ const FUEL_EMPTY := Color(0.9, 0.15, 0.1)
 @export var fuel_price := 490.0
 ## The car you are driving when the game starts. Empty means the node named "Car".
 @export var start_car: VehicleBody3D
+## Start on foot outside the house's front door (the car above parked nearby)
+## rather than at the wheel.
+@export var start_at_house := true
 
 ## The car being driven, or the last one you drove while you are on foot.
 ## Every car is in the "cars" group; the others are parked.
@@ -33,10 +36,18 @@ const FUEL_EMPTY := Color(0.9, 0.15, 0.1)
 @onready var lights_label: Label = $HUD/Lights
 @onready var prompt_label: Label = $HUD/Prompt
 @onready var money_label: Label = $HUD/Money
+## The key help in the top left corner; I shows or hides it.
+@onready var help_label: Label = $HUD/Help
+## Whether the key help is on screen when the game starts.
+@export var show_help_at_start := false
+## Seconds of play left to remind you that I shows the key help.
+var _help_hint_left := 8.0
 ## Your money.
 @onready var wallet: Wallet = $Wallet
 ## What you carry; the selected item is in your hand (see game/inventory.gd).
 var inventory: Inventory
+## The story missions (game/mission_manager.gd); made in _ready.
+var missions: MissionManager
 ## Only cars built with lamps have this node. Null while on foot.
 var lamps: Node
 var on_foot := false
@@ -67,6 +78,7 @@ func _ready() -> void:
 	var bar := preload("res://hud/inventory_bar.gd").new()
 	bar.name = "Inventory"
 	$HUD.add_child(bar)
+	help_label.visible = show_help_at_start
 	bar.inventory = inventory
 	# The key help wraps short of the inventory in the top right corner.
 	var help := $HUD/Help as Label
@@ -82,9 +94,15 @@ func _ready() -> void:
 			_set_on_ground(other)
 		# The cars standing about are parked; the one you start in is ready to go.
 		other.parked = other != car
-	_drive(car, true)
+	if not (start_at_house and _start_at_house()):
+		_drive(car, true)
 	wallet.changed.connect(_show_money)
 	_show_money(wallet.balance)
+	# The story: one mission after another (game/mission_manager.gd, res://missions/).
+	missions = MissionManager.new()
+	missions.name = "Missions"
+	missions.main = self
+	add_child(missions)
 
 
 func _show_money(balance: float) -> void:
@@ -93,7 +111,19 @@ func _show_money(balance: float) -> void:
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	var key := event as InputEventKey
-	if key == null or not key.pressed or key.echo or _door_time > 0.0:
+	if key == null or not key.pressed or key.echo:
+		return
+	# I shows or hides the key help in the top left corner.
+	if key.physical_keycode == KEY_I:
+		help_label.visible = not help_label.visible
+		_help_hint_left = 0.0
+		return
+	if _door_time > 0.0:
+		return
+	# For testing: 0 forgets the missions done and starts again from the first.
+	if key.physical_keycode == KEY_0:
+		if missions:
+			missions.reset()
 		return
 	# For testing: 1, 2, 3... put you straight into that car, wherever it is,
 	# in the order the cars come in this scene.
@@ -188,6 +218,60 @@ func _drive(next: VehicleBody3D, jump_camera := false) -> void:
 	fuel_bar.visible = true
 	minimap.target = car
 	camera.follow(car, jump_camera)
+
+
+## Stands you just outside the front door, facing the start car, with every car
+## parked. False when there is no house.
+func _start_at_house() -> bool:
+	var spot: Variant = front_door_outside(1.8)
+	if not spot is Vector3:
+		return false
+	car.parked = true
+	car.player_controlled = false
+	var facing: Vector3 = car.global_position - spot
+	player.place(spot + Vector3.UP * 0.1, facing)
+	player.stand_up()
+	player.set_active(true)
+	on_foot = true
+	lamps = null
+	lights_label.visible = false
+	speed_label.visible = false
+	power_bar.visible = false
+	fuel_bar.visible = false
+	minimap.target = player
+	camera.follow(player, true)
+	return true
+
+
+## A point `distance` metres out from the middle of the house's front door
+## (tools/build_house.gd puts it in the side wall, facing the terrace), or null
+## with no house. Out is the side with no roof over it.
+func front_door_outside(distance := 1.5) -> Variant:
+	var door := get_node_or_null("House/Doors/FrontDoor") as Node3D
+	if door == null:
+		return null
+	var middle := door.to_global(Vector3(float(door.get("width")) * 0.5, 0.0, 0.0))
+	var out := -(get_node("House") as Node3D).global_basis.x
+	out = out.slide(Vector3.UP).normalized()
+	var spot := middle + out * distance
+	if _under_house(spot):
+		spot = middle - out * distance
+	return spot
+
+
+## Whether `at` (someone's feet) is inside the house: under its roof or upper floor.
+func inside_house(at: Vector3) -> bool:
+	return _under_house(at)
+
+
+func _under_house(at: Vector3) -> bool:
+	var body := get_node_or_null("House/Body") as CollisionObject3D
+	if body == null:
+		return false
+	var ray := PhysicsRayQueryParameters3D.create(at + Vector3.UP * 2.0, at + Vector3.UP * 15.0)
+	ray.exclude = [player.get_rid()]
+	var hit := get_world_3d().direct_space_state.intersect_ray(ray)
+	return not hit.is_empty() and hit["collider"] == body
 
 
 ## Leaves the car where it is and stands you beside it.
@@ -329,6 +413,14 @@ func _process(delta: float) -> void:
 			hints.append("In park: press P to drive")
 		if absf(car.forward_speed()) < 1.0:
 			hints.append("Press F to get out")
+	# Taxi work (game/taxi.gd): Y to start, and where to stop.
+	var taxi := get_node_or_null("Taxi")
+	if taxi:
+		taxi.add_hints(hints)
+	if _help_hint_left > 0.0:
+		_help_hint_left -= delta
+		if not help_label.visible:
+			hints.append("Press I for the controls")
 	for gate in get_tree().get_nodes_in_group("gates"):
 		if gate.is_nearest():
 			hints.append("Press G to %s the %s" % ["close" if gate.is_open else "open", gate.label])

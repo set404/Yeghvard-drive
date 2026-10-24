@@ -4,8 +4,17 @@ extends Node3D
 ## The figure is one of the scenes tools/build_npcs.gd makes in res://npc.
 ## Hit by a car (townsfolk.gd finds that), they are thrown down and lie there
 ## for corpse_seconds, then are gone.
+## At the end of their sidewalk they walk on to the next one on the same side
+## (over a side street); passing a crosswalk they sometimes cross the road on it
+## (townsfolk.gd links them). Before stepping on to the road they wait at the
+## kerb, looking about, till no car is near, then walk over a little quicker.
 
-enum State { WALK, STAND, TALK, DEAD }
+enum State { WALK, STAND, TALK, DEAD, CROSS }
+
+## Crossing is this much quicker than their walk.
+const CROSS_HURRY := 1.2
+## Seconds they wait at the kerb for the cars before giving up and turning back.
+const CROSS_PATIENCE := 20.0
 
 ## Seconds a body lies where it fell before it is taken away.
 const CORPSE_SECONDS := 25.0
@@ -35,6 +44,22 @@ var _yaw := 0.0
 ## Talking: seconds until the other one takes a turn, and whether it is our turn.
 var _turn_left := 0.0
 var _speaking := false
+## Crossing: the points they walk through (a crosswalk's ends, then the
+## right-hand lane of the sidewalk they come out on) and the next one, where
+## they step on to the road (at the kerb they look out for cars first) and the
+## stretch of road to look along, whether they have stepped off yet and how
+## long they have waited, and the sidewalk, place and way they walk on from there.
+var _cross_points := PackedVector3Array()
+var _cross_next := 0
+var _kerb := 0
+var _road_from := Vector3.ZERO
+var _road_to := Vector3.ZERO
+var _leg_from := Vector3.ZERO
+var _crossing := false
+var _waited := 0.0
+var _next_path := -1
+var _next_at := 0.0
+var _next_way := 1.0
 
 
 func setup(townsfolk: Node, figure: PackedScene, body_layer: int) -> void:
@@ -179,6 +204,8 @@ func _process(delta: float) -> void:
 				walk(path, along, direction if randf() < 0.6 else -direction)
 		State.TALK:
 			_talk(delta)
+		State.CROSS:
+			_cross(delta)
 		State.DEAD:
 			time_left -= delta
 			if time_left <= 0.0:
@@ -196,18 +223,112 @@ func _walk(delta: float) -> void:
 		return
 	_play("walk", 0.25)
 	_anim.speed_scale = speed / _walk_anim_speed
+	var before := along
 	along += direction * speed * delta
 	if along <= 0.0 or along >= length:
 		along = clampf(along, 0.0, length)
+		# The end of the sidewalk: usually on to the next one, across the road.
+		if randf() < _townsfolk.end_cross_chance and _try_cross(_townsfolk.links_at_end(path, along)):
+			return
 		direction = -direction
 		stand(randf_range(3.0, 8.0))
 		_anim.speed_scale = 1.0
 		return
 	_place(false)
+	# Passing a crosswalk: now and then over to the other side; where another
+	# sidewalk joins, now and then on to it.
+	for link: Dictionary in _townsfolk.links_passed(path, before, along):
+		var chance: float = _townsfolk.crosswalk_chance if link["crosswalk"] else _townsfolk.turn_chance
+		if randf() < chance and _try_cross([link]):
+			return
 	time_left -= delta
 	if time_left <= 0.0:
 		_anim.speed_scale = 1.0
 		stand(randf_range(5.0, 14.0))
+
+
+## Sets off across one of these links (townsfolk.gd) whose way is clear;
+## false if there is none.
+func _try_cross(links: Array) -> bool:
+	var open := links.filter(func(l: Dictionary) -> bool: return _townsfolk.link_ok(l, path))
+	if open.is_empty():
+		return false
+	var link: Dictionary = open.pick_random()
+	_next_path = link["to_path"]
+	_next_at = link["to_at"]
+	# Out at an end of the next sidewalk, along it; in its middle, either way.
+	var length: float = _townsfolk.path_length(_next_path)
+	if _next_at < 1.5:
+		_next_way = 1.0
+	elif _next_at > length - 1.5:
+		_next_way = -1.0
+	else:
+		_next_way = 1.0 if randf() < 0.5 else -1.0
+	var where: Dictionary = _townsfolk.point_on(_next_path, _next_at)
+	var right: Vector3 = (where["forward"] * _next_way).cross(Vector3.UP).normalized()
+	var via: PackedVector3Array = link["via"]
+	_cross_points = via.duplicate()
+	_cross_points.append(where["position"] + right * where["width"] * 0.22)
+	_cross_next = 0
+	# Over a crosswalk the road is between its ends: first to the kerb, then
+	# look. Over a side street it starts where they stand.
+	if via.size() >= 2:
+		_kerb = 1
+		_road_from = via[0]
+		_road_to = via[via.size() - 1]
+	else:
+		_kerb = 0
+		_road_from = global_position
+		_road_to = _cross_points[0]
+	_leg_from = global_position
+	_crossing = false
+	_waited = 0.0
+	state = State.CROSS
+	_set_phone(false)
+	return true
+
+
+## To the kerb, there looking out for cars, then over the road.
+func _cross(delta: float) -> void:
+	var goal := _cross_points[_cross_next]
+	var to := goal - global_position
+	to.y = 0.0
+	if to.length() > 0.05:
+		_yaw = atan2(to.x, to.z)
+	if _cross_next == _kerb and not _crossing:
+		if _townsfolk.traffic_on(_road_from, _road_to):
+			_waited += delta
+			_anim.speed_scale = 1.0
+			_play("look" if _anim.has_animation("look") else "idle", 0.3)
+			if _waited > CROSS_PATIENCE:
+				# Too busy: back the way they came.
+				walk(path, along, -direction)
+			return
+		_crossing = true
+	if _townsfolk.blocked(self):
+		_anim.speed_scale = 1.0
+		_play("idle", 0.25)
+		return
+	# Up to the kerb at their own pace, over the road a little quicker.
+	var pace := speed * (CROSS_HURRY if _crossing else 1.0)
+	_play("walk", 0.25)
+	_anim.speed_scale = pace / _walk_anim_speed
+	var left := to.length()
+	var step := pace * delta
+	if left <= step:
+		global_position = goal
+		_cross_next += 1
+		_leg_from = goal
+		if _cross_next >= _cross_points.size():
+			walk(_next_path, _next_at, _next_way)
+		return
+	var p := global_position + to / left * step
+	# Down off the kerb and up the other: on the road, at the height of the
+	# line across where nothing is found.
+	var whole := Vector2(goal.x - _leg_from.x, goal.z - _leg_from.z).length()
+	var t := 1.0 - (left - step) / maxf(whole, 0.01)
+	p.y = _ground_below(p, lerpf(_leg_from.y, goal.y, clampf(t, 0.0, 1.0)))
+	global_position = p
 
 
 func _talk(delta: float) -> void:

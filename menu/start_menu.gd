@@ -1,6 +1,8 @@
 extends Node
 ## The title screen. Loads the world behind it with the game paused and a camera
-## slowly panning towards Ararat; Play hands control over to main.tscn.
+## slowly panning towards Ararat. Continue hands control over to main.tscn as
+## it was saved (money, inventory, missions); New game starts those over first
+## (asking, if there is a game to lose). Continue only shows with a saved game.
 ## In game, Esc brings the same menu back as a pause menu.
 
 const Settings := preload("res://menu/settings.gd")
@@ -12,6 +14,10 @@ const PAN_FROM := 175.0
 const PAN_TO := 215.0
 ## Seconds for one sweep across.
 const PAN_TIME := 40.0
+
+## A game has been played when these exist (the missions are saved a few
+## seconds into any game, the inventory once you pick something up).
+const SAVE_FILES: Array[String] = [MissionManager.SAVE_PATH, Inventory.SAVE_PATH]
 
 const CREAM := Color(1, 0.97, 0.9)
 const GOLD := Color(1, 0.85, 0.45)
@@ -29,6 +35,8 @@ var dim: ColorRect
 var subtitle: Label
 var controls: PanelContainer
 var options: PanelContainer
+## "Start a new game?", when there is a saved one.
+var confirm_new: PanelContainer
 ## The title block, hidden while a panel is open to make room.
 var heading: Array[Control] = []
 ## Option name -> the control showing it, so a preset can refresh them all.
@@ -37,7 +45,7 @@ var title_font := SystemFont.new()
 var text_font := SystemFont.new()
 var pan_t := 0.0
 var started := false
-## True while Play is fading into the game, so Esc waits for it.
+## True while Continue or New game is fading into the game, so Esc waits for it.
 var fading := false
 var in_pause := false
 
@@ -89,7 +97,7 @@ func _input(event: InputEvent) -> void:
 	var key := event as InputEventKey
 	if key == null or not key.pressed or key.echo or key.physical_keycode != KEY_ESCAPE or fading:
 		return
-	if controls.visible or options.visible:
+	if controls.visible or options.visible or confirm_new.visible:
 		_show_panel(null)
 	elif in_pause:
 		_resume()
@@ -152,6 +160,33 @@ func _resume() -> void:
 	get_tree().paused = false
 
 
+## Whether there is a game to continue.
+static func has_save() -> bool:
+	for path in SAVE_FILES:
+		if FileAccess.file_exists(path):
+			return true
+	return false
+
+
+## New game: asks first when that would lose a saved one.
+func _new_game() -> void:
+	if has_save():
+		_show_panel(confirm_new)
+	else:
+		_start_new()
+
+
+## Money back to what you start with, nothing carried, the missions from the first; then play.
+func _start_new() -> void:
+	_show_panel(null)
+	main.wallet.reset()
+	main.inventory.reset()
+	var missions = main.get("missions")
+	if missions:
+		missions.reset(missions.start_delay)
+	_play()
+
+
 ## Back to the title screen: reloads the menu and the world from scratch.
 func _to_title() -> void:
 	settings.save_file()
@@ -165,6 +200,7 @@ func _show_panel(panel: PanelContainer) -> void:
 		settings.save_file()
 	controls.visible = panel == controls
 	options.visible = panel == options
+	confirm_new.visible = panel == confirm_new
 	for c in heading:
 		c.visible = panel == null
 	var list := pause_buttons if started else buttons
@@ -236,13 +272,18 @@ func _build_ui() -> void:
 
 	controls = _build_controls()
 	options = _build_options()
-	buttons = _button_list(column, [["Play", _play], ["Options", _show_panel.bind(options)],
-			["Controls", _show_panel.bind(controls)], ["Quit", get_tree().quit]])
+	confirm_new = _build_confirm_new()
+	var entries := [["New game", _new_game], ["Options", _show_panel.bind(options)],
+			["Controls", _show_panel.bind(controls)], ["Quit", get_tree().quit]]
+	if has_save():
+		entries.push_front(["Continue", _play])
+	buttons = _button_list(column, entries)
 	pause_buttons = _button_list(column, [["Resume", _resume], ["Options", _show_panel.bind(options)],
 			["Controls", _show_panel.bind(controls)], ["Main menu", _to_title], ["Quit", get_tree().quit]])
 	pause_buttons.visible = false
 	column.add_child(controls)
 	column.add_child(options)
+	column.add_child(confirm_new)
 
 	var fade := ColorRect.new()
 	fade.name = "Fade"
@@ -308,6 +349,18 @@ func _build_controls() -> PanelContainer:
 			continue
 		for entry in line.split("   ", false):
 			grid.add_child(_label(entry.strip_edges(), 17))
+	_add_back(panel)
+	return panel
+
+
+func _build_confirm_new() -> PanelContainer:
+	var panel := _panel("NEW GAME?")
+	var box := panel.get_node("Box")
+	var text := _label("Your money, what you carry and your missions start over.\nThe saved game is lost.", 19)
+	box.add_child(text)
+	var start := _button("Start new game", _start_new)
+	start.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	box.add_child(start)
 	_add_back(panel)
 	return panel
 

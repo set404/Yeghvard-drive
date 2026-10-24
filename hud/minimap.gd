@@ -9,8 +9,22 @@ const ARROW := [Vector2(0, -10), Vector2(7, 8), Vector2(0, 4), Vector2(-7, 8)]
 @export var map: Texture2D
 @export var view_radius := 250.0 ## metres from the centre to the edge
 @export var wide_radius := 1200.0
+## Where the current mission wants you (a Vector3), or null; set by
+## game/mission_manager.gd. Off the edge of the map it is pinned to the rim.
+var objective: Variant = null
+## Other places to mark, by name: {"at": Vector3, "color": Color}; see set_marker.
+var markers := {}
 
 var _wide := false
+
+
+## Marks `at` on the map in `color` (a diamond, pinned to the rim when off the
+## map) under `key`; null for `at` takes the mark away. The taxi (game/taxi.gd) uses it.
+func set_marker(key: String, at: Variant, color := Color(0.35, 0.9, 0.45)) -> void:
+	if at is Vector3:
+		markers[key] = {"at": at, "color": color}
+	else:
+		markers.erase(key)
 
 
 func _ready() -> void:
@@ -49,6 +63,11 @@ func _draw() -> void:
 		draw_circle(at, 5.0, Color.WHITE)
 		draw_circle(at, 3.5, Color(0.15, 0.4, 0.9))
 
+	for m: Dictionary in markers.values():
+		_draw_mark(centre, pos, px_per_m, m["at"], m["color"])
+	if objective is Vector3:
+		_draw_objective(centre, pos, px_per_m)
+
 	var nose := target.global_basis.z
 	draw_set_transform(centre, atan2(nose.x, -nose.z))
 	draw_colored_polygon(PackedVector2Array(ARROW), Color(0.86, 0.12, 0.10))
@@ -59,3 +78,31 @@ func _draw() -> void:
 	draw_string_outline(font, Vector2(size.x * 0.5 - 5, 18), "N", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, 4, Color.WHITE)
 	draw_string(font, Vector2(size.x * 0.5 - 5, 18), "N", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color(0.15, 0.15, 0.15))
 	draw_rect(Rect2(Vector2.ONE, size - Vector2.ONE * 2.0), Color(0.1, 0.1, 0.1, 0.9), false, 2.0)
+
+
+## The mission marker: a gold diamond, or, when it is off the map, a gold
+## arrow on the rim pointing its way.
+func _draw_objective(centre: Vector2, pos: Vector2, px_per_m: float) -> void:
+	_draw_mark(centre, pos, px_per_m, objective, Color(1.0, 0.82, 0.3))
+
+
+## A diamond at `goal` in `gold`, or an arrow on the rim towards it.
+func _draw_mark(centre: Vector2, pos: Vector2, px_per_m: float, goal: Vector3, gold: Color) -> void:
+	var at := centre + (Vector2(goal.x, goal.z) - pos) * px_per_m
+	var inner := Rect2(Vector2.ONE * 12.0, size - Vector2.ONE * 24.0)
+	if inner.has_point(at):
+		var d := PackedVector2Array([at + Vector2(0, -8), at + Vector2(7, 0), at + Vector2(0, 8), at + Vector2(-7, 0)])
+		draw_colored_polygon(d, gold)
+		d.append(d[0])
+		draw_polyline(d, Color.BLACK, 1.5, true)
+		return
+	# Pinned where the line from the centre towards it leaves the inner square.
+	var dir := (at - centre).normalized()
+	var half := inner.size * 0.5
+	var t := minf(half.x / maxf(absf(dir.x), 0.001), half.y / maxf(absf(dir.y), 0.001))
+	var tip := centre + dir * t
+	var side := Vector2(-dir.y, dir.x)
+	var tri := PackedVector2Array([tip + dir * 6.0, tip - dir * 6.0 + side * 6.0, tip - dir * 6.0 - side * 6.0])
+	draw_colored_polygon(tri, gold)
+	tri.append(tri[0])
+	draw_polyline(tri, Color.BLACK, 1.5, true)

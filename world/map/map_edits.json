@@ -1,5 +1,30 @@
 {
-	"buildings": {},
+	"buildings": {
+		"Buildings/Buildings_D3/Building_568214288": {
+			"height": 6.6,
+			"id": 568214288,
+			"offset": [
+				0.0,
+				0.0
+			],
+			"plain": false,
+			"poly": [
+				-507.476,
+				702.955,
+				-488.93,
+				706.875,
+				-491.149,
+				717.246,
+				-509.685,
+				713.326
+			],
+			"removed": false,
+			"roof": "804233ff",
+			"tuff": false,
+			"wall": "d66c22",
+			"yaw": 0.0
+		}
+	},
 	"props": [
 		{
 			"key": "",

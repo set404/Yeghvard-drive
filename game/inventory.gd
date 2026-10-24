@@ -203,3 +203,32 @@ func _reselect(id: String) -> void:
 func _changed() -> void:
 	changed.emit()
 	save()
+
+
+## Empties it, as at the start of a new game.
+func reset() -> void:
+	slots.clear()
+	selected = -1
+	_changed()
+
+
+## Takes `amount` of `id` out of the inventory (handing things over), if you
+## have that many; returns whether it did.
+func take(id: String, amount := 1) -> bool:
+	if count_of(id) < amount:
+		return false
+	var before := selected_id()
+	var left := amount
+	for k in range(slots.size() - 1, -1, -1):
+		if left <= 0:
+			break
+		if slots[k]["id"] != id:
+			continue
+		var n := mini(left, int(slots[k]["count"]))
+		slots[k]["count"] -= n
+		left -= n
+		if slots[k]["count"] <= 0:
+			slots.remove_at(k)
+	_reselect(before)
+	_changed()
+	return true

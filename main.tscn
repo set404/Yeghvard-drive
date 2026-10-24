@@ -19,6 +19,8 @@
 [ext_resource type="Script" uid="uid://djli0m1af50kx" path="res://world/townsfolk.gd" id="17"]
 [ext_resource type="PackedScene" path="res://world/map_parts.scn" id="18"]
 [ext_resource type="Script" uid="uid://cf15qswjb81l6" path="res://world/map_editor.gd" id="19"]
+[ext_resource type="Script" uid="uid://d3p26x683yhgs" path="res://world/crosswalk.gd" id="20"]
+[ext_resource type="Script" uid="uid://cjghnbnfs0r26" path="res://game/taxi.gd" id="21"]
 
 [sub_resource type="ProceduralSkyMaterial" id="sky_mat"]
 sky_top_color = Color(0.18, 0.38, 0.72, 1)
@@ -76,7 +78,7 @@ corner_radius_bottom_left = 5
 
 [node name="Main" type="Node3D" unique_id=1615393304 node_paths=PackedStringArray("start_car")]
 script = ExtResource("1")
-start_car = NodePath("Car3")
+start_car = NodePath("Car")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=687212331]
 environment = SubResource("env")
@@ -103,6 +105,13 @@ transform = Transform3D(0.98546433, 0, 0.16988242, 0, 1, 0, -0.16988242, 0, 0.98
 [node name="Sidewalks" parent="." unique_id=1188525416 instance=ExtResource("14")]
 
 [node name="Supermarket" parent="." unique_id=1306596210 instance=ExtResource("15")]
+
+[node name="Crosswalks" type="Node3D" parent="." unique_id=1468203157]
+
+[node name="GasStation" type="Node3D" parent="Crosswalks" unique_id=902716544]
+transform = Transform3D(0.0764556, 0, 0.997073, 0, 1, 0, -0.997073, 0, 0.0764556, -815.5059, -19.879616, 1565.8075)
+script = ExtResource("20")
+length = 13.2
 
 [node name="Townsfolk" type="Node3D" parent="." unique_id=1520867731 node_paths=PackedStringArray("sidewalks", "player")]
 script = ExtResource("17")
@@ -135,6 +144,7 @@ starter_seconds = 2.2
 start_fail_chance = 0.5
 fuel = 12.0
 engine_layer_rpms = []
+metadata/taxi = true
 
 [node name="Car4" parent="." unique_id=669761671 instance=ExtResource("8")]
 transform = Transform3D(0.7602329, 0, -0.64676505, 0, 1, 0, 0.6482097, 0, 0.7614456, -760.98364, -18.486435, 1753.7594)
@@ -160,6 +170,19 @@ fov = 65.0
 far = 20000.0
 script = ExtResource("4")
 target = NodePath("../Car")
+
+[node name="Taxi" type="Node" parent="." unique_id=1377260981]
+script = ExtResource("21")
+
+[node name="TaxiStops" type="Node3D" parent="." unique_id=1092588317]
+
+[node name="Supermarket" type="Marker3D" parent="TaxiStops" unique_id=530918264 groups=["taxi_stops"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -766, -19, 1744)
+metadata/place = "the supermarket"
+
+[node name="GasStation" type="Marker3D" parent="TaxiStops" unique_id=1655040729 groups=["taxi_stops"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -835.42, -19.39, 1624.76)
+metadata/place = "the gas station"
 
 [node name="Wallet" type="Node" parent="." unique_id=1844470213]
 script = ExtResource("16")
@@ -207,11 +230,11 @@ offset_left = 20.0
 offset_top = 16.0
 offset_right = 600.0
 offset_bottom = 116.0
-text = "W/S or arrows: drive   A/D: steer   Space: handbrake   R: reset car   M: zoom map   K: camera   F: get in / out   E: start / stop engine   G: gate   P: park
+text = "W/S or arrows: drive   A/D: steer   Space: handbrake   R: reset car   M: zoom map   K: camera   I: show / hide this help   F: get in / out   E: start / stop engine   G: gate   P: park
 On foot: W/A/S/D walk   Shift: run   Space: jump
-Z / C / X: left, right, hazard signals   L: lights (park, low, high)   T: refuel at a pump (you pay as it fills)
+Z / C / X: left, right, hazard signals   L: lights (park, low, high)   T: refuel at a pump (you pay as it fills)   Y: taxi fares (in a taxi)
 Mouse: look around (click to grab)   Wheel: zoom (on foot: Ctrl+wheel; wheel picks the item in your hand)   E on foot: buy / use the item in your hand (drink, smoke)   C: squat on a smoke break   Esc: pause
-1-5: jump into a car (testing): 1 E50   2 E55   3 Volga   4 Land Cruiser   5 Compass   =: +10 000 AMD (testing)"
+1-5: jump into a car (testing): 1 E50   2 E55   3 Volga   4 Land Cruiser   5 Compass   =: +10 000 AMD (testing)   0: restart missions (testing)"
 
 [node name="Power" type="ProgressBar" parent="HUD" unique_id=123988569]
 anchors_preset = 3
