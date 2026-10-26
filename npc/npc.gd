@@ -8,8 +8,14 @@ extends Node3D
 ## (over a side street); passing a crosswalk they sometimes cross the road on it
 ## (townsfolk.gd links them). Before stepping on to the road they wait at the
 ## kerb, looking about, till no car is near, then walk over a little quicker.
+## In a fight (player/combat.gd): hit, they lose health (take_hit) and either
+## fight back, running at whoever hit them and punching, or run off along their
+## sidewalk; a gunshot near them (townsfolk.gd alarm) sends them running too.
+## Out of health they go down like someone hit by a car.
 
-enum State { WALK, STAND, TALK, DEAD, CROSS }
+enum State { WALK, STAND, TALK, DEAD, CROSS, FLEE, FIGHT }
+
+const Sfx := preload("res://game/sfx.gd")
 
 ## Crossing is this much quicker than their walk.
 const CROSS_HURRY := 1.2
@@ -18,6 +24,32 @@ const CROSS_PATIENCE := 20.0
 
 ## Seconds a body lies where it fell before it is taken away.
 const CORPSE_SECONDS := 25.0
+
+## Running away, and running at someone to fight (metres a second).
+const RUN_SPEED := 4.2
+const CHARGE_SPEED := 3.2
+## How fast the Mixamo run covers ground at normal speed (they have no measure of it).
+const RUN_ANIM_SPEED := 3.6
+## Seconds they run before calming down; how long a fight lasts at most.
+const FLEE_TIME := Vector2(10.0, 16.0)
+const FIGHT_TIME := 25.0
+## A punch of theirs: how close they get, every how many seconds, what it does,
+## how long it takes and when in it it lands.
+const PUNCH_REACH := 1.05
+const PUNCH_EVERY := 1.3
+const PUNCH_DAMAGE := 9.0
+const PUNCH_TIME := 0.45
+const PUNCH_LANDS := 0.18
+## They give up the fight past this far from whoever they fight (metres).
+const FIGHT_LOST := 30.0
+## Chance someone punched fights back rather than running.
+const BRAVE := 0.45
+## Seconds someone hit reels (the "hit" animation's recoil, or the lean back)
+## before they run or fight, and how hard a hit knocks them back (m/s).
+const REEL_TIME := 0.75
+const LEAN_TIME := 0.4
+const KNOCK_PUNCH := 2.2
+const KNOCK_SHOT := 3.0
 
 var state := State.WALK
 ## The walk: which sidewalk (an index into the townsfolk's paths), how far
@@ -60,6 +92,25 @@ var _waited := 0.0
 var _next_path := -1
 var _next_at := 0.0
 var _next_way := 1.0
+## In a fight: health left (100 full), who they fight, what they run from,
+## seconds till the next punch and how far into the one they throw (-1 none),
+## whether it has landed, and their right arm for throwing it without a "punch"
+## animation (world/cashier_hands.gd, made on first use).
+var health := 100.0
+var foe: Node3D
+var _threat := Vector3.ZERO
+var _punch_wait := 0.0
+var _punch_t := -1.0
+var _punch_landed := false
+var _hands: SkeletonModifier3D
+var _hit_lean := 0.0
+## Running from something: crossing to the next sidewalk at a run, without
+## waiting for cars, and seconds of running left after it.
+var _panic := false
+var _panic_left := 0.0
+## Reeling from a hit: seconds left, and the knock back still carrying them (m/s, level).
+var _reel_left := 0.0
+var _knock := Vector3.ZERO
 
 
 func setup(townsfolk: Node, figure: PackedScene, body_layer: int) -> void:
@@ -194,6 +245,10 @@ func _play(anim_name: String, blend := 0.35) -> void:
 
 func _process(delta: float) -> void:
 	talk_cooldown = maxf(talk_cooldown - delta, 0.0)
+	# Reeling from a hit: knocked back a step, the reaction plays out, nothing else.
+	if _reel_left > 0.0 and state != State.DEAD:
+		_reel(delta)
+		return
 	match state:
 		State.WALK:
 			_walk(delta)
@@ -206,12 +261,20 @@ func _process(delta: float) -> void:
 			_talk(delta)
 		State.CROSS:
 			_cross(delta)
+		State.FLEE:
+			_flee(delta)
+		State.FIGHT:
+			_fight(delta)
 		State.DEAD:
 			time_left -= delta
 			if time_left <= 0.0:
 				queue_free()
 			return
-	rotation.y = lerp_angle(rotation.y, _yaw, 1.0 - exp(-6.0 * delta))
+	rotation.y = lerp_angle(rotation.y, _yaw, 1.0 - exp(-(10.0 if state == State.FIGHT else 6.0) * delta))
+	# Rocked back by a hit (without a "hit" animation), then upright again.
+	if _hit_lean > 0.0:
+		_hit_lean = maxf(_hit_lean - delta * 2.5, 0.0)
+		_model.rotation.x = -sin(_hit_lean * PI) * 0.35
 
 
 func _walk(delta: float) -> void:
@@ -295,7 +358,7 @@ func _cross(delta: float) -> void:
 	to.y = 0.0
 	if to.length() > 0.05:
 		_yaw = atan2(to.x, to.z)
-	if _cross_next == _kerb and not _crossing:
+	if _cross_next == _kerb and not _crossing and not _panic:
 		if _townsfolk.traffic_on(_road_from, _road_to):
 			_waited += delta
 			_anim.speed_scale = 1.0
@@ -305,14 +368,24 @@ func _cross(delta: float) -> void:
 				walk(path, along, -direction)
 			return
 		_crossing = true
-	if _townsfolk.blocked(self):
+	if not _panic and _townsfolk.blocked(self):
 		_anim.speed_scale = 1.0
 		_play("idle", 0.25)
 		return
-	# Up to the kerb at their own pace, over the road a little quicker.
+	# Up to the kerb at their own pace, over the road a little quicker;
+	# running from something, at a run all the way.
 	var pace := speed * (CROSS_HURRY if _crossing else 1.0)
-	_play("walk", 0.25)
-	_anim.speed_scale = pace / _walk_anim_speed
+	if _panic:
+		pace = RUN_SPEED
+		if _anim.has_animation("run"):
+			_play("run", 0.2)
+			_anim.speed_scale = pace / RUN_ANIM_SPEED
+		else:
+			_play("walk", 0.2)
+			_anim.speed_scale = minf(pace / _walk_anim_speed, 2.6)
+	else:
+		_play("walk", 0.25)
+		_anim.speed_scale = pace / _walk_anim_speed
 	var left := to.length()
 	var step := pace * delta
 	if left <= step:
@@ -321,6 +394,11 @@ func _cross(delta: float) -> void:
 		_leg_from = goal
 		if _cross_next >= _cross_points.size():
 			walk(_next_path, _next_at, _next_way)
+			if _panic:
+				# Still running.
+				_panic = false
+				state = State.FLEE
+				time_left = maxf(_panic_left, 3.0)
 		return
 	var p := global_position + to / left * step
 	# Down off the kerb and up the other: on the road, at the height of the
@@ -331,9 +409,243 @@ func _cross(delta: float) -> void:
 	global_position = p
 
 
+# --- fighting -------------------------------------------------------------------
+
+## Hit by `by` (from `from`, world) for `damage`; `kind` is "punch" or "shot".
+## Out of health they go down, thrown away from the hit; otherwise they reel,
+## then fight back (some, when punched) or run.
+func take_hit(damage: float, from: Vector3, by: Node3D, kind: String) -> void:
+	if state == State.DEAD:
+		return
+	health -= damage
+	var away := global_position - from
+	away.y = 0.0
+	away = away.normalized() if away.length() > 0.01 else -global_basis.z
+	if health <= 0.0:
+		if _hands:
+			_hands.weight = 0.0
+		_townsfolk.forget(self)
+		die(away * (7.0 if kind == "shot" else 4.0))
+		return
+	# The reaction from its start (again, if hit again while reeling).
+	if _anim.has_animation("hit"):
+		_anim.speed_scale = 1.0
+		_anim.play("hit", 0.05)
+		_anim.seek(0.0, true)
+		_reel_left = minf(REEL_TIME, _anim.get_animation("hit").length)
+	else:
+		_hit_lean = 1.0
+		_reel_left = LEAN_TIME
+	_knock = away * (KNOCK_SHOT if kind == "shot" else KNOCK_PUNCH)
+	if _punch_t >= 0.0:
+		# A punch of theirs is cut short.
+		_punch_t = -1.0
+		_punch_wait = 0.3
+		if _hands:
+			_hands.weight = 0.0
+	if state == State.FIGHT:
+		return
+	if kind == "punch" and by != null and randf() < BRAVE:
+		fight(by)
+	else:
+		flee(from)
+
+
+func _reel(delta: float) -> void:
+	_reel_left -= delta
+	if _knock.length() > 0.01:
+		var p := global_position + _knock * delta
+		p.y = _ground_below(p, global_position.y)
+		global_position = p
+		_knock = _knock.move_toward(Vector3.ZERO, 5.0 * delta)
+	if _hit_lean > 0.0:
+		_hit_lean = maxf(_hit_lean - delta * 2.5, 0.0)
+		_model.rotation.x = -sin(_hit_lean * PI) * 0.35
+	if _reel_left <= 0.0:
+		_knock = Vector3.ZERO
+		# Back on their sidewalk where the hit pushed them (unless fighting, off it anyway).
+		if state in [State.FLEE, State.WALK, State.STAND, State.TALK]:
+			_back_on_path()
+
+
+## Off along their sidewalk, away from `from` (world), as fast as they can.
+func flee(from: Vector3) -> void:
+	if state in [State.DEAD, State.FIGHT]:
+		return
+	# The one they were talking to runs too; each lets go of the other first,
+	# or they would keep telling each other to run.
+	var other := partner
+	partner = null
+	if other and is_instance_valid(other) and other.state == State.TALK:
+		other.partner = null
+		other.flee(from)
+	_threat = from
+	if state == State.CROSS and _panic:
+		return # already running over to the next sidewalk
+	_panic = false
+	if state == State.CROSS or path < 0:
+		_back_on_path()
+	var ahead: Vector3 = _townsfolk.point_on(path, along)["forward"]
+	direction = 1.0 if ahead.dot(global_position - from) >= 0.0 else -1.0
+	state = State.FLEE
+	time_left = randf_range(FLEE_TIME.x, FLEE_TIME.y)
+	_set_phone(false)
+
+
+## A gunshot (or a fight) near them: they run.
+func alarm(from: Vector3) -> void:
+	if state in [State.WALK, State.STAND, State.TALK, State.CROSS]:
+		flee(from)
+
+
+## Whether they are running from something (on their sidewalk or over to the next).
+func fleeing() -> bool:
+	return state == State.FLEE or (state == State.CROSS and _panic)
+
+
+## Runs at `who` and punches them till one of them is down or too far.
+func fight(who: Node3D) -> void:
+	if state == State.DEAD:
+		return
+	partner = null
+	foe = who
+	state = State.FIGHT
+	time_left = FIGHT_TIME
+	_punch_wait = 0.4
+	_set_phone(false)
+
+
+func _flee(delta: float) -> void:
+	time_left -= delta
+	var length: float = _townsfolk.path_length(path)
+	var pace := RUN_SPEED
+	if _anim.has_animation("run"):
+		_play("run", 0.2)
+		_anim.speed_scale = pace / RUN_ANIM_SPEED
+	else:
+		_play("walk", 0.2)
+		_anim.speed_scale = minf(pace / _walk_anim_speed, 2.6)
+	along += direction * pace * delta
+	if along <= 0.0 or along >= length:
+		along = clampf(along, 0.0, length)
+		# Run on to the next sidewalk if there is one; otherwise cower here.
+		_panic_left = time_left
+		if _try_cross(_townsfolk.links_at_end(path, along)):
+			_panic = true
+		else:
+			_anim.speed_scale = 1.0
+			stand(randf_range(6.0, 12.0), "cower" if _anim.has_animation("cower") else "look")
+		return
+	_place(false)
+	if time_left <= 0.0:
+		_anim.speed_scale = 1.0
+		walk(path, along, direction)
+
+
+func _fight(delta: float) -> void:
+	time_left -= delta
+	var gone := foe == null or not is_instance_valid(foe) or not foe.is_visible_in_tree()
+	var foe_health: Node = null if gone else foe.get_node_or_null("Health")
+	if gone or (foe_health and foe_health.is_dead()) or time_left <= 0.0 \
+			or _flat(foe.global_position) > FIGHT_LOST:
+		_calm()
+		return
+	var to := foe.global_position - global_position
+	to.y = 0.0
+	if to.length() > 0.05:
+		_yaw = atan2(to.x, to.z)
+	if _punch_t >= 0.0:
+		_throw_punch(delta)
+		return
+	_punch_wait -= delta
+	if to.length() > PUNCH_REACH:
+		# Run at them.
+		var step := minf(CHARGE_SPEED * delta, to.length() - PUNCH_REACH * 0.8)
+		var p := global_position + to.normalized() * step
+		p.y = _ground_below(p, global_position.y)
+		global_position = p
+		if _anim.has_animation("run"):
+			_play("run", 0.2)
+			_anim.speed_scale = CHARGE_SPEED / RUN_ANIM_SPEED
+		else:
+			_play("walk", 0.2)
+			_anim.speed_scale = minf(CHARGE_SPEED / _walk_anim_speed, 2.4)
+		return
+	_anim.speed_scale = 1.0
+	if _punch_wait <= 0.0:
+		_punch_t = 0.0
+		_punch_landed = false
+		if _anim.has_animation("punch"):
+			_anim.play("punch", 0.08)
+	else:
+		_play("idle", 0.2)
+
+
+## Their punch: the "punch" animation, or their right arm thrown out at the
+## foe's chest and back; it lands PUNCH_LANDS in, if they are still in reach.
+func _throw_punch(delta: float) -> void:
+	_punch_t += delta
+	var t := _punch_t
+	if not _anim.has_animation("punch"):
+		var hands := _arm()
+		if hands:
+			hands.goal = foe.global_position + Vector3.UP * 1.35
+			var w := smoothstep(0.0, PUNCH_LANDS, t) - smoothstep(PUNCH_LANDS + 0.05, PUNCH_TIME, t)
+			hands.weight = clampf(w, 0.0, 1.0)
+	if not _punch_landed and t >= PUNCH_LANDS:
+		_punch_landed = true
+		if _flat(foe.global_position) <= PUNCH_REACH + 0.35:
+			var hp: Node = foe.get_node_or_null("Health")
+			if hp:
+				hp.hurt(PUNCH_DAMAGE, global_position)
+			Sfx.play(self, Sfx.punch(), global_position + Vector3.UP * 1.3, -4.0)
+	if t >= PUNCH_TIME:
+		_punch_t = -1.0
+		_punch_wait = PUNCH_EVERY * randf_range(0.8, 1.3)
+		if _hands:
+			_hands.weight = 0.0
+
+
+## The fight is over: back to the nearest sidewalk, walking.
+func _calm() -> void:
+	foe = null
+	_punch_t = -1.0
+	if _hands:
+		_hands.weight = 0.0
+	_anim.speed_scale = 1.0
+	_back_on_path()
+	walk(path, along, direction)
+
+
+## On to the sidewalk nearest where they are now (after a fight or mid-crossing).
+func _back_on_path() -> void:
+	var near: Dictionary = _townsfolk.nearest_point(global_position)
+	if near.is_empty():
+		return
+	path = near["path"]
+	along = near["at"]
+
+
+func _arm() -> SkeletonModifier3D:
+	if _hands:
+		return _hands
+	var skeleton := _model.get_node_or_null("Skeleton3D") as Skeleton3D
+	if skeleton == null:
+		return null
+	_hands = preload("res://world/cashier_hands.gd").new()
+	_hands.name = "PunchArm"
+	skeleton.add_child(_hands)
+	return _hands
+
+
+func _flat(at: Vector3) -> float:
+	return Vector2(at.x - global_position.x, at.z - global_position.z).length()
+
+
 func _talk(delta: float) -> void:
 	_anim.speed_scale = 1.0
-	if partner == null or not is_instance_valid(partner) or partner.state == State.DEAD:
+	# The other one gone, down, or off running or fighting: the talk is over.
+	if partner == null or not is_instance_valid(partner) or partner.state != State.TALK:
 		partner = null
 		walk(path, along, direction)
 		return

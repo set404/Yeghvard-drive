@@ -64,6 +64,8 @@ var _kerbs: Array[PackedVector3Array] = []
 ## "crosswalk": bool, "ok": null until checked, then whether the way across is
 ## clear (link_ok)}].
 var _links: Array[Array] = []
+## The sidewalks' segments by grid cell (_segment_grid), for finding the nearest one.
+var _grid := {}
 var _figures: Array[PackedScene] = []
 var _people: Array[Node3D] = []
 var _tick := 0.0
@@ -153,6 +155,46 @@ func _add_path(points: PackedVector3Array, widths: PackedFloat32Array, kerbs: Pa
 	_widths.append(widths)
 	_distances.append(distances)
 	_kerbs.append(kerbs)
+
+
+# --- fights (player/combat.gd, npc/npc.gd) ---------------------------------------
+
+## The people about, alive.
+func people() -> Array[Node3D]:
+	return _people
+
+
+## Everyone within `radius` metres of `from` runs from it (a gunshot).
+func alarm(from: Vector3, radius: float) -> void:
+	for p: Node3D in _people.duplicate():
+		if p.global_position.distance_to(from) < radius:
+			p.alarm(from)
+
+
+## Everyone fighting stops (you were knocked out).
+func calm_all() -> void:
+	for p: Node3D in _people:
+		if p.state == Npc.State.FIGHT:
+			p._calm()
+
+
+## Someone gone down (npc.gd): no longer one of the people about.
+func forget(p: Node3D) -> void:
+	_people.erase(p)
+	for other in _people:
+		if other.partner == p:
+			other.partner = null
+
+
+## The nearest point of any sidewalk to `at`: {"path", "at"}; empty with none.
+func nearest_point(at: Vector3) -> Dictionary:
+	for reach: float in [30.0, 120.0, 600.0]:
+		var near := _nearest_on_others(_grid, at, reach, -1)
+		if near.is_empty():
+			continue
+		near.sort_custom(func(x: Dictionary, y: Dictionary) -> bool: return x["d"] < y["d"])
+		return {"path": near[0]["path"], "at": near[0]["at"]}
+	return {}
 
 
 ## How many sidewalks there are (for the taxi's fares, game/taxi.gd).
@@ -267,6 +309,7 @@ func _build_links() -> void:
 	for i in _points.size():
 		_links.append([])
 	var grid := _segment_grid()
+	_grid = grid
 	var seen := {}
 	for i in _points.size():
 		var length := path_length(i)

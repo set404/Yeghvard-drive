@@ -25,9 +25,18 @@ extends CharacterBody3D
 @export var hair_color := Color(0.1, 0.07, 0.05)
 @export var shoe_color := Color(0.08, 0.08, 0.08)
 
-## How the chase camera frames someone on foot (it reads these by name).
+## How the chase camera frames someone on foot (it reads these by name);
+## chase_side moves it over his right shoulder (aiming, player/combat.gd).
 var chase_distance := 4.0
 var chase_height := 1.5
+var chase_side := 0.0
+
+## In a fight (player/combat.gd): the way to face (radians, as rotation.y)
+## instead of the way he walks, or null; whether he only walks (aiming); and an
+## animation to play over his idle, walk and run (a "punch"), or "".
+var aim_yaw: Variant = null
+var aim_slow := false
+var override_anim := ""
 
 ## True while you are walking around, false while you sit in a car. Same name
 ## as the cars' flag, so the garage gates treat a driver and a walker alike.
@@ -176,7 +185,7 @@ func _physics_process(delta: float) -> void:
 	if on_break and (wish.length() > 0.05 or Input.is_action_just_pressed("jump")):
 		end_break()
 
-	var speed := run_speed if Input.is_action_pressed("run") else walk_speed
+	var speed := run_speed if Input.is_action_pressed("run") and not aim_slow else walk_speed
 	var ground := Vector3(velocity.x, 0.0, velocity.z)
 	var accel := acceleration if is_on_floor() else acceleration * 0.2
 	ground = ground.move_toward(wish * speed, accel * delta)
@@ -194,7 +203,9 @@ func _physics_process(delta: float) -> void:
 		velocity.y -= _gravity * delta
 	move_and_slide()
 
-	if wish.length() > 0.05:
+	if aim_yaw is float:
+		rotation.y = lerp_angle(rotation.y, aim_yaw, 1.0 - exp(-turn_speed * 2.0 * delta))
+	elif wish.length() > 0.05:
 		rotation.y = lerp_angle(rotation.y, atan2(wish.x, wish.z), 1.0 - exp(-turn_speed * delta))
 
 	if global_position.y < -500.0:
@@ -671,6 +682,11 @@ func _animate_character(delta: float) -> void:
 			var at := _anim.current_animation_position if _anim.current_animation.begins_with("smoke_drink") else 0.0
 			_anim.play(wanted_break, 0.7)
 			_anim.seek(at)
+		_anim.speed_scale = 1.0
+		return
+	if override_anim != "" and _anim.has_animation(override_anim):
+		if _anim.current_animation != override_anim:
+			_anim.play(override_anim, 0.08)
 		_anim.speed_scale = 1.0
 		return
 	_air_time = 0.0 if is_on_floor() else _air_time + delta

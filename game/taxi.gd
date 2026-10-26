@@ -36,6 +36,8 @@ enum Stage { OFF, WAITING, PICKUP, BOARDING, RIDE, ALIGHTING }
 ## A bump harder than this (m/s², the change of the car's speed) counts as a crash.
 @export var hard_hit := 30.0
 @export var max_hits := 3
+## The mission (game/mission_manager.gd) to finish before taking fares; empty for none.
+@export var needs_mission := "grandpas_volga"
 ## Seconds between one passenger getting out and the next one calling.
 @export var next_fare_wait := Vector2(4.0, 10.0)
 
@@ -126,10 +128,19 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	if not is_taxi(main.car):
 		_say("Only a taxi takes fares.")
 		return
+	if not _unlocked():
+		_say("Bring Grandpa's Volga home first.")
+		return
 	cab = main.car
 	stage = Stage.WAITING
 	_wait = 2.0
 	_say("Taxi work: drive about, someone will call soon. Y to stop.")
+
+
+## Whether taxi work is open yet (needs_mission done).
+func _unlocked() -> bool:
+	var missions = main.get("missions")
+	return needs_mission == "" or missions == null or missions.is_done(needs_mission)
 
 
 ## Whether `car` is a taxi (its metadata "taxi").
@@ -141,7 +152,7 @@ static func is_taxi(car: Node) -> bool:
 func add_hints(hints: PackedStringArray) -> void:
 	if main.on_foot:
 		return
-	if stage == Stage.OFF and is_taxi(main.car) and absf(main.car.forward_speed()) < 1.0:
+	if stage == Stage.OFF and is_taxi(main.car) and _unlocked() and absf(main.car.forward_speed()) < 1.0:
 		hints.append("Press Y to take taxi fares")
 	elif stage == Stage.PICKUP and _flat(cab.global_position, _pickup) < pickup_reach * 2.5:
 		hints.append("Stop next to the passenger")

@@ -161,8 +161,11 @@ func _follow(back_by: float, up_by: float, blend: float) -> void:
 	# Keep the stored pitch inside what the camera can actually reach.
 	_pitch = atan2(up_by, back_by) - tilt
 	var back := -_heading() if _on_foot() else -_heading().rotated(Vector3.UP, _yaw)
-	var wanted := target.global_position + back * reach * cos(tilt) + Vector3.UP * reach * sin(tilt)
-	var pivot := target.global_position + Vector3.UP * 1.2
+	# Over the shoulder (the walker's chase_side, aiming): everything shifted to his right.
+	var side: Variant = target.get("chase_side")
+	var shift := back.cross(Vector3.UP).normalized() * -(side as float) if side is float else Vector3.ZERO
+	var wanted := target.global_position + shift + back * reach * cos(tilt) + Vector3.UP * reach * sin(tilt)
+	var pivot := target.global_position + shift + Vector3.UP * 1.2
 	# Never behind a wall (indoors that is most of the time). The spot the camera
 	# heads for is pulled in front of whatever is in the way, so it stays put and
 	# the camera settles there instead of being pushed back and forth.

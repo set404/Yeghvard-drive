@@ -21,6 +21,7 @@
 [ext_resource type="Script" uid="uid://cf15qswjb81l6" path="res://world/map_editor.gd" id="19"]
 [ext_resource type="Script" uid="uid://d3p26x683yhgs" path="res://world/crosswalk.gd" id="20"]
 [ext_resource type="Script" uid="uid://cjghnbnfs0r26" path="res://game/taxi.gd" id="21"]
+[ext_resource type="Script" uid="uid://ct2q2gwrh4ulv" path="res://world/gun_dealer.gd" id="22"]
 
 [sub_resource type="ProceduralSkyMaterial" id="sky_mat"]
 sky_top_color = Color(0.18, 0.38, 0.72, 1)
@@ -184,6 +185,10 @@ metadata/place = "the supermarket"
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -835.42, -19.39, 1624.76)
 metadata/place = "the gas station"
 
+[node name="GunDealer" type="Node3D" parent="." unique_id=1203348811]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -777.6, -19, 1736)
+script = ExtResource("22")
+
 [node name="Wallet" type="Node" parent="." unique_id=1844470213]
 script = ExtResource("16")
 
@@ -234,6 +239,7 @@ text = "W/S or arrows: drive   A/D: steer   Space: handbrake   R: reset car   M:
 On foot: W/A/S/D walk   Shift: run   Space: jump
 Z / C / X: left, right, hazard signals   L: lights (park, low, high)   T: refuel at a pump (you pay as it fills)   Y: taxi fares (in a taxi)
 Mouse: look around (click to grab)   Wheel: zoom (on foot: Ctrl+wheel; wheel picks the item in your hand)   E on foot: buy / use the item in your hand (drink, smoke)   C: squat on a smoke break   Esc: pause
+Left click: punch (with the pistol in hand: shoot)   Right click: aim   R: reload
 1-5: jump into a car (testing): 1 E50   2 E55   3 Volga   4 Land Cruiser   5 Compass   =: +10 000 AMD (testing)   0: restart missions (testing)"
 
 [node name="Power" type="ProgressBar" parent="HUD" unique_id=123988569]

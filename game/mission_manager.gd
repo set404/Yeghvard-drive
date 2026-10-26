@@ -17,6 +17,7 @@ const SAVE_PATH := "user://missions.cfg"
 ## The story, in order.
 const MISSIONS: Array[String] = [
 	"res://missions/dads_errand.gd",
+	"res://missions/grandpas_volga.gd",
 ]
 
 const GOLD := Color(1.0, 0.82, 0.3)
@@ -76,6 +77,9 @@ func _process(delta: float) -> void:
 			_start_next()
 		_show_target(null)
 		return
+	current.tick(delta)
+	if current == null:
+		return
 	var s := current.steps[step]
 	if s.has("back_to"):
 		var back: int = s["back_to"].call()
@@ -104,6 +108,11 @@ func _place_panel() -> void:
 	if _help and _help.visible:
 		top = _help.position.y + _help.size.y + 16.0
 	_panel.position = Vector2(20.0, top)
+
+
+## Whether the mission with this id has been done.
+func is_done(mission_id: String) -> bool:
+	return mission_id in _completed
 
 
 ## Puts up a message across the top of the screen for a few seconds.

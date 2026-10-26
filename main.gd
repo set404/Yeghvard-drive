@@ -48,6 +48,8 @@ var _help_hint_left := 8.0
 var inventory: Inventory
 ## The story missions (game/mission_manager.gd); made in _ready.
 var missions: MissionManager
+## Fighting and shooting on foot (player/combat.gd); made in _ready.
+var combat: Combat
 ## Only cars built with lamps have this node. Null while on foot.
 var lamps: Node
 var on_foot := false
@@ -103,6 +105,9 @@ func _ready() -> void:
 	missions.name = "Missions"
 	missions.main = self
 	add_child(missions)
+	combat = Combat.new()
+	combat.name = "Combat"
+	add_child(combat)
 
 
 func _show_money(balance: float) -> void:

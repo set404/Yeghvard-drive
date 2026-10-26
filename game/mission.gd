@@ -48,6 +48,12 @@ func can_start() -> bool:
 	return true
 
 
+## Called every frame while it runs, before its step is checked (for
+## anything that is not a step: help when you are stuck, say).
+func tick(_delta: float) -> void:
+	pass
+
+
 ## Called once the last step is done, before the reward is paid.
 func finish() -> void:
 	pass

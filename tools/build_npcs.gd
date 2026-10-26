@@ -11,6 +11,10 @@ extends SceneTree
 ##   phone  looking at a phone held in the right hand
 ##   die    (only from an FBX) falling down dead, when a car hits them; without
 ##          it npc/npc.gd topples the figure over instead
+##   punch, hit, run, cower  (only from an FBX) fighting back, reeling from a
+##          hit, running away and cowering (npc/npc.gd in a fight); without
+##          them it throws an arm out in code, rocks them back, plays the walk
+##          faster and has them look about
 ##
 ## Mixamo rigs all share their bone names, so the animations in the shared
 ## data/models/animations (Adam's too, see tools/build_character.gd) fit them all.
@@ -32,8 +36,14 @@ const OPTIONAL := {
 	"look": ["Looking Around.fbx", "Look Around.fbx"],
 	"phone": ["Texting.fbx", "Texting While Standing.fbx", "Talking On Phone.fbx"],
 	"die": ["Flying Back Death.fbx", "Falling Back Death.fbx", "Dying.fbx", "Death From The Front.fbx"],
+	"punch": ["Punching Rear.fbx", "Punching.fbx", "Cross Punch.fbx"],
+	"hit": ["Hit Reaction.fbx", "Head Hit.fbx"],
+	"run": ["Running.fbx"],
+	"cower": ["Terrified.fbx", "Scared.fbx"],
 }
-const LOOPED := ["idle", "walk", "talk", "listen", "look", "phone"]
+## Only made from an FBX: without one they are left out (npc/npc.gd copes).
+const FBX_ONLY := ["die", "punch", "hit", "run", "cower"]
+const LOOPED := ["idle", "walk", "talk", "listen", "look", "phone", "run", "cower"]
 ## Their textures are stored at most this big: they are seen from a distance.
 const MAX_TEXTURE := 512
 ## Keys a second in the animations made here.
@@ -129,7 +139,7 @@ func _build(file: String, idle_src: Animation, walk_src: Animation) -> Error:
 					_pin_hips(anim, hips_path)
 				print("  %s from %s" % [anim_name, f])
 				break
-		if anim == null and anim_name == "die":
+		if anim == null and anim_name in FBX_ONLY:
 			continue
 		if anim == null:
 			anim = _made(anim_name, idle, skeleton)

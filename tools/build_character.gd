@@ -13,6 +13,10 @@ extends SceneTree
 ##            these keep the way they move him (see _seat_paths)
 ##   Standing Idle.fbx (optional) a standing idle; without it he stands in a relaxed
 ##            pose made from his rest pose
+##   Punching.fbx, Punching Rear.fbx, Hit Reaction.fbx (optional) a punch with
+##            the lead (left) hand and one with the rear (right) hand, and
+##            reeling from a hit, for fights (player/combat.gd); without them
+##            his arm is thrown out in code (player/combat_pose.gd)
 ##
 ## The walk and run were downloaded moving forward, not "in place": their hips
 ## are pinned here so player.gd moves him instead, and the distance they
@@ -27,7 +31,8 @@ const DIR := "res://data/models/adam/"
 const ANIM_DIR := "res://data/models/animations/"
 const CHARACTER := "Ch08_nonPBR.fbx"
 const ANIMATIONS := {"idle": "Standing Idle.fbx", "walk": "Walking.fbx", "run": "Running.fbx", "jump": "Jumping.fbx",
-	"drive": "Driving.fbx", "enter": "Entering Car.fbx", "exit": "Exiting Car.fbx"}
+	"drive": "Driving.fbx", "enter": "Entering Car.fbx", "exit": "Exiting Car.fbx",
+	"punch": "Punching.fbx", "punch_rear": "Punching Rear.fbx", "hit": "Hit Reaction.fbx"}
 ## Animations that keep how far they move him.
 const MOVING := ["enter", "exit"]
 ## Mixamo's driving pose sits upright as on a high chair; in our cars that put

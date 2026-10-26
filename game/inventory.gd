@@ -22,6 +22,10 @@ const MAX_STACK := 99
 const ITEMS := {
 	"duet": {"name": "Duet ice coffee", "scene": "res://props/duet.glb", "scale": 0.75, "use": "drink"},
 	"cigarette": {"name": "Cigarette", "scene": "res://props/cigarettes.tscn", "scale": 1.0, "use": "smoke"},
+	# player/combat.gd holds the pistol itself and shoots with it; the rounds
+	# are what it is loaded from (world/gun_dealer.gd sells both).
+	"pistol": {"name": "Makarov pistol", "scene": "res://props/pistol.tscn", "scale": 1.6, "use": "shoot"},
+	"ammo": {"name": "9 mm rounds", "scene": "res://props/ammo.tscn", "scale": 1.6, "use": ""},
 }
 ## Two items used together, shown as one more slot when you have both: the
 ## smoke and the drink it goes with, what it is called and shows. E uses it:
@@ -133,7 +137,9 @@ func held_id() -> String:
 	var id := selected_id()
 	if COMBOS.has(id):
 		return COMBOS[id]["drink"]
-	if not ITEMS.has(id) or ITEMS[id]["use"] == "smoke":
+	# Only a drink is held for show (cigarettes come out on a break, the
+	# pistol is player/combat.gd's, rounds stay in the pocket).
+	if not ITEMS.has(id) or ITEMS[id]["use"] != "drink":
 		return ""
 	return id
 
