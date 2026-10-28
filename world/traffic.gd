@@ -13,7 +13,11 @@ extends Node3D
 ## are the road network the cars drive on.
 ##
 ## The cars are the models of the cars placed in main.tscn, each painted a
-## colour none of those has. Get into one (F) and it is yours; traffic lets go.
+## colour none of those has. At the wheel of each sits one of the townspeople
+## (res://npc), playing your character's "drive" animation (player/character.scn),
+## its bones renamed to theirs (each Mixamo rig has its own prefix) and its hips
+## moved to their height. Get into one (F) and it is yours: the driver gets
+## out and traffic lets go of it.
 
 ## Cars driving about you at a time.
 @export var count := 12
@@ -89,6 +93,15 @@ var _grid := {} ## Vector2i cell -> PackedInt32Array of nodes that have a way ou
 const CELL := 40.0
 
 var _scenes: Array[PackedScene] = []
+## The townspeople's figures, to sit at the wheel.
+var _figures: Array[PackedScene] = []
+## Your character's "drive" animation and where his eyes and hands are in it.
+var _drive_anim: Animation
+var _drive_eyes := Vector3(0.0, 1.26, 0.05)
+var _drive_hands := Vector3(0.0, 0.94, 0.26)
+var _drive_height := 1.78
+var _drive_prefix := ""
+var _drive_hips := 0.98
 var _colours: Array[Color] = []
 var _drivers: Array[Driver] = []
 var _manage_in := 1.5
@@ -121,6 +134,7 @@ func _ready() -> void:
 			_colours.append(c)
 	if _colours.is_empty():
 		_colours = PALETTE.duplicate()
+	_load_drivers()
 	print("Traffic: %d road nodes, %d lanes, %d models, %d colours (%.0f ms)" % [
 		_pos.size(), _e_to.size(), _scenes.size(), _colours.size(), (Time.get_ticks_usec() - t0) / 1000.0])
 
@@ -348,6 +362,7 @@ func _manage() -> void:
 		car.set("engine_volume_db", float(car.get("engine_volume_db")) - 4.0)
 		car.set("ai_driven", true)
 		car.set("engine_running", true)
+		_seat_driver(car)
 		_set_down(d)
 		_drivers.append(d)
 
@@ -360,6 +375,9 @@ func _release(d: Driver) -> void:
 	car.set("ai_gas", 0.0)
 	car.set("ai_brake", 0.0)
 	_signal(d, 0)
+	var driver := car.get_node_or_null("NpcDriver")
+	if driver:
+		_get_out(car, driver)
 
 
 ## Brings the car back somewhere else out of sight, in a new colour.
@@ -424,6 +442,102 @@ func _set_down(d: Driver) -> void:
 	d.car.linear_velocity = dir * minf(d.cruise, 9.0)
 	d.k = 0
 	d.s = 0.0
+
+
+# --- drivers ------------------------------------------------------------------
+
+func _load_drivers() -> void:
+	for file in DirAccess.get_files_at("res://npc"):
+		file = file.trim_suffix(".remap")
+		if file.get_extension() == "scn":
+			_figures.append(load("res://npc/" + file))
+	const CHARACTER := "res://player/character.scn"
+	if not ResourceLoader.exists(CHARACTER):
+		return
+	var adam: Node3D = (load(CHARACTER) as PackedScene).instantiate()
+	var anim := adam.get_node_or_null("AnimationPlayer") as AnimationPlayer
+	var skeleton := adam.get_node_or_null("Skeleton3D") as Skeleton3D
+	if anim and skeleton and anim.has_animation("drive") and skeleton.get_bone_count() > 0:
+		_drive_anim = anim.get_animation("drive")
+		_drive_eyes = adam.get_meta("drive_eyes", _drive_eyes)
+		_drive_hands = adam.get_meta("drive_hands", _drive_eyes)
+		_drive_height = adam.get_meta("height", _drive_height)
+		_drive_prefix = _bone_prefix(skeleton)
+		_drive_hips = skeleton.get_bone_rest(0).origin.y
+	adam.free()
+
+
+## "mixamorig7_" of "mixamorig7_Hips": the part of the bone names each rig has its own.
+static func _bone_prefix(skeleton: Skeleton3D) -> String:
+	var root := skeleton.get_bone_name(0)
+	var cut := root.find("_")
+	return root.substr(0, cut + 1) if cut >= 0 else ""
+
+
+## The drive animation fitted to a figure: its bone names, and the hips (the
+## only bone that moves, not just turns) scaled to its height.
+func _drive_for(skeleton: Skeleton3D) -> Animation:
+	var prefix := _bone_prefix(skeleton)
+	var scale := skeleton.get_bone_rest(0).origin.y / _drive_hips if _drive_hips > 0.01 else 1.0
+	var anim := _drive_anim.duplicate(true) as Animation
+	for t in anim.get_track_count():
+		var path := String(anim.track_get_path(t))
+		if _drive_prefix != "" and prefix != _drive_prefix:
+			path = path.replace(":" + _drive_prefix, ":" + prefix)
+			anim.track_set_path(t, NodePath(path))
+		if anim.track_get_type(t) == Animation.TYPE_POSITION_3D:
+			for k in anim.track_get_key_count(t):
+				anim.track_set_key_value(t, k, (anim.track_get_key_value(t, k) as Vector3) * scale)
+	anim.loop_mode = Animation.LOOP_LINEAR
+	return anim
+
+
+## Sits one of the townspeople at the wheel, eyes where the car's in-car camera
+## is and hands on the steering wheel, as player.gd seats you.
+func _seat_driver(car: VehicleBody3D) -> void:
+	if _drive_anim == null or _figures.is_empty():
+		return
+	var figure: Node3D = _figures.pick_random().instantiate()
+	var anim := figure.get_node_or_null("AnimationPlayer") as AnimationPlayer
+	var skeleton := figure.get_node_or_null("Skeleton3D") as Skeleton3D
+	if anim == null or skeleton == null or skeleton.get_bone_count() == 0:
+		figure.free()
+		return
+	figure.name = "NpcDriver"
+	# Their own library, so the people walking about who share the figure are not touched.
+	var library := AnimationLibrary.new()
+	library.add_animation(&"drive", _drive_for(skeleton))
+	anim.add_animation_library(&"traffic", library)
+	var phone := figure.get_node_or_null("Skeleton3D/RightHand/Phone") as Node3D
+	if phone:
+		phone.visible = false
+	var s := float(figure.get_meta("height", _drive_height)) / _drive_height
+	var view: Variant = car.get("driver_view")
+	var eye_point: Vector3 = view if view is Vector3 else Vector3(0.37, 1.13, 0.1)
+	var at := eye_point + Vector3(0.0, 0.0, 0.05) - _drive_eyes * s
+	var wheel := car.find_child("SteeringWheel", true, false) as Node3D
+	if wheel and wheel.is_inside_tree():
+		var short := car.to_local(wheel.global_position).z - (at + _drive_hands * s).z
+		at.z += clampf(short, 0.0, 0.15)
+	figure.position = at
+	car.add_child(figure)
+	anim.play(&"traffic/drive")
+
+
+## The driver of a car you took is out of it and runs off along the nearest
+## walk, as one of the townspeople.
+func _get_out(car: VehicleBody3D, driver: Node3D) -> void:
+	driver.queue_free()
+	var townsfolk := _main.get_node_or_null("Townsfolk")
+	if townsfolk == null or not townsfolk.has_method("nearest_point") or not townsfolk.has_method("_person"):
+		return
+	var near: Dictionary = townsfolk.call("nearest_point", car.global_position)
+	if near.is_empty():
+		return
+	# On the nearest walk, running from you.
+	var person: Node3D = townsfolk.call("_person", near["path"], near["at"], 1.0 if randf() < 0.5 else -1.0)
+	if person.has_method("alarm"):
+		person.call("alarm", car.global_position)
 
 
 # --- the way ahead --------------------------------------------------------------

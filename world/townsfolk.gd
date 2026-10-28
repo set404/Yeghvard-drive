@@ -9,6 +9,9 @@ extends Node3D
 ## street, or turn back if there is none. The main road they cross only at a
 ## crosswalk (world/crosswalk.gd), and only some of those who pass one. They
 ## wait at the kerb until no car is close or coming (traffic_on).
+## The small streets have no sidewalks: there people walk along the edge of
+## the street, just off the road (_read_street_sides, from the world's road
+## mesh), and on round the corners to the next street.
 ## The figures are the scenes in res://npc (tools/build_npcs.gd); each person
 ## is run by npc/npc.gd. A car that runs into someone knocks them down dead.
 
@@ -21,7 +24,7 @@ const BODY_LAYER := 1 << 9
 ## You (on foot): made to bump into them.
 @export var player: CharacterBody3D
 ## How many people about you at a time.
-@export var count := 16
+@export var count := 8
 ## Metres from you where new people come in, and where they leave.
 @export var spawn_min := 30.0
 @export var spawn_max := 110.0
@@ -33,6 +36,16 @@ const BODY_LAYER := 1 << 9
 @export var meet_chance := 0.3
 ## A car going at least this fast (km/h) knocks down whoever it runs into.
 @export var deadly_speed := 8.0
+@export_group("Street sides")
+## People also walk along the edges of the streets that have no sidewalk.
+@export var street_sides := true
+## Road classes (tools/build_world.gd ROAD_TYPES priority) whose edges they
+## walk: 2 residential streets up to 4 secondary roads.
+@export var street_side_classes := Vector2i(2, 4)
+## Where they walk: the middle of the strip this far out past the road's edge
+## (the yard walls stand 1.2 m out), and how wide it is.
+@export var street_side_out := 0.6
+@export var street_side_width := 1.0
 @export_group("Crossing the road")
 ## How far from the end of a sidewalk the next one on the same side may be to
 ## walk on to it (metres), and how far towards the road (its kerb side) the way
@@ -80,6 +93,9 @@ func _ready() -> void:
 			_figures.append(load("res://npc/" + file))
 	if sidewalks:
 		_read_sidewalks(sidewalks.get_node("Mesh") as MeshInstance3D)
+	var walks := _points.size()
+	if street_sides:
+		_read_street_sides()
 	var t0 := Time.get_ticks_usec()
 	_build_links()
 	if player:
@@ -87,8 +103,8 @@ func _ready() -> void:
 	var links := 0
 	for l in _links:
 		links += l.size()
-	print("Townsfolk: %d figures, %d sidewalks, %d links, %d crosswalks (%.0f ms)" % [
-		_figures.size(), _points.size(), links / 2, get_tree().get_nodes_in_group("crosswalks").size(),
+	print("Townsfolk: %d figures, %d sidewalks, %d street sides, %d links, %d crosswalks (%.0f ms)" % [
+		_figures.size(), walks, _points.size() - walks, links / 2, get_tree().get_nodes_in_group("crosswalks").size(),
 		(Time.get_ticks_usec() - t0) / 1000.0])
 
 
@@ -136,6 +152,97 @@ func _read_sidewalks(mesh_instance: MeshInstance3D) -> void:
 		widths.append(width)
 		kerbs.append(kerb_end)
 	_add_path(points, widths, kerbs)
+
+
+## Walks along the edges of the small streets, from the world's road mesh
+## (tools/build_world.gd, _strip): each 3 m piece of road is six vertices in a
+## row, left / middle / right at its start then at its end (UV x 0, 0.5, 1),
+## with UV2 x the road's width and the colour's alpha its class in sixteenths.
+## Each side of a street becomes a walk street_side_out past its edge, broken
+## where it would cross another road or run beside a sidewalk.
+func _read_street_sides() -> void:
+	var world := get_parent().get_node_or_null("World")
+	var roads := world.find_child("Roads", true, false) if world else null
+	if roads == null:
+		return
+	var sidewalk_grid := _segment_grid()
+	# Every piece of road (not footpaths), to keep the walks off the roads: [a, b, half width].
+	var pieces: Array = []
+	var piece_grid := {}
+	# Runs of street to walk beside: each a list of [left, middle, right] points.
+	var runs: Array = []
+	for mi: MeshInstance3D in roads.find_children("*", "MeshInstance3D", true, false):
+		if mi.mesh == null:
+			continue
+		var xf := mi.global_transform
+		var arr := mi.mesh.surface_get_arrays(0)
+		var v: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
+		var uv: PackedVector2Array = arr[Mesh.ARRAY_TEX_UV]
+		var uv2: PackedVector2Array = arr[Mesh.ARRAY_TEX_UV2] if arr[Mesh.ARRAY_TEX_UV2] != null else PackedVector2Array()
+		var col: PackedColorArray = arr[Mesh.ARRAY_COLOR] if arr[Mesh.ARRAY_COLOR] != null else PackedColorArray()
+		if uv2.size() != v.size() or col.size() != v.size():
+			continue
+		var run: Array = []
+		var last_mid := Vector3.INF
+		var i := 0
+		var n := v.size()
+		while i + 5 < n:
+			if not (absf(uv[i].x) < 0.01 and absf(uv[i + 1].x - 0.5) < 0.01 and absf(uv[i + 2].x - 1.0) < 0.01
+					and absf(uv[i + 3].x) < 0.01 and absf(uv[i + 4].x - 0.5) < 0.01 and absf(uv[i + 5].x - 1.0) < 0.01
+					and uv[i + 4].y > uv[i + 1].y):
+				i += 1
+				continue
+			var road_class := roundi(col[i].a * 16.0) % 8
+			var m0 := xf * v[i + 1]
+			var m1 := xf * v[i + 4]
+			if road_class >= 1:
+				var id := pieces.size()
+				pieces.append([m0, m1, uv2[i].x * 0.5])
+				for p: Vector3 in [m0, m1]:
+					piece_grid.get_or_add(Vector2i(floori(p.x / 10.0), floori(p.z / 10.0)), {})[id] = true
+			var wanted := road_class >= street_side_classes.x and road_class <= street_side_classes.y
+			if not wanted or m0.distance_to(last_mid) > 0.05:
+				if run.size() >= 2:
+					runs.append(run)
+				run = []
+			if wanted:
+				if run.is_empty():
+					run.append([xf * v[i], m0, xf * v[i + 2]])
+				run.append([xf * v[i + 3], m1, xf * v[i + 5]])
+			last_mid = m1
+			i += 6
+		if run.size() >= 2:
+			runs.append(run)
+	var on_road := func(p: Vector3) -> bool:
+		var c := Vector2i(floori(p.x / 10.0), floori(p.z / 10.0))
+		for dx in range(-1, 2):
+			for dz in range(-1, 2):
+				for id: int in piece_grid.get(c + Vector2i(dx, dz), {}):
+					var piece: Array = pieces[id]
+					var q := Geometry3D.get_closest_point_to_segment(p, piece[0], piece[1])
+					if Vector2(q.x - p.x, q.z - p.z).length() < float(piece[2]) + 0.25 and absf(q.y - p.y) < 2.0:
+						return true
+		return false
+	for run: Array in runs:
+		for side: int in [0, 2]:
+			var points := PackedVector3Array()
+			var widths := PackedFloat32Array()
+			var kerbs := PackedVector3Array()
+			for t: Array in run:
+				var edge: Vector3 = t[side]
+				var out := _level(edge - (t[1] as Vector3))
+				var p := edge + out * street_side_out
+				p.y = edge.y - 0.02
+				if on_road.call(p) or not _nearest_on_others(sidewalk_grid, p, 4.0, -1).is_empty():
+					_add_path(points, widths, kerbs)
+					points = PackedVector3Array()
+					widths = PackedFloat32Array()
+					kerbs = PackedVector3Array()
+					continue
+				points.append(p)
+				widths.append(street_side_width)
+				kerbs.append(-out)
+			_add_path(points, widths, kerbs)
 
 
 static func _level(v: Vector3) -> Vector3:
@@ -510,10 +617,16 @@ func _remove(p: Node3D) -> void:
 
 
 func _spawn(focus: Vector3) -> void:
-	# A random spot on a sidewalk in the ring about you.
+	# A random spot on a sidewalk or street side in the ring about you.
+	var reach := ceili(spawn_max / GRID_CELL)
+	var centre := Vector2i(floori(focus.x / GRID_CELL), floori(focus.z / GRID_CELL))
 	for attempt in 24:
-		var i := randi() % _points.size()
-		var at := randf() * path_length(i)
+		var segs: Array = _grid.get(centre + Vector2i(randi_range(-reach, reach), randi_range(-reach, reach)), [])
+		if segs.is_empty():
+			continue
+		var seg: Vector2i = segs.pick_random()
+		var i := seg.x
+		var at := lerpf(_distances[i][seg.y - 1], _distances[i][seg.y], randf())
 		var where := point_on(i, at)
 		var flat := Vector2(where["position"].x - focus.x, where["position"].z - focus.z).length()
 		if flat < spawn_min or flat > spawn_max or absf(where["position"].y - focus.y) > 40.0:
