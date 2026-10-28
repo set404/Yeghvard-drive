@@ -149,6 +149,14 @@ var _front_wheels: Array[VehicleWheel3D] = []
 var _rear_wheels: Array[VehicleWheel3D] = []
 var _traction_wheels := 0
 var _wheelbase := 2.7
+## Driven by the town's traffic (world/traffic.gd) instead of the keys. Each
+## physics frame it sets the pedal (ai_gas, 0 to 1), the brake (ai_brake, 0 to
+## 1, never reverse) and the front wheels' angle (ai_steer, radians, + is left).
+## Ignored while you drive the car.
+var ai_driven := false
+var ai_gas := 0.0
+var ai_brake := 0.0
+var ai_steer := 0.0
 
 
 ## The engine_layer_rpms the car's own scene (car/*.scn) gives, for when a scene
@@ -277,6 +285,9 @@ func _physics_process(delta: float) -> void:
 	var back := Input.get_action_strength("brake") if pedals else 0.0
 	var handbrake := Input.is_action_pressed("handbrake") if player_controlled else false
 	var steer_input := Input.get_axis("steer_right", "steer_left") if player_controlled else 0.0
+	var ai := ai_driven and not player_controlled and not parked
+	if ai and engine_running:
+		gas = clampf(ai_gas, 0.0, 1.0)
 	if engine_running and on_reserve():
 		_cough_time -= delta
 		if _cough_time <= 0.0:
@@ -300,6 +311,8 @@ func _physics_process(delta: float) -> void:
 			brake = brake_power * back
 		else:
 			drive = -reverse_force * back * clampf(1.0 + speed / max_reverse_speed, 0.0, 1.0)
+	if ai and ai_brake > 0.0:
+		brake = maxf(brake, brake_power * clampf(ai_brake, 0.0, 1.0))
 	braking = brake > 0.0
 	_apply_brake_assist(brake / brake_power if braking else 0.0, handbrake)
 	if parked:
@@ -357,6 +370,8 @@ func _physics_process(delta: float) -> void:
 	var sliding := clampf((absf(slip) - deg_to_rad(4.0)) / deg_to_rad(12.0), 0.0, 1.0)
 	limit = lerpf(limit, max_steer, sliding)
 	var target := steer_input * limit + slip * countersteer_assist
+	if ai:
+		target = ai_steer + slip * countersteer_assist
 	steering = move_toward(steering, clampf(target, -max_steer, max_steer), steer_speed * delta)
 
 	if player_controlled and Input.is_action_just_pressed("reset_car"):
@@ -430,6 +445,12 @@ func _crank() -> void:
 		_crank_for = starter_seconds * randf_range(0.85, 1.2)
 	else:
 		_crank_for = starter_seconds * 1.5 + 0.8
+
+
+## Repaints the body (a car of the town's traffic gets a new colour each time it comes back).
+func set_paint(color: Color) -> void:
+	paint_color = color
+	_apply_paint()
 
 
 func _apply_paint() -> void:

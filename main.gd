@@ -108,6 +108,10 @@ func _ready() -> void:
 	combat = Combat.new()
 	combat.name = "Combat"
 	add_child(combat)
+	# Cars driven about the town's roads (world/traffic.gd).
+	var traffic: Node3D = preload("res://world/traffic.gd").new()
+	traffic.name = "Traffic"
+	add_child(traffic)
 
 
 func _show_money(balance: float) -> void:
