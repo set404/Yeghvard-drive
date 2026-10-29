@@ -17,6 +17,7 @@ const SAVE_PATH := "user://missions.cfg"
 ## The story, in order.
 const MISSIONS: Array[String] = [
 	"res://missions/dads_errand.gd",
+	"res://missions/davitik_lesson.gd",
 	"res://missions/grandpas_volga.gd",
 ]
 

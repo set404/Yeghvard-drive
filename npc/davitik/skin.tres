@@ -1,0 +1,10 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[ext_resource type="Texture2D" path="res://npc/davitik/color.res" id="1_yr1ws"]
+[ext_resource type="Texture2D" path="res://npc/davitik/normal.res" id="2_uone3"]
+
+[resource]
+albedo_texture = ExtResource("1_yr1ws")
+roughness = 0.85
+normal_enabled = true
+normal_texture = ExtResource("2_uone3")

@@ -26,6 +26,34 @@ static func punch() -> AudioStreamWAV:
 			return clampf(thud + slap, -1.0, 1.0)))
 
 
+## A car going into a wall: a crunch of metal and breaking glass.
+static func crash() -> AudioStreamWAV:
+	return _cached("crash", func() -> AudioStreamWAV:
+		return _make(1.4, func(t: float, rng: RandomNumberGenerator) -> float:
+			var bang := sin(TAU * (60.0 - t * 30.0) * t) * exp(-t * 6.0)
+			var crunch := rng.randf_range(-1.0, 1.0) * exp(-t * 4.0) * 0.8
+			# Glass: bright ringing bits that come and go.
+			var glass := sin(TAU * (2600.0 + 900.0 * sin(t * 40.0)) * t) * exp(-t * 3.0) * 0.25 * float(rng.randf() < 0.35)
+			return clampf(bang + crunch + glass, -1.0, 1.0)))
+
+
+## A car alarm: a siren going up and down, then beeps. Plays once (about 6 s).
+static func alarm() -> AudioStreamWAV:
+	return _cached("alarm", func() -> AudioStreamWAV:
+		return _make(6.0, func(t: float, _rng: RandomNumberGenerator) -> float:
+			var f := 900.0 + 500.0 * sin(TAU * 1.6 * t) if t < 3.0 else 1300.0
+			var on := 1.0 if t < 3.0 or fmod(t, 0.4) < 0.2 else 0.0
+			return sin(TAU * f * t) * 0.45 * on))
+
+
+## A phone ringing: two tones together, on and off (about 4 s, two rings).
+static func ring() -> AudioStreamWAV:
+	return _cached("ring", func() -> AudioStreamWAV:
+		return _make(4.0, func(t: float, _rng: RandomNumberGenerator) -> float:
+			var on := 1.0 if fmod(t, 2.0) < 1.2 and fmod(t, 0.1) < 0.07 else 0.0
+			return (sin(TAU * 440.0 * t) + sin(TAU * 480.0 * t)) * 0.25 * on))
+
+
 ## The hammer falling on an empty chamber.
 static func click() -> AudioStreamWAV:
 	return _cached("click", func() -> AudioStreamWAV:
@@ -44,6 +72,18 @@ static func play(parent: Node, stream: AudioStream, at: Vector3, volume_db := 0.
 	p.max_distance = 300.0
 	parent.add_child(p)
 	p.global_position = at
+	p.finished.connect(p.queue_free)
+	p.play()
+
+
+## Plays `stream` everywhere at once (not from a spot in the world): a phone in your pocket.
+static func play_flat(parent: Node, stream: AudioStream, volume_db := 0.0) -> void:
+	if parent == null or not parent.is_inside_tree():
+		return
+	var p := AudioStreamPlayer.new()
+	p.stream = stream
+	p.volume_db = volume_db
+	parent.add_child(p)
 	p.finished.connect(p.queue_free)
 	p.play()
 
