@@ -551,7 +551,8 @@ func _input(event: InputEvent) -> void:
 		_camera.rotation = Vector3(_pitch, _yaw, 0.0)
 		get_viewport().set_input_as_handled()
 		return
-	if key and key.pressed:
+	# F3 is the locator's (game/locator.gd): it copies the spot under the mouse.
+	if key and key.pressed and key.physical_keycode != KEY_F3:
 		_key(key)
 		get_viewport().set_input_as_handled()
 
@@ -1390,7 +1391,7 @@ func _make_ui() -> void:
 		"Click: pick a building, wall or model   G: move it (click to drop, right click: cancel)",
 		"E: drag a wall's corner or end (click to drop)",
 		"Z / X: turn (Shift: 1 degree)   Delete: remove   + / -: model size",
-		"Tab: choose model   N: place it   Ctrl+Z: undo   Ctrl+S: save",
+		"Tab: choose model   N: place it   Ctrl+Z: undo   Ctrl+S: save   F3: copy the spot under the mouse",
 	])
 	box.add_child(help)
 	# How the picked building or wall looks, on the right.

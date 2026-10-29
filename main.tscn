@@ -22,6 +22,8 @@
 [ext_resource type="Script" uid="uid://d3p26x683yhgs" path="res://world/crosswalk.gd" id="20"]
 [ext_resource type="Script" uid="uid://cjghnbnfs0r26" path="res://game/taxi.gd" id="21"]
 [ext_resource type="Script" uid="uid://ct2q2gwrh4ulv" path="res://world/gun_dealer.gd" id="22"]
+[ext_resource type="Script" path="res://world/junction.gd" id="junction"]
+[ext_resource type="Script" path="res://world/traffic_light.gd" id="traffic_light"]
 
 [sub_resource type="ProceduralSkyMaterial" id="sky_mat"]
 sky_top_color = Color(0.18, 0.38, 0.72, 1)
@@ -113,6 +115,21 @@ transform = Transform3D(0.98546433, 0, 0.16988242, 0, 1, 0, -0.16988242, 0, 0.98
 transform = Transform3D(0.0764556, 0, 0.997073, 0, 1, 0, -0.997073, 0, 0.0764556, -815.5059, -19.879616, 1565.8075)
 script = ExtResource("20")
 length = 13.2
+
+[node name="MainNorth" type="Node3D" parent="Crosswalks"]
+transform = Transform3D(0.1190, 0, 0.9929, 0, 1, 0, -0.9929, 0, 0.1190, -601.20, -15.90, 622.00)
+script = ExtResource("20")
+length = 8.6
+
+[node name="MainEast" type="Node3D" parent="Crosswalks"]
+transform = Transform3D(0.9806, 0, -0.1961, 0, 1, 0, 0.1961, 0, 0.9806, -588.86, -15.90, 655.80)
+script = ExtResource("20")
+length = 15.6
+
+[node name="MainSouth" type="Node3D" parent="Crosswalks"]
+transform = Transform3D(0.1961, 0, 0.9806, 0, 1, 0, -0.9806, 0, 0.1961, -604.90, -15.90, 671.00)
+script = ExtResource("20")
+length = 12.8
 
 [node name="Townsfolk" type="Node3D" parent="." unique_id=1520867731 node_paths=PackedStringArray("sidewalks", "player")]
 script = ExtResource("17")
@@ -240,7 +257,7 @@ On foot: W/A/S/D walk   Shift: run   Space: jump
 Z / C / X: left, right, hazard signals   L: lights (park, low, high)   T: refuel at a pump (you pay as it fills)   Y: taxi fares (in a taxi)
 Mouse: look around (click to grab)   Wheel: zoom (on foot: Ctrl+wheel; wheel picks the item in your hand)   E on foot: buy / use the item in your hand (drink, smoke)   C: squat on a smoke break   Esc: pause
 Left click: punch (with the pistol in hand: shoot)   Right click: aim   R: reload
-1-5: jump into a car (testing): 1 E50   2 E55   3 Volga   4 Land Cruiser   5 Compass   =: +10 000 AMD (testing)   0: restart missions (testing)"
+1-5: jump into a car (testing): 1 E50   2 E55   3 Volga   4 Land Cruiser   5 Compass   =: +10 000 AMD (testing)   0: restart missions (testing)   F3: copy where you are (for map changes)"
 
 [node name="Power" type="ProgressBar" parent="HUD" unique_id=123988569]
 anchors_preset = 3
@@ -345,3 +362,31 @@ theme_override_constants/outline_size = 8
 theme_override_font_sizes/font_size = 26
 text = "Press F to get in"
 horizontal_alignment = 1
+
+[node name="Junctions" type="Node3D" parent="."]
+
+[node name="MainCrossroad" type="Node3D" parent="Junctions"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -602, -15.9, 650)
+script = ExtResource("junction")
+plain_area = PackedVector2Array(-3.40, -31.00, 5.50, -31.00, 4.40, -20.00, 6.40, -14.60, 7.70, -5.00, 9.00, -3.20, 18.10, -1.80, 17.85, 13.52, 15.67, 13.34, 13.66, 13.37, 11.82, 13.61, 10.15, 14.06, 8.65, 14.72, 7.32, 15.58, 6.16, 16.65, 5.16, 17.92, 4.34, 19.41, 3.69, 21.10, 3.20, 23.00, 3.00, 24.40, -9.30, 24.40, -8.80, 18.00, -8.20, 10.50, -10.80, 9.40, -8.20, 2.60, -6.60, -1.80, -7.90, -12.50, -11.40, -21.40, -7.40, -25.40, -4.40, -22.60)
+corner_kerb = PackedVector2Array(3.20, 23.00, 3.69, 21.10, 4.34, 19.41, 5.16, 17.92, 6.16, 16.65, 7.32, 15.58, 8.65, 14.72, 10.15, 14.06, 11.82, 13.61, 13.66, 13.37, 15.67, 13.34, 17.85, 13.52, 20.20, 13.90)
+
+[node name="North" type="Node3D" parent="Junctions/MainCrossroad"]
+transform = Transform3D(0.9929, 0, -0.1190, 0, 1, 0, 0.1190, 0, 0.9929, -3.80, 0, -30.60)
+script = ExtResource("traffic_light")
+stop_width = 4.3
+
+[node name="South" type="Node3D" parent="Junctions/MainCrossroad"]
+transform = Transform3D(-0.9806, 0, 0.1961, 0, 1, 0, -0.1961, 0, -0.9806, 3.70, 0, 23.30)
+script = ExtResource("traffic_light")
+
+[node name="East" type="Node3D" parent="Junctions/MainCrossroad"]
+transform = Transform3D(-0.2097, 0, -0.9778, 0, 1, 0, 0.9778, 0, -0.2097, 18.10, 0, -2.20)
+script = ExtResource("traffic_light")
+group = 1
+
+[node name="NorthWest" type="Node3D" parent="Junctions/MainCrossroad"]
+transform = Transform3D(0.7071, 0, 0.7071, 0, 1, 0, -0.7071, 0, 0.7071, -11.10, 0, -20.30)
+script = ExtResource("traffic_light")
+group = 1
+stop_width = 2.8

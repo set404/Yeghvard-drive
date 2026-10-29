@@ -31,7 +31,7 @@ extends Node3D
 ## Speed in km/h by road class (2 streets, 3 tertiary, 4 secondary, 5 primary, 6 trunk).
 @export var class_speeds := {2: 35.0, 3: 45.0, 4: 50.0, 5: 60.0, 6: 70.0}
 ## How hard they take bends (m/s² sideways) and brake for what is ahead (m/s²).
-@export var bend_grip := 2.6
+@export var bend_grip := 1.8
 @export var comfort_brake := 3.0
 
 ## Body colours (sRGB), as car.gd's paint_color. Any close to a colour the
@@ -55,6 +55,11 @@ const PALETTE: Array[Color] = [
 ## How close (RGB distance) a colour may be to a placed car's and still be used.
 const SAME_COLOUR := 0.12
 const UP := Vector3.UP
+## m/s² the cars' full foot brake gives (car.gd brake_decel).
+const BRAKE_DECEL := 10.0
+## Metres past a traffic light's stop line that must be clear (no car standing)
+## before a car goes in on green.
+const BOX := 25.0
 
 ## One car of the traffic and where it is going.
 class Driver:
@@ -63,6 +68,9 @@ class Driver:
 	## lane (offset to the right of the middle) and the distance to each.
 	var nodes := PackedInt32Array()
 	var edges := PackedInt32Array()
+	## The lane's corner points, and pts: the same with the corners rounded
+	## into curves a car can follow (_lane_points).
+	var raw := PackedVector3Array()
 	var pts := PackedVector3Array()
 	var cum := PackedFloat32Array()
 	## The piece of the way the car is on (pts[k] to pts[k + 1]) and how far along it is.
@@ -75,6 +83,9 @@ class Driver:
 	var allowed := 0.0 ## m/s, from bends and what is in the way
 	var plan_in := 0.0
 	var blocker: Node3D
+	## Metres to the blocker's back and how fast it is going our way, m/s.
+	var gap := INF
+	var gap_speed := 0.0
 	var blocked_for := 0.0
 	var ignore_cars_for := 0.0
 	var stuck_for := 0.0
@@ -86,8 +97,15 @@ class Driver:
 # The road network.
 var _pos := PackedVector3Array()
 var _out: Array[PackedInt32Array] = [] ## directed edges leaving each node
+var _e_from := PackedInt32Array()
 var _e_to := PackedInt32Array()
+## Whether a car fits along the lane, found the first time it is asked (_edge_clear):
+## 0 not yet known, 1 clear, 2 a fence or wall stands in it.
+var _e_clear := PackedByteArray()
+var _ground: Array[RID] = [] ## the terrain and the roads, which the lane test ignores
 var _e_offset := PackedFloat32Array() ## metres from the middle to the lane, to the right
+var _e_hw := PackedFloat32Array() ## the road's half width
+var _e_two_way := PackedByteArray()
 var _e_speed := PackedFloat32Array() ## m/s
 var _grid := {} ## Vector2i cell -> PackedInt32Array of nodes that have a way out
 const CELL := 40.0
@@ -109,8 +127,12 @@ var _manage_in := 1.5
 
 func _ready() -> void:
 	var t0 := Time.get_ticks_usec()
-	var roads := _main.get_node_or_null("World")
-	roads = roads.find_child("Roads", true, false) if roads else null
+	var world := _main.get_node_or_null("World")
+	var roads: Node = world.find_child("Roads", true, false) if world else null
+	if world:
+		for body: CollisionObject3D in world.find_children("*", "CollisionObject3D", true, false):
+			if body.name in [&"Terrain", &"Roads", &"Water"]:
+				_ground.append(body.get_rid())
 	if roads:
 		_build_network(roads)
 	# The models and colours: those of the cars placed in the scene.
@@ -258,10 +280,14 @@ func _build_network(roads: Node) -> void:
 			offset = clampf(hw * 0.5, 1.3, 3.2)
 		for dir in ([[a, b]] if oneway else [[a, b], [b, a]]):
 			var e := _e_to.size()
+			_e_from.append(dir[0])
 			_e_to.append(dir[1])
 			_e_offset.append(offset)
+			_e_hw.append(hw)
+			_e_two_way.append(0 if oneway else 1)
 			_e_speed.append(piece[5])
 			tmp[dir[0]].append(e)
+	_e_clear.resize(_e_to.size())
 	for id in _pos.size():
 		_out[id] = PackedInt32Array(tmp[id])
 		if not _out[id].is_empty():
@@ -271,6 +297,33 @@ func _build_network(roads: Node) -> void:
 			var list: PackedInt32Array = _grid[cell]
 			list.append(id)
 			_grid[cell] = list
+
+
+## False where a fence or wall stands in the lane (a yard built over the end of
+## a street, a join across a verge): a car following it would only hit it.
+func _edge_clear(e: int) -> bool:
+	if _e_clear[e] == 0:
+		var a := _pos[_e_from[e]]
+		var b := _pos[_e_to[e]]
+		var dir := _flat(b - a)
+		var length := dir.length()
+		dir = dir.normalized() if length > 0.01 else Vector3.BACK
+		var right := dir.cross(UP)
+		var box := BoxShape3D.new()
+		# A car's width and a little: a street a car only scrapes along is no good either.
+		box.size = Vector3(2.1, 0.8, maxf(length, 0.5))
+		var query := PhysicsShapeQueryParameters3D.new()
+		query.shape = box
+		query.collision_mask = 1
+		var mid := (a + b) * 0.5 + right * _e_offset[e] + UP * 1.0
+		query.transform = Transform3D(Basis.looking_at(dir), mid)
+		var exclude := _ground.duplicate()
+		for car: CollisionObject3D in get_tree().get_nodes_in_group("cars"):
+			exclude.append(car.get_rid())
+		query.exclude = exclude
+		var hits := get_world_3d().direct_space_state.intersect_shape(query, 1)
+		_e_clear[e] = 2 if not hits.is_empty() else 1
+	return _e_clear[e] == 1
 
 
 static func _near(a: float, b: float) -> bool:
@@ -411,7 +464,11 @@ func _place(d: Driver, focus: Vector3) -> bool:
 		if not _clear_at(p, 16.0, d.car):
 			continue
 		var e := _out[id][randi() % _out[id].size()]
+		if not _edge_clear(e):
+			continue
 		_start_route(d, id, e)
+		if d.ends or d.cum[d.cum.size() - 1] < 40.0:
+			continue
 		return true
 	return false
 
@@ -439,9 +496,12 @@ func _set_down(d: Driver) -> void:
 	at.y += 0.4
 	d.car.call("place", Transform3D(Basis.looking_at(-dir), at))
 	d.cruise = _e_speed[d.edges[0]] * d.temper
-	d.car.linear_velocity = dir * minf(d.cruise, 9.0)
 	d.k = 0
 	d.s = 0.0
+	d.gap = INF
+	# Rolling no faster than the first bend allows, or it is in the fence.
+	_plan(d, 0.0)
+	d.car.linear_velocity = dir * minf(minf(d.cruise, d.allowed), 9.0)
 
 
 # --- drivers ------------------------------------------------------------------
@@ -545,6 +605,7 @@ func _get_out(car: VehicleBody3D, driver: Node3D) -> void:
 func _start_route(d: Driver, from: int, edge: int) -> void:
 	d.nodes = PackedInt32Array([from, _e_to[edge]])
 	d.edges = PackedInt32Array([edge])
+	d.raw = PackedVector3Array()
 	d.pts = PackedVector3Array()
 	d.cum = PackedFloat32Array()
 	d.ends = false
@@ -589,15 +650,34 @@ func _extend(d: Driver) -> void:
 		var options: Array[int] = []
 		var weights: Array[float] = []
 		var total := 0.0
+		var hairpin := -1
 		for e in _out[here]:
 			var to := _e_to[e]
-			if to == came:
+			if to == came or not _edge_clear(e):
+				continue
+			# Not into a dead end: a join onto a one-way road the wrong way leads
+			# nowhere but back, and the car would stop there for good.
+			var onward := false
+			for next in _out[to]:
+				if _e_to[next] != here:
+					onward = true
+					break
+			if not onward:
 				continue
 			var cos_turn := dir_in.dot(_flat(_pos[to] - _pos[here]).normalized())
-			var w := 4.0 if cos_turn > 0.7 else (1.5 if cos_turn > -0.3 else 0.15)
+			# Doubling back into a fork's other arm: too tight to take, and the
+			# corner of the yard between the two is in the way.
+			if cos_turn < -0.2:
+				hairpin = e
+				continue
+			var w := 4.0 if cos_turn > 0.7 else 1.5
 			options.append(e)
 			weights.append(w)
 			total += w
+		if options.is_empty() and hairpin >= 0:
+			options.append(hairpin)
+			weights.append(1.0)
+			total += 1.0
 		if options.is_empty():
 			d.ends = true
 		else:
@@ -613,11 +693,19 @@ func _extend(d: Driver) -> void:
 		_lane_points(d)
 
 
-## The lane points: each node moved to the right of the way by its lane offset.
+## The lane points: each node moved to the right of the way by its lane offset,
+## then the corners rounded. A junction's lane is a sharp corner that no car can
+## turn on the spot: following it, a car swings wide past a right turn into the
+## other side of the new street. Each point is averaged with two either side
+## (weights 1 2 3 2 1), which makes a right angle of 3 m pieces a curve of about
+## 4.6 m radius: one a car can take, starting before the corner and ending in
+## its own lane; a left turn crosses near the middle of the junction.
 func _lane_points(d: Driver) -> void:
 	var n := d.nodes.size()
-	# Only the last two can have changed.
-	var first := maxi(d.pts.size() - 1, 0)
+	# Only the last two corner points can have changed, and the rounded points
+	# within two of them.
+	var first := maxi(d.raw.size() - 1, 0)
+	d.raw.resize(n)
 	d.pts.resize(n)
 	d.cum.resize(n)
 	for i in range(first, n):
@@ -633,8 +721,72 @@ func _lane_points(d: Driver) -> void:
 		var mitre := 1.0
 		if dir_in != Vector3.ZERO and dir_out != Vector3.ZERO:
 			mitre = 1.0 / maxf(0.7, dir.dot(dir_out))
-		d.pts[i] = p + dir.cross(UP).normalized() * offset * mitre
+		d.raw[i] = p + dir.cross(UP).normalized() * offset * mitre
+	for i in range(maxi(first - 2, 0), n):
+		var sum := Vector3.ZERO
+		var weight := 0.0
+		for j in range(maxi(i - 2, 0), mini(i + 3, n)):
+			var w := 3.0 - absi(j - i)
+			sum += d.raw[j] * w
+			weight += w
+		d.pts[i] = sum / weight
+		_keep_in_lane(d, i)
+		# Round the corner only where a car fits: not into a wall at the kerb.
+		if d.pts[i] != d.raw[i] and not _fits(d.pts[i], d.raw[mini(i + 1, n - 1)] - d.raw[maxi(i - 1, 0)]):
+			d.pts[i] = d.raw[i]
+	for i in range(maxi(first - 2, 0), n):
 		d.cum[i] = 0.0 if i == 0 else d.cum[i - 1] + _flat(d.pts[i] - d.pts[i - 1]).length()
+
+
+## True if nothing but the ground and cars is where a car would stand at `at`,
+## facing `dir`.
+func _fits(at: Vector3, dir: Vector3) -> bool:
+	dir = _flat(dir)
+	if dir.length() < 0.01:
+		return true
+	var box := BoxShape3D.new()
+	box.size = Vector3(2.0, 0.8, 3.0)
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.shape = box
+	query.collision_mask = 1
+	query.transform = Transform3D(Basis.looking_at(dir.normalized()), at + UP * 1.0)
+	var exclude := _ground.duplicate()
+	for car: CollisionObject3D in get_tree().get_nodes_in_group("cars"):
+		exclude.append(car.get_rid())
+	query.exclude = exclude
+	return get_world_3d().direct_space_state.intersect_shape(query, 1).is_empty()
+
+
+## Rounding cuts a left turn towards the middle of the junction, across the
+## oncoming lanes, and a right turn towards the kerb. Keeps a rounded point from
+## going more than KEEP_CENTRE over the middle of a two-way road (a left turn
+## then swings wider, as a driver's does) or nearer the edge than KEEP_EDGE.
+const KEEP_CENTRE := 1.1
+const KEEP_EDGE := 1.1
+
+func _keep_in_lane(d: Driver, i: int) -> void:
+	var n := d.nodes.size()
+	for j in range(maxi(i - 2, 0), mini(i + 2, n - 1)):
+		var a := _pos[d.nodes[j]]
+		var ab := _flat(_pos[d.nodes[j + 1]] - a)
+		if ab.length() < 0.01:
+			continue
+		var rel := _flat(d.pts[i] - a)
+		var t := rel.dot(ab) / ab.length_squared()
+		# Only beside this piece of road, not off past its ends.
+		if t < -0.2 or t > 1.2:
+			continue
+		var right := ab.normalized().cross(UP)
+		var lateral := rel.dot(right)
+		var e := d.edges[j]
+		var lo := KEEP_CENTRE if _e_two_way[e] == 1 else -INF
+		# At a junction the kerb opens out round the corner: up to the road's
+		# edge line there, the fences stand back from it (build_world FENCE_ROAD_GAP).
+		var junction := _out[d.nodes[j]].size() > 2 or _out[d.nodes[j + 1]].size() > 2
+		var hi := maxf(_e_hw[e] - (0.0 if junction else KEEP_EDGE), _e_offset[e])
+		if absf(lateral) > _e_hw[e] + 2.0:
+			continue # beside some other arm of the junction
+		d.pts[i] += right * (clampf(lateral, lo, hi) - lateral)
 
 
 ## Drops the part of the way already driven.
@@ -644,6 +796,7 @@ func _trim(d: Driver) -> void:
 		return
 	d.nodes = d.nodes.slice(drop)
 	d.edges = d.edges.slice(drop)
+	d.raw = d.raw.slice(drop)
 	d.pts = d.pts.slice(drop)
 	var base := d.cum[drop]
 	d.cum = d.cum.slice(drop)
@@ -691,15 +844,30 @@ func _drive(d: Driver, delta: float) -> void:
 		d.plan_in = 0.1
 		_plan(d, speed)
 
-	# Steering: aim at a point on the lane a little ahead (pure pursuit).
-	var look := clampf(4.0 + speed * 0.6, 6.0, 18.0)
+	# Steering: aim at a point on the lane a little ahead (pure pursuit). Short
+	# when slow, so it follows a tight corner instead of cutting it. (From the
+	# middle of the car, not the rear axle: the tyres slip, so the car turns
+	# wider than the geometry says, and that makes up for it.)
+	var wheelbase: float = car.get("_wheelbase") if car.get("_wheelbase") != null else 2.7
+	var look := clampf(2.0 + speed * 0.45, 3.5, 16.0)
 	var target := _point_at(d, d.s + look)
 	var local := car.global_basis.inverse() * (target - p)
+	if local.x > 0.0:
+		# Bending left: aiming far ahead turns in early, across the oncoming
+		# lane. Aim nearer, and turn in late as a driver does.
+		target = _point_at(d, d.s + maxf(look * 0.55, 2.5))
+		local = car.global_basis.inverse() * (target - p)
 	var alpha := atan2(local.x, local.z)
 	var dist := maxf(Vector2(local.x, local.z).length(), 1.0)
-	var wheelbase: float = car.get("_wheelbase") if car.get("_wheelbase") != null else 2.7
 	var max_steer: float = car.get("max_steer")
-	car.set("ai_steer", clampf(atan(2.0 * wheelbase * sin(alpha) / dist), -max_steer, max_steer))
+	# Aiming ahead alone lets the car drift inside a long bend (a left turn
+	# across the junction); steer back towards the lane by how far off it is.
+	var off_lane := 0.0
+	if seg.length() > 0.001:
+		var c := d.pts[d.k] + seg.normalized() * along
+		off_lane = _flat(p - c).dot(seg.normalized().cross(UP))
+	var correct := clampf(off_lane * 0.25, -0.25, 0.25)
+	car.set("ai_steer", clampf(atan(2.0 * wheelbase * sin(alpha) / dist) + correct, -max_steer, max_steer))
 
 	# Pedals: hold the speed the road, the bends and the traffic allow; stop
 	# for you getting in.
@@ -715,8 +883,18 @@ func _drive(d: Driver, delta: float) -> void:
 		brake = 1.0
 	elif err > -0.3:
 		gas = clampf(0.12 + err * 0.35, 0.0, 1.0)
-	elif err < -1.0:
-		brake = clampf(-err * 0.18, 0.0, 1.0)
+	elif err < -0.6:
+		brake = clampf(-err * 0.4, 0.0, 1.0)
+	# Closing on whoever is ahead: brake as hard as it takes to stop short of
+	# them (the gap shrinks between plans), not just towards the wanted speed.
+	if d.gap < INF:
+		var closing := speed - d.gap_speed
+		d.gap -= closing * delta
+		if closing > 0.3:
+			var need := closing * closing / (2.0 * maxf(d.gap, 0.3))
+			if need > comfort_brake * 0.8 or d.gap < 1.5:
+				gas = 0.0
+				brake = maxf(brake, clampf(need / BRAKE_DECEL * 1.2, 0.0, 1.0))
 	car.set("ai_gas", gas)
 	car.set("ai_brake", brake)
 
@@ -765,35 +943,78 @@ func _plan(d: Driver, speed: float) -> void:
 	for other: VehicleBody3D in get_tree().get_nodes_in_group("cars"):
 		if other == d.car:
 			continue
-		if d.ignore_cars_for > 0.0 and other.get("ai_driven"):
-			continue
 		obstacles.append([other, other.global_position, 2.2, 7.0])
 		if other.linear_velocity.length() > 2.0:
 			# Where it will be in a moment: catches a car about to cross.
-			obstacles.append([other, other.global_position + other.linear_velocity * 0.8, 2.0, 7.0])
+			obstacles.append([other, other.global_position + other.linear_velocity * 0.8, 2.0, 7.0, true])
 	var me := d.car.global_position
+	var to_local := d.car.global_basis.inverse()
 	var reach := horizon - d.s + 8.0
+	# Right in front of the bumper, wherever the way goes: a car cutting across
+	# or over the line, someone stepping out. Never waved through.
+	var close := 5.0 + maxf(speed, 0.0) * 1.2
 	for o: Array in obstacles:
 		var at: Vector3 = o[1]
 		if _flat(at - me).length() > reach or absf(at.y - me.y) > 4.0:
 			continue
-		for i in range(d.k + 1, last + 1):
-			var ahead := d.cum[i] - d.s
-			if ahead > reach:
+		var g := INF
+		var local := to_local * (at - me)
+		var in_front: bool = o.size() < 5 and local.z > 0.0 and local.z < close + o[3] and absf(local.x) < o[2] * 0.85
+		if in_front:
+			g = local.z - o[3]
+		else:
+			for i in range(d.k + 1, last + 1):
+				var ahead := d.cum[i] - d.s
+				if ahead > reach:
+					break
+				if _flat(at - d.pts[i]).length() < o[2]:
+					g = ahead - o[3]
+					break
+		if g >= gap:
+			continue
+		if not in_front and o[0] is VehicleBody3D and o[0].get("ai_driven"):
+			# Squeezing past one it has waited on too long.
+			if d.ignore_cars_for > 0.0:
+				continue
+			# Two cars each in the other's way: the one that came first goes.
+			var other_driver := _driver_of(o[0])
+			if other_driver and other_driver.blocker == d.car and d.car.get_instance_id() > (o[0] as Object).get_instance_id():
+				continue
+		gap = g
+		blocker = o[0]
+	# Traffic lights: where the way ahead crosses one's stop line, stop there on
+	# red (and on yellow, if there is room).
+	for light: Node3D in get_tree().get_nodes_in_group("traffic_lights"):
+		if _flat(light.global_position - me).length() > reach + 10.0:
+			continue
+		var line: PackedVector3Array = light.call("stop_line")
+		var l0 := Vector2(line[0].x, line[0].z)
+		var l1 := Vector2(line[1].x, line[1].z)
+		for i in range(d.k, last):
+			if d.cum[i] - d.s > reach:
 				break
-			if _flat(at - d.pts[i]).length() < o[2]:
-				var g: float = ahead - o[3]
-				if g < gap:
-					# Two cars each in the other's way: the one that came first goes.
-					var other_driver := _driver_of(o[0])
-					if other_driver and other_driver.blocker == d.car and d.car.get_instance_id() > (o[0] as Object).get_instance_id():
-						break
-					gap = g
-					blocker = o[0]
-				break
+			var p0 := Vector2(d.pts[i].x, d.pts[i].z)
+			var cross: Variant = Geometry2D.segment_intersects_segment(p0, Vector2(d.pts[i + 1].x, d.pts[i + 1].z), l0, l1)
+			if cross == null:
+				continue
+			# From the car's front (half a car ahead of its middle) to the line.
+			var g: float = d.cum[i] + p0.distance_to(cross) - d.s - 2.3
+			if g > -1.0 and g < gap:
+				# Green too, but not into the junction behind a car standing in it:
+				# that is how everyone ends up waiting on everyone else.
+				var full: bool = g > 0.5 and blocker is VehicleBody3D and gap < g + BOX \
+						and (blocker as VehicleBody3D).linear_velocity.length() < 2.0
+				if full or light.call("must_stop", g, speed):
+					gap = maxf(g, 0.0)
+					blocker = light
+			break
 	d.blocker = blocker
+	d.gap = gap
+	d.gap_speed = 0.0
 	if blocker:
 		allowed = minf(allowed, _stop_speed(gap))
+		if blocker is VehicleBody3D:
+			d.gap_speed = maxf((blocker as VehicleBody3D).linear_velocity.dot(d.car.global_basis.z), 0.0)
 	# Held up by a car that does not move. Another of the traffic (two waiting
 	# on each other at a junction): after a while, squeeze past. A parked one:
 	# out of sight, the car comes back elsewhere (_manage).

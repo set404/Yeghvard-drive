@@ -63,10 +63,9 @@ func _rebuild(heights := {}) -> void:
 		_mesh.name = "Stripes"
 		_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(_mesh, false, Node.INTERNAL_MODE_FRONT)
-	var paint := StandardMaterial3D.new()
-	paint.albedo_color = Color(0.92, 0.92, 0.88)
-	paint.roughness = 0.75
-	paint.cull_mode = BaseMaterial3D.CULL_DISABLED
+	# Drawn over the road and a junction's plain asphalt (world/shaders/road_paint.gdshader).
+	var paint := ShaderMaterial.new()
+	paint.shader = preload("res://world/shaders/road_paint.gdshader")
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	st.set_material(paint)

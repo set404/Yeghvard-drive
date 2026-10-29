@@ -112,6 +112,10 @@ func _ready() -> void:
 	var traffic: Node3D = preload("res://world/traffic.gd").new()
 	traffic.name = "Traffic"
 	add_child(traffic)
+	# F3: where you are, copied for asking about a spot on the map (game/locator.gd).
+	var locator: CanvasLayer = preload("res://game/locator.gd").new()
+	locator.name = "Locator"
+	add_child(locator)
 
 
 func _show_money(balance: float) -> void:

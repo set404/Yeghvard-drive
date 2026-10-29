@@ -5186,12 +5186,12 @@ _data = {
 }
 point_count = 2
 
-[sub_resource type="Curve3D" id="Curve3D_qnxkd"]
+[sub_resource type="Curve3D" id="Curve3D_0f1lj"]
 _data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, -0.6157837, 0, 1.4077759, 0, 0, 0, 0, 0, 0, -12.5008545, 0, -3.7906494, 0, 0, 0, 0, 0, 0, -15.209106, 0, -5.076111, 0, 0, 0, 0, 0, 0, -52.799988, 0, -23.579956, 0, 0, 0, 0, 0, 0, -56.940002, 0, -20.940063, 0, 0, 0, 0, 0, 0, -57.11841, 0, -12.854431, 0, 0, 0, 0, 0, 0, -59.6756, 0, 0.35321045),
-"tilts": PackedFloat32Array(0, 0, 0, 0, 0, 0, 0)
+"points": PackedVector3Array(0, 0, 0, 0, 0, 0, -0.6157837, 0, 1.4077759, 0, 0, 0, 0, 0, 0, -12.5008545, 0, -3.7906494, 0, 0, 0, 0, 0, 0, -15.209106, 0, -5.076111, 0, 0, 0, 0, 0, 0, -43.252502, 0, -18.979187, 0, 0, 0, 0, 0, 0, -45.35742, 0, -19.381775, 0, 0, 0, 0, 0, 0, -47.256958, 0, -19.593689, 0, 0, 0, 0, 0, 0, -48.947937, 0, -19.62555, 0, 0, 0, 0, 0, 0, -50.431458, 0, -19.491943, 0, 0, 0, 0, 0, 0, -51.71747, 0, -19.208984, 0, 0, 0, 0, 0, 0, -52.828003, 0, -18.789063, 0, 0, 0, 0, 0, 0, -53.7959, 0, -18.2323, 0, 0, 0, 0, 0, 0, -54.654907, 0, -17.520752, 0, 0, 0, 0, 0, 0, -55.42639, 0, -16.622498, 0, 0, 0, 0, 0, 0, -56.112732, 0, -15.5043335, 0, 0, 0, 0, 0, 0, -56.701233, 0, -14.142578, 0, 0, 0, 0, 0, 0, -57.173462, 0, -12.526794, 0, 0, 0, 0, 0, 0, -59.6756, 0, 0.35321045),
+"tilts": PackedFloat32Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 }
-point_count = 7
+point_count = 17
 
 [sub_resource type="Curve3D" id="Curve3D_13qf7"]
 _data = {
@@ -45723,13 +45723,6 @@ _data = {
 }
 point_count = 2
 
-[sub_resource type="Curve3D" id="Curve3D_peir3"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -22.440002, 0, -3.0600586, 0, 0, 0, 0, 0, 0, -59.51996, 0, -30.359985),
-"tilts": PackedFloat32Array(0, 0, 0)
-}
-point_count = 3
-
 [sub_resource type="Curve3D" id="Curve3D_mqpqp"]
 _data = {
 "points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8.940002, 0, -30.71997, 0, 0, 0, 0, 0, 0, 21.119934, 0, -42.54004, 0, 0, 0, 0, 0, 0, 38.51996, 0, -47.640015),
@@ -46171,34 +46164,6 @@ _data = {
 }
 point_count = 4
 
-[sub_resource type="Curve3D" id="Curve3D_sxx38"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 17.160034, 0, -14.340027, 0, 0, 0, 0, 0, 0, 33.359985, 0, -34.140015, 0, 0, 0, 0, 0, 0, 46.5, 0, -45),
-"tilts": PackedFloat32Array(0, 0, 0, 0)
-}
-point_count = 4
-
-[sub_resource type="Curve3D" id="Curve3D_o4xnj"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16.619995, 0, 4.380005),
-"tilts": PackedFloat32Array(0, 0)
-}
-point_count = 2
-
-[sub_resource type="Curve3D" id="Curve3D_fnt55"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2.2799683, 0, 3, 0, 0, 0, 0, 0, 0, -17.76001, 0, 76.98004),
-"tilts": PackedFloat32Array(0, 0, 0)
-}
-point_count = 3
-
-[sub_resource type="Curve3D" id="Curve3D_uvb6m"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -16.259949, 0, -2.460022, 0, 0, 0, 0, 0, 0, -29.939941, 0, -8.28009, 0, 0, 0, 0, 0, 0, -40.799988, 0, -19.920105, 0, 0, 0, 0, 0, 0, -45.359985, 0, -36.360046),
-"tilts": PackedFloat32Array(0, 0, 0, 0, 0)
-}
-point_count = 5
-
 [sub_resource type="Curve3D" id="Curve3D_dcrs8"]
 _data = {
 "points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 29.4, 0, -12.599976, 0, 0, 0, 0, 0, 0, 40.5, 0, -24),
@@ -46240,27 +46205,6 @@ _data = {
 "tilts": PackedFloat32Array(0, 0, 0)
 }
 point_count = 3
-
-[sub_resource type="Curve3D" id="Curve3D_3rd8s"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12.299988, 0, -2.580017, 0, 0, 0, 0, 0, 0, 30.059998, 0, 2.1599731),
-"tilts": PackedFloat32Array(0, 0, 0)
-}
-point_count = 3
-
-[sub_resource type="Curve3D" id="Curve3D_hqsur"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 20.700012, 0, 15.299988),
-"tilts": PackedFloat32Array(0, 0)
-}
-point_count = 2
-
-[sub_resource type="Curve3D" id="Curve3D_exo0p"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5.0999756, 0, 18.900024),
-"tilts": PackedFloat32Array(0, 0)
-}
-point_count = 2
 
 [sub_resource type="Curve3D" id="Curve3D_nhgv0"]
 _data = {
@@ -46430,20 +46374,6 @@ _data = {
 }
 point_count = 3
 
-[sub_resource type="Curve3D" id="Curve3D_g1lj5"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8.400024, 0, 11.0998535, 0, 0, 0, 0, 0, 0, 11.640015, 0, 29.640015, 0, 0, 0, 0, 0, 0, 5.999939, 0, 51, 0, 0, 0, 0, 0, 0, -14.099976, 0, 89.3999, 0, 0, 0, 0, 0, 0, -26.100037, 0, 101.400024, 0, 0, 0, 0, 0, 0, -33.599976, 0, 104.400024, 0, 0, 0, 0, 0, 0, -46.440002, 0, 106.43994, 0, 0, 0, 0, 0, 0, -64.5, 0, 102),
-"tilts": PackedFloat32Array(0, 0, 0, 0, 0, 0, 0, 0, 0)
-}
-point_count = 9
-
-[sub_resource type="Curve3D" id="Curve3D_l5q4n"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -8.400024, 0, -9.5998535, 0, 0, 0, 0, 0, 0, -11.640015, 0, -28.140015, 0, 0, 0, 0, 0, 0, -1.0200195, 0, -56.52002, 0, 0, 0, 0, 0, 0, 9.359985, 0, -68.63989, 0, 0, 0, 0, 0, 0, 20.099976, 0, -74.400024, 0, 0, 0, 0, 0, 0, 34.440002, 0, -76.43994, 0, 0, 0, 0, 0, 0, 48.900024, 0, -72.900024),
-"tilts": PackedFloat32Array(0, 0, 0, 0, 0, 0, 0, 0)
-}
-point_count = 8
-
 [sub_resource type="Curve3D" id="Curve3D_kvh10"]
 _data = {
 "points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16.73999, 0, 8.760132),
@@ -46464,13 +46394,6 @@ _data = {
 "tilts": PackedFloat32Array(0, 0, 0, 0, 0)
 }
 point_count = 5
-
-[sub_resource type="Curve3D" id="Curve3D_cl1l7"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -6.9000244, 0, 16.559937, 0, 0, 0, 0, 0, 0, -18.900085, 0, 28.560059, 0, 0, 0, 0, 0, 0, -32.400024, 0, 33.06006, 0, 0, 0, 0, 0, 0, -41.700073, 0, 33.06018, 0, 0, 0, 0, 0, 0, -60.30005, 0, 27.660034),
-"tilts": PackedFloat32Array(0, 0, 0, 0, 0, 0)
-}
-point_count = 6
 
 [sub_resource type="Curve3D" id="Curve3D_pxtnm"]
 _data = {
@@ -51197,48 +51120,6 @@ _data = {
 }
 point_count = 2
 
-[sub_resource type="Curve3D" id="Curve3D_21y7l"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -10.799927, 0, 47.160034),
-"tilts": PackedFloat32Array(0, 0)
-}
-point_count = 2
-
-[sub_resource type="Curve3D" id="Curve3D_eapwi"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 22.799988, 0, 6.839966, 0, 0, 0, 0, 0, 0, 37.19995, 0, 4.7401123, 0, 0, 0, 0, 0, 0, 45.299927, 0, 0.8399658),
-"tilts": PackedFloat32Array(0, 0, 0, 0)
-}
-point_count = 4
-
-[sub_resource type="Curve3D" id="Curve3D_4gkje"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10.5, 0, -36),
-"tilts": PackedFloat32Array(0, 0)
-}
-point_count = 2
-
-[sub_resource type="Curve3D" id="Curve3D_yytup"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -36, 0, -13.5),
-"tilts": PackedFloat32Array(0, 0)
-}
-point_count = 2
-
-[sub_resource type="Curve3D" id="Curve3D_d5ml5"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -10.799927, 0, 43.19995, 0, 0, 0, 0, 0, 0, -14.039978, 0, 47.45996),
-"tilts": PackedFloat32Array(0, 0, 0)
-}
-point_count = 3
-
-[sub_resource type="Curve3D" id="Curve3D_l8pup"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -28.859985, 0, -7.5600586, 0, 0, 0, 0, 0, 0, -40.859985, 0, -19.559937, 0, 0, 0, 0, 0, 0, -44.460022, 0, -30.95996),
-"tilts": PackedFloat32Array(0, 0, 0, 0)
-}
-point_count = 4
-
 [sub_resource type="Curve3D" id="Curve3D_cn4cn"]
 _data = {
 "points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -22.97998, 0, -4.9801025, 0, 0, 0, 0, 0, 0, -37.97998, 0, -19.980103, 0, 0, 0, 0, 0, 0, -42.47998, 0, -36.48004, 0, 0, 0, 0, 0, 0, -38.93994, 0, -53.82007, 0, 0, 0, 0, 0, 0, -34.440002, 0, -65.82007, 0, 0, 0, 0, 0, 0, -19.440002, 0, -79.32007, 0, 0, 0, 0, 0, 0, 2.4000244, 0, -82.86005, 0, 0, 0, 0, 0, 0, 25.860046, 0, -76.32007, 0, 0, 0, 0, 0, 0, 38.400024, 0, -63.359985, 0, 0, 0, 0, 0, 0, 42.600037, 0, -49.56006, 0, 0, 0, 0, 0, 0, 42.179993, 0, -41.82007),
@@ -51246,177 +51127,9 @@ _data = {
 }
 point_count = 12
 
-[sub_resource type="Curve3D" id="Curve3D_ij04x"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4.5, 0, -25.5),
-"tilts": PackedFloat32Array(0, 0)
-}
-point_count = 2
-
-[sub_resource type="Curve3D" id="Curve3D_oawcj"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -22.5, 0, 30),
-"tilts": PackedFloat32Array(0, 0)
-}
-point_count = 2
-
-[sub_resource type="Curve3D" id="Curve3D_xdxdb"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15.300049, 0, -58.200012, 0, 0, 0, 0, 0, 0, 13.859985, 0, -63.360046),
-"tilts": PackedFloat32Array(0, 0, 0)
-}
-point_count = 3
-
-[sub_resource type="Curve3D" id="Curve3D_54ovv"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -21.419983, 0, -5.579895, 0, 0, 0, 0, 0, 0, -40.25995, 0, -0.539978, 0, 0, 0, 0, 0, 0, -53.75995, 0, 12.960022, 0, 0, 0, 0, 0, 0, -60.359985, 0, 34.860046),
-"tilts": PackedFloat32Array(0, 0, 0, 0, 0)
-}
-point_count = 5
-
-[sub_resource type="Curve3D" id="Curve3D_adqef"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -24.899963, 0, -12.599976, 0, 0, 0, 0, 0, 0, -46.5, 0, -28.5),
-"tilts": PackedFloat32Array(0, 0, 0)
-}
-point_count = 3
-
-[sub_resource type="Curve3D" id="Curve3D_wryqw"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -9, 0, 36),
-"tilts": PackedFloat32Array(0, 0)
-}
-point_count = 2
-
-[sub_resource type="Curve3D" id="Curve3D_ywt84"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -17.400024, 0, -2.0999756),
-"tilts": PackedFloat32Array(0, 0)
-}
-point_count = 2
-
-[sub_resource type="Curve3D" id="Curve3D_xqpvr"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -4.5, 0, 36),
-"tilts": PackedFloat32Array(0, 0)
-}
-point_count = 2
-
 [sub_resource type="Curve3D" id="Curve3D_nu1m5"]
 _data = {
 "points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 19.5, 0, -31.5),
-"tilts": PackedFloat32Array(0, 0)
-}
-point_count = 2
-
-[sub_resource type="Curve3D" id="Curve3D_3fy0c"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -42, 0, -3),
-"tilts": PackedFloat32Array(0, 0)
-}
-point_count = 2
-
-[sub_resource type="Curve3D" id="Curve3D_wvjas"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -17.159912, 0, 59.340088, 0, 0, 0, 0, 0, 0, -20.039978, 0, 62.460083),
-"tilts": PackedFloat32Array(0, 0, 0)
-}
-point_count = 3
-
-[sub_resource type="Curve3D" id="Curve3D_un03d"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, -12),
-"tilts": PackedFloat32Array(0, 0)
-}
-point_count = 2
-
-[sub_resource type="Curve3D" id="Curve3D_uotem"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -16.680054, 0, 7.3200684, 0, 0, 0, 0, 0, 0, -33.899963, 0, 9.5998535, 0, 0, 0, 0, 0, 0, -67.5, 0, 22.5),
-"tilts": PackedFloat32Array(0, 0, 0, 0)
-}
-point_count = 4
-
-[sub_resource type="Curve3D" id="Curve3D_blli4"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -6, 0, -33),
-"tilts": PackedFloat32Array(0, 0)
-}
-point_count = 2
-
-[sub_resource type="Curve3D" id="Curve3D_no6sv"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 36, 0, 22.5),
-"tilts": PackedFloat32Array(0, 0)
-}
-point_count = 2
-
-[sub_resource type="Curve3D" id="Curve3D_xh26m"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -18, 0, -22.5),
-"tilts": PackedFloat32Array(0, 0)
-}
-point_count = 2
-
-[sub_resource type="Curve3D" id="Curve3D_keowc"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -24.359924, 0, 26.639893, 0, 0, 0, 0, 0, 0, -40.5, 0, 40.5),
-"tilts": PackedFloat32Array(0, 0, 0)
-}
-point_count = 3
-
-[sub_resource type="Curve3D" id="Curve3D_2hqfk"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15.900024, 0, -54.599976, 0, 0, 0, 0, 0, 0, 16.860107, 0, -64.86011),
-"tilts": PackedFloat32Array(0, 0, 0)
-}
-point_count = 3
-
-[sub_resource type="Curve3D" id="Curve3D_yb45s"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -21.960083, 0, -6.539917, 0, 0, 0, 0, 0, 0, -31.500122, 0, -6.779907, 0, 0, 0, 0, 0, 0, -46.26007, 0, -2.039795, 0, 0, 0, 0, 0, 0, -58.860107, 0, 9.360107),
-"tilts": PackedFloat32Array(0, 0, 0, 0, 0)
-}
-point_count = 5
-
-[sub_resource type="Curve3D" id="Curve3D_hs8oc"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -4.919983, 0, -0.2999878, 0, 0, 0, 0, 0, 0, -7.5, 0, 6),
-"tilts": PackedFloat32Array(0, 0, 0)
-}
-point_count = 3
-
-[sub_resource type="Curve3D" id="Curve3D_vb0ms"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16.5, 0, 0),
-"tilts": PackedFloat32Array(0, 0)
-}
-point_count = 2
-
-[sub_resource type="Curve3D" id="Curve3D_k8c3v"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -18.899963, 0, 67.619995, 0, 0, 0, 0, 0, 0, -15.899963, 0, 71.400024),
-"tilts": PackedFloat32Array(0, 0, 0)
-}
-point_count = 3
-
-[sub_resource type="Curve3D" id="Curve3D_xbxdj"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 23.399963, 0, 6.5999756),
-"tilts": PackedFloat32Array(0, 0)
-}
-point_count = 2
-
-[sub_resource type="Curve3D" id="Curve3D_skjmq"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, -1.0709839, 0, -0.08215332, 0, 0, 0, 0, 0, 0, -10.73999, 0, -38.76001, 0, 0, 0, 0, 0, 0, -23.699951, 0, -51.30017, 0, 0, 0, 0, 0, 0, -45.95996, 0, -55.680176, 0, 0, 0, 0, 0, 0, -62.039978, 0, -50.76001, 0, 0, 0, 0, 0, 0, -77.45996, 0, -33.180176, 0, 0, 0, 0, 0, 0, -80.58002, 0, -15.420166, 0, 0, 0, 0, 0, 0, -73.140015, 0, 25.139893),
-"tilts": PackedFloat32Array(0, 0, 0, 0, 0, 0, 0, 0)
-}
-point_count = 8
-
-[sub_resource type="Curve3D" id="Curve3D_s8tli"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 19.5, 0, -39),
 "tilts": PackedFloat32Array(0, 0)
 }
 point_count = 2
@@ -51428,68 +51141,12 @@ _data = {
 }
 point_count = 2
 
-[sub_resource type="Curve3D" id="Curve3D_stuth"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 16.5),
-"tilts": PackedFloat32Array(0, 0)
-}
-point_count = 2
-
-[sub_resource type="Curve3D" id="Curve3D_a0h2q"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -12.059998, 0, -2.8200684),
-"tilts": PackedFloat32Array(0, 0)
-}
-point_count = 2
-
-[sub_resource type="Curve3D" id="Curve3D_78v5n"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1.7999268, 0, -2.5200195, 0, 0, 0, 0, 0, 0, 18.420105, 0, -74.819824, 0, 0, 0, 0, 0, 0, 23.52002, 0, -77.5199),
-"tilts": PackedFloat32Array(0, 0, 0, 0)
-}
-point_count = 4
-
-[sub_resource type="Curve3D" id="Curve3D_xfghh"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 23.039978, 0, 6.839966),
-"tilts": PackedFloat32Array(0, 0)
-}
-point_count = 2
-
-[sub_resource type="Curve3D" id="Curve3D_lbnyu"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -20.940002, 0, -6.0600586, 0, 0, 0, 0, 0, 0, -27.47992, 0, -13.319946),
-"tilts": PackedFloat32Array(0, 0, 0)
-}
-point_count = 3
-
-[sub_resource type="Curve3D" id="Curve3D_uq71u"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 18.119934, 0, -68.04004),
-"tilts": PackedFloat32Array(0, 0)
-}
-point_count = 2
-
 [sub_resource type="Curve3D" id="Curve3D_4wtxt"]
 _data = {
 "points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 7.5),
 "tilts": PackedFloat32Array(0, 0)
 }
 point_count = 2
-
-[sub_resource type="Curve3D" id="Curve3D_wos0n"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9.180054, 0, 5.8200684, 0, 0, 0, 0, 0, 0, 31.680054, 0, 11.820068, 0, 0, 0, 0, 0, 0, 40.859985, 0, 10.860107),
-"tilts": PackedFloat32Array(0, 0, 0, 0)
-}
-point_count = 4
-
-[sub_resource type="Curve3D" id="Curve3D_kiov6"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3.540039, 0, -5.460083, 0, 0, 0, 0, 0, 0, 19.800049, 0, -70.14014),
-"tilts": PackedFloat32Array(0, 0, 0)
-}
-point_count = 3
 
 [sub_resource type="Curve3D" id="Curve3D_nl8wv"]
 _data = {
@@ -51498,33 +51155,12 @@ _data = {
 }
 point_count = 4
 
-[sub_resource type="Curve3D" id="Curve3D_o8l3c"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -19.5, 0, 72),
-"tilts": PackedFloat32Array(0, 0)
-}
-point_count = 2
-
 [sub_resource type="Curve3D" id="Curve3D_wjyhl"]
 _data = {
 "points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -15.599976, 0, -8.400024, 0, 0, 0, 0, 0, 0, -30.179932, 0, -11.820068, 0, 0, 0, 0, 0, 0, -36.359985, 0, -10.860107),
 "tilts": PackedFloat32Array(0, 0, 0, 0)
 }
 point_count = 4
-
-[sub_resource type="Curve3D" id="Curve3D_qtl06"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -14.039978, 0, 45.960083, 0, 0, 0, 0, 0, 0, -20.039978, 0, 68.46008, 0, 0, 0, 0, 0, 0, -19.199951, 0, 73.920166),
-"tilts": PackedFloat32Array(0, 0, 0, 0)
-}
-point_count = 4
-
-[sub_resource type="Curve3D" id="Curve3D_dj3t2"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 24.659973, 0, 8.339966, 0, 0, 0, 0, 0, 0, 36.059937, 0, 8.939941),
-"tilts": PackedFloat32Array(0, 0, 0)
-}
-point_count = 3
 
 [sub_resource type="Curve3D" id="Curve3D_r2jk6"]
 _data = {
@@ -51533,26 +51169,12 @@ _data = {
 }
 point_count = 2
 
-[sub_resource type="Curve3D" id="Curve3D_umqeh"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -20.880005, 0, 73.619995, 0, 0, 0, 0, 0, 0, -24.180054, 0, 76.20001),
-"tilts": PackedFloat32Array(0, 0, 0)
-}
-point_count = 3
-
 [sub_resource type="Curve3D" id="Curve3D_s3g36"]
 _data = {
 "points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -9.71991, 0, -1.7999878, 0, 0, 0, 0, 0, 0, -26.21991, 0, -7.799988, 0, 0, 0, 0, 0, 0, -36.899963, 0, -18.120056, 0, 0, 0, 0, 0, 0, -41.21991, 0, -27.30011, 0, 0, 0, 0, 0, 0, -43.25995, 0, -40.140076, 0, 0, 0, 0, 0, 0, -37.139893, 0, -62.52002, 0, 0, 0, 0, 0, 0, -32.45996, 0, -69.84003, 0, 0, 0, 0, 0, 0, -20.21991, 0, -80.10004, 0, 0, 0, 0, 0, 0, -2.8199463, 0, -83.70001),
 "tilts": PackedFloat32Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 }
 point_count = 10
-
-[sub_resource type="Curve3D" id="Curve3D_p7n6f"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8.100037, 0, 6.9000244, 0, 0, 0, 0, 0, 0, 20.039978, 0, 11.460083, 0, 0, 0, 0, 0, 0, 31.619995, 0, 14.400024),
-"tilts": PackedFloat32Array(0, 0, 0, 0)
-}
-point_count = 4
 
 [sub_resource type="Curve3D" id="Curve3D_tui65"]
 _data = {
@@ -51567,27 +51189,6 @@ _data = {
 "tilts": PackedFloat32Array(0, 0, 0)
 }
 point_count = 3
-
-[sub_resource type="Curve3D" id="Curve3D_ej07i"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -13.680054, 0, -10.320068, 0, 0, 0, 0, 0, 0, -33.539978, 0, -15.839966),
-"tilts": PackedFloat32Array(0, 0, 0)
-}
-point_count = 3
-
-[sub_resource type="Curve3D" id="Curve3D_x8vjx"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -4.5, 0, -4.5),
-"tilts": PackedFloat32Array(0, 0)
-}
-point_count = 2
-
-[sub_resource type="Curve3D" id="Curve3D_478ps"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -5.0999756, 0, -17.400024, 0, 0, 0, 0, 0, 0, -18.059937, 0, -29.939941, 0, 0, 0, 0, 0, 0, -45.059937, 0, -37.43994, 0, 0, 0, 0, 0, 0, -65.94, 0, -32.93994, 0, 0, 0, 0, 0, 0, -79.44, 0, -19.439941, 0, 0, 0, 0, 0, 0, -85.44, 0, 3.0600586, 0, 0, 0, 0, 0, 0, -81.89996, 0, 23.400024, 0, 0, 0, 0, 0, 0, -70.5, 0, 37.5),
-"tilts": PackedFloat32Array(0, 0, 0, 0, 0, 0, 0, 0, 0)
-}
-point_count = 9
 
 [sub_resource type="Curve3D" id="Curve3D_c4ikk"]
 _data = {
@@ -51616,13 +51217,6 @@ _data = {
 "tilts": PackedFloat32Array(0, 0, 0)
 }
 point_count = 3
-
-[sub_resource type="Curve3D" id="Curve3D_dbv3p"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8.699951, 0, -3.1800537, 0, 0, 0, 0, 0, 0, 22.199951, 0, -16.679932, 0, 0, 0, 0, 0, 0, 28.199951, 0, -34.67993, 0, 0, 0, 0, 0, 0, 28.439941, 0, -47.21997, 0, 0, 0, 0, 0, 0, 23.699951, 0, -61.97986, 0, 0, 0, 0, 0, 0, 11.699951, 0, -73.97998, 0, 0, 0, 0, 0, 0, -9.300049, 0, -81.47998, 0, 0, 0, 0, 0, 0, -18.600037, 0, -81.47986),
-"tilts": PackedFloat32Array(0, 0, 0, 0, 0, 0, 0, 0, 0)
-}
-point_count = 9
 
 [sub_resource type="Curve3D" id="Curve3D_xc1bw"]
 _data = {
@@ -55533,13 +55127,6 @@ point_count = 6
 [sub_resource type="Curve3D" id="Curve3D_qbk5e"]
 _data = {
 "points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4.5, 0, 4.5),
-"tilts": PackedFloat32Array(0, 0)
-}
-point_count = 2
-
-[sub_resource type="Curve3D" id="Curve3D_uhch1"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, -1.1687622, 0, -0.08972168, 0, 0, 0, 0, 0, 0, 0.06903076, 0, -16.222046),
 "tilts": PackedFloat32Array(0, 0)
 }
 point_count = 2
@@ -68412,7 +67999,8 @@ osm_id = 568214287
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -499.3101, -13.344725, 710.1004)
 script = ExtResource("2_u3wvt")
 footprint = PackedVector2Array(-8.165527, -7.145508, 10.379608, -3.225769, 8.161346, 7.145447, -10.375305, 3.225708)
-wall_color = Color(0.7303229, 0.6897901, 0.6289909, 1)
+wall_color = Color(0.8392157, 0.42352942, 0.13333334, 1)
+roof_color = Color(0.5019608, 0.25882354, 0.2, 1)
 osm_id = 568214288
 
 [node name="Building_568214289" type="Node3D" parent="Buildings/Buildings_D3" unique_id=1644411871]
@@ -85512,7 +85100,7 @@ gate_color = Color(0.44, 0.3, 0.2, 1)
 
 [node name="Wall_4219" type="Path3D" parent="Walls/Walls_D3" unique_id=1663851491]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -539.17505, -14.690995, 686.0171)
-curve = SubResource("Curve3D_qnxkd")
+curve = SubResource("Curve3D_0f1lj")
 script = ExtResource("3_0f1lj")
 color = Color(0.7915764, 0.59807324, 0.4239204, 0.9238033)
 height = 2.1968496
@@ -132977,15 +132565,6 @@ color = Color(0.61754405, 0.48206758, 0.38529864, 0.9242006)
 height = 1.9097258
 gate_color = Color(0.55, 0.56, 0.55, 1)
 
-[node name="Wall_5849" type="Path3D" parent="Walls/Walls_E3" unique_id=563680960]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -659.17505, -17.649462, 840.5171)
-curve = SubResource("Curve3D_peir3")
-script = ExtResource("3_0f1lj")
-color = Color(0.7749375, 0.5613863, 0.4837314, 0.93108696)
-height = 2.079638
-gate_at = 35.98780918121338
-gate_color = Color(0.52, 0.24, 0.18, 1)
-
 [node name="Wall_5850" type="Path3D" parent="Walls/Walls_E3" unique_id=1971103484]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -718.695, -18.48301, 810.1571)
 curve = SubResource("Curve3D_mqpqp")
@@ -133499,39 +133078,6 @@ color = Color(0.499505, 0.4895139, 0.4895139, 0.99786067)
 height = 1.8509604
 gate_color = Color(0.55, 0.56, 0.55, 1)
 
-[node name="Wall_7034" type="Path3D" parent="Walls/Walls_E3" unique_id=1461991739]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -752.17505, -20.283361, 890.0171)
-curve = SubResource("Curve3D_sxx38")
-script = ExtResource("3_0f1lj")
-color = Color(0.62989, 0.49192655, 0.39338127, 0.96544266)
-height = 1.992188
-gate_color = Color(0.52, 0.24, 0.18, 1)
-
-[node name="Wall_7035" type="Path3D" parent="Walls/Walls_E3" unique_id=1665894780]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -705.67505, -18.065826, 845.0171)
-curve = SubResource("Curve3D_o4xnj")
-script = ExtResource("3_0f1lj")
-color = Color(0.62989, 0.49192655, 0.39338127, 0.96544266)
-height = 1.992188
-gate_color = Color(0.52, 0.24, 0.18, 1)
-
-[node name="Wall_7036" type="Path3D" parent="Walls/Walls_E3" unique_id=278399112]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -689.05505, -17.791487, 849.3971)
-curve = SubResource("Curve3D_fnt55")
-script = ExtResource("3_0f1lj")
-color = Color(0.62989, 0.49192655, 0.39338127, 0.96544266)
-height = 2.1097004
-gate_at = 41.75164270401001
-gate_color = Color(0.52, 0.24, 0.18, 1)
-
-[node name="Wall_7037" type="Path3D" parent="Walls/Walls_E3" unique_id=1999752771]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -706.81506, -20.255161, 926.37714)
-curve = SubResource("Curve3D_uvb6m")
-script = ExtResource("3_0f1lj")
-color = Color(0.62989, 0.49192655, 0.39338127, 0.96544266)
-height = 1.992188
-gate_color = Color(0.52, 0.24, 0.18, 1)
-
 [node name="Wall_7048" type="Path3D" parent="Walls/Walls_E3" unique_id=1873806831]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -42.67505, -6.356059, 945.5171)
 curve = SubResource("Curve3D_dcrs8")
@@ -133579,30 +133125,6 @@ script = ExtResource("3_0f1lj")
 color = Color(0.70812345, 0.47774652, 0.4009542, 0.9064551)
 height = 1.8252994
 gate_color = Color(0.22, 0.34, 0.52, 1)
-
-[node name="Wall_7113" type="Path3D" parent="Walls/Walls_E3" unique_id=1447538256]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -761.53503, -19.559832, 808.6571)
-curve = SubResource("Curve3D_3rd8s")
-script = ExtResource("3_0f1lj")
-color = Color(0.7752191, 0.5854548, 0.41466686, 0.88154256)
-height = 1.9728168
-gate_color = Color(0.52, 0.24, 0.18, 1)
-
-[node name="Wall_7114" type="Path3D" parent="Walls/Walls_E3" unique_id=1919539198]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -731.47504, -18.669909, 810.8171)
-curve = SubResource("Curve3D_hqsur")
-script = ExtResource("3_0f1lj")
-color = Color(0.7752191, 0.5854548, 0.41466686, 0.88154256)
-height = 2.0474875
-gate_color = Color(0.52, 0.24, 0.18, 1)
-
-[node name="Wall_7115" type="Path3D" parent="Walls/Walls_E3" unique_id=475558223]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -710.775, -18.173239, 826.11707)
-curve = SubResource("Curve3D_exo0p")
-script = ExtResource("3_0f1lj")
-color = Color(0.7752191, 0.5854548, 0.41466686, 0.88154256)
-height = 1.9728168
-gate_color = Color(0.52, 0.24, 0.18, 1)
 
 [node name="Wall_7152" type="Path3D" parent="Walls/Walls_E3" unique_id=1351448633]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -156.67505, 3.3768532, 1158.5171)
@@ -133801,22 +133323,6 @@ color = Color(0.499505, 0.4895139, 0.4895139, 0.99786067)
 height = 1.8509604
 gate_color = Color(0.55, 0.56, 0.55, 1)
 
-[node name="Wall_7518" type="Path3D" parent="Walls/Walls_E3" unique_id=1308002339]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -645.67505, -18.811605, 1140.5171)
-curve = SubResource("Curve3D_g1lj5")
-script = ExtResource("3_0f1lj")
-color = Color(0.59570205, 0.4646254, 0.3709992, 0.8537952)
-height = 1.9786122
-gate_color = Color(0.44, 0.3, 0.2, 1)
-
-[node name="Wall_7519" type="Path3D" parent="Walls/Walls_E3" unique_id=523256466]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -659.17505, -19.295729, 1112.0171)
-curve = SubResource("Curve3D_l5q4n")
-script = ExtResource("3_0f1lj")
-color = Color(0.8156689, 0.61665887, 0.43754983, 0.98816156)
-height = 1.9121864
-gate_color = Color(0.22, 0.34, 0.52, 1)
-
 [node name="Wall_7520" type="Path3D" parent="Walls/Walls_E3" unique_id=423139848]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -610.275, -19.547949, 1039.1171)
 curve = SubResource("Curve3D_kvh10")
@@ -133840,14 +133346,6 @@ script = ExtResource("3_0f1lj")
 color = Color(0.8156689, 0.61665887, 0.43754983, 0.98816156)
 height = 2.0982423
 gate_at = 33.864301681518555
-gate_color = Color(0.22, 0.34, 0.52, 1)
-
-[node name="Wall_7523" type="Path3D" parent="Walls/Walls_E3" unique_id=1445412324]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -585.375, -18.109539, 1097.857)
-curve = SubResource("Curve3D_cl1l7")
-script = ExtResource("3_0f1lj")
-color = Color(0.8156689, 0.61665887, 0.43754983, 0.98816156)
-height = 1.9121864
 gate_color = Color(0.22, 0.34, 0.52, 1)
 
 [node name="Wall_7554" type="Path3D" parent="Walls/Walls_E3" unique_id=1834474268]
@@ -139370,54 +138868,6 @@ color = Color(0.59714395, 0.4657768, 0.37194318, 0.8583428)
 height = 1.9635758
 gate_color = Color(0.44, 0.3, 0.2, 1)
 
-[node name="Wall_1926" type="Path3D" parent="Walls/Walls_E2" unique_id=945991674]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -861.67505, -23.385717, 1184.0171)
-curve = SubResource("Curve3D_21y7l")
-script = ExtResource("3_0f1lj")
-color = Color(0.59714395, 0.4657768, 0.37194318, 0.8583428)
-height = 2.1465178
-gate_at = 9.7045965
-gate_color = Color(0.44, 0.3, 0.2, 1)
-
-[node name="Wall_1927" type="Path3D" parent="Walls/Walls_E2" unique_id=867830596]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -872.475, -23.40763, 1231.1771)
-curve = SubResource("Curve3D_eapwi")
-script = ExtResource("3_0f1lj")
-color = Color(0.59714395, 0.4657768, 0.37194318, 0.8583428)
-height = 1.9635758
-gate_color = Color(0.44, 0.3, 0.2, 1)
-
-[node name="Wall_1934" type="Path3D" parent="Walls/Walls_E2" unique_id=1595122132]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -818.17505, -23.912884, 996.5171)
-curve = SubResource("Curve3D_4gkje")
-script = ExtResource("3_0f1lj")
-color = Color(0.7018652, 0.4733776, 0.39721504, 0.8887168)
-height = 2.1167047
-gate_at = 11.352732
-gate_color = Color(0.44, 0.3, 0.2, 1)
-
-[node name="Wall_1935" type="Path3D" parent="Walls/Walls_E2" unique_id=561281499]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -818.17505, -23.912884, 996.5171)
-curve = SubResource("Curve3D_yytup")
-script = ExtResource("3_0f1lj")
-color = Color(0.61530703, 0.4802812, 0.3838341, 0.91683996)
-height = 1.8731482
-
-[node name="Wall_1936" type="Path3D" parent="Walls/Walls_E2" unique_id=1844871382]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -818.17505, -23.912884, 996.5171)
-curve = SubResource("Curve3D_d5ml5")
-script = ExtResource("3_0f1lj")
-color = Color(0.61530703, 0.4802812, 0.3838341, 0.91683996)
-height = 2.1579738
-gate_at = 10.011434
-
-[node name="Wall_1937" type="Path3D" parent="Walls/Walls_E2" unique_id=601156148]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -832.215, -23.938105, 1043.977)
-curve = SubResource("Curve3D_l8pup")
-script = ExtResource("3_0f1lj")
-color = Color(0.61530703, 0.4802812, 0.3838341, 0.91683996)
-height = 1.8731482
-
 [node name="Wall_3380" type="Path3D" parent="Walls/Walls_E2" unique_id=1969467871]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -777.1351, -20.077896, 837.93713)
 curve = SubResource("Curve3D_cn4cn")
@@ -139426,70 +138876,6 @@ color = Color(0.48572603, 0.4759832, 0.4759832, 0.9393821)
 height = 1.8568753
 gate_color = Color(0.55, 0.56, 0.55, 1)
 
-[node name="Wall_4580" type="Path3D" parent="Walls/Walls_E2" unique_id=822694787]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -854.17505, -23.44959, 983.0171)
-curve = SubResource("Curve3D_ij04x")
-script = ExtResource("3_0f1lj")
-color = Color(0.7093619, 0.47861114, 0.4016942, 0.9099899)
-height = 1.8775064
-gate_color = Color(0.44, 0.3, 0.2, 1)
-
-[node name="Wall_4778" type="Path3D" parent="Walls/Walls_E2" unique_id=1244426450]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -854.17505, -23.44959, 983.0171)
-curve = SubResource("Curve3D_oawcj")
-script = ExtResource("3_0f1lj")
-color = Color(0.61530703, 0.4802812, 0.3838341, 0.91683996)
-height = 1.8731482
-
-[node name="Wall_4878" type="Path3D" parent="Walls/Walls_E2" unique_id=1305996728]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -798.67505, -22.082691, 924.5171)
-curve = SubResource("Curve3D_xdxdb")
-script = ExtResource("3_0f1lj")
-color = Color(0.63042325, 0.4923524, 0.39373034, 0.9672476)
-height = 2.0139942
-gate_at = 24.562332
-gate_color = Color(0.52, 0.24, 0.18, 1)
-
-[node name="Wall_4879" type="Path3D" parent="Walls/Walls_E2" unique_id=108651625]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -784.81506, -20.411135, 861.15704)
-curve = SubResource("Curve3D_54ovv")
-script = ExtResource("3_0f1lj")
-color = Color(0.63042325, 0.4923524, 0.39373034, 0.9672476)
-height = 1.8002222
-gate_color = Color(0.52, 0.24, 0.18, 1)
-
-[node name="Wall_4880" type="Path3D" parent="Walls/Walls_E2" unique_id=2094545889]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -798.67505, -22.082691, 924.5171)
-curve = SubResource("Curve3D_adqef")
-script = ExtResource("3_0f1lj")
-color = Color(0.79389006, 0.5998581, 0.42522928, 0.92987424)
-height = 1.8107517
-gate_color = Color(0.55, 0.56, 0.55, 1)
-
-[node name="Wall_5098" type="Path3D" parent="Walls/Walls_E2" unique_id=757081915]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -798.67505, -22.082691, 924.5171)
-curve = SubResource("Curve3D_wryqw")
-script = ExtResource("3_0f1lj")
-color = Color(0.79389006, 0.5998581, 0.42522928, 0.92987424)
-height = 2.2236478
-gate_at = 17.090797
-gate_color = Color(0.55, 0.56, 0.55, 1)
-
-[node name="Wall_5216" type="Path3D" parent="Walls/Walls_E2" unique_id=2113083297]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -848.775, -23.317436, 1354.1171)
-curve = SubResource("Curve3D_ywt84")
-script = ExtResource("3_0f1lj")
-color = Color(0.6981132, 0.4707583, 0.39497328, 0.87817997)
-height = 1.876822
-
-[node name="Wall_5253" type="Path3D" parent="Walls/Walls_E2" unique_id=1469905550]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -822.67505, -23.380678, 1196.0171)
-curve = SubResource("Curve3D_xqpvr")
-script = ExtResource("3_0f1lj")
-color = Color(0.59714395, 0.4657768, 0.37194318, 0.8583428)
-height = 1.9635758
-gate_color = Color(0.44, 0.3, 0.2, 1)
-
 [node name="Wall_5254" type="Path3D" parent="Walls/Walls_E2" unique_id=2102497747]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -822.67505, -23.380678, 1196.0171)
 curve = SubResource("Curve3D_nu1m5")
@@ -139497,140 +138883,6 @@ script = ExtResource("3_0f1lj")
 color = Color(0.47402006, 0.46448815, 0.46448815, 0.8913124)
 height = 1.8981704
 gate_color = Color(0.3, 0.48, 0.52, 1)
-
-[node name="Wall_5335" type="Path3D" parent="Walls/Walls_E2" unique_id=1261700659]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -807.67505, -23.28088, 960.5171)
-curve = SubResource("Curve3D_3fy0c")
-script = ExtResource("3_0f1lj")
-color = Color(0.7018652, 0.4733776, 0.39721504, 0.8887168)
-height = 1.98097
-gate_color = Color(0.44, 0.3, 0.2, 1)
-
-[node name="Wall_5411" type="Path3D" parent="Walls/Walls_E2" unique_id=1135060301]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -902.17505, -23.162636, 1311.5171)
-curve = SubResource("Curve3D_wvjas")
-script = ExtResource("3_0f1lj")
-color = Color(0.4944111, 0.48451176, 0.48451176, 0.9760019)
-height = 2.0506005
-gate_at = 26.84737
-gate_color = Color(0.55, 0.56, 0.55, 1)
-
-[node name="Wall_5484" type="Path3D" parent="Walls/Walls_E2" unique_id=1225230223]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -902.17505, -23.162636, 1311.5171)
-curve = SubResource("Curve3D_un03d")
-script = ExtResource("3_0f1lj")
-color = Color(0.62265587, 0.48614967, 0.38864523, 0.9411495)
-height = 2.2706456
-gate_at = 2.5
-gate_color = Color(0.22, 0.34, 0.52, 1)
-
-[node name="Wall_5485" type="Path3D" parent="Walls/Walls_E2" unique_id=1211159811]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -902.17505, -23.162636, 1311.5171)
-curve = SubResource("Curve3D_uotem")
-script = ExtResource("3_0f1lj")
-color = Color(0.4944111, 0.48451176, 0.48451176, 0.9760019)
-height = 1.8318722
-gate_color = Color(0.55, 0.56, 0.55, 1)
-
-[node name="Wall_5599" type="Path3D" parent="Walls/Walls_E2" unique_id=1897745024]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -935.17505, -23.405956, 1277.0171)
-curve = SubResource("Curve3D_blli4")
-script = ExtResource("3_0f1lj")
-color = Color(0.81760305, 0.618151, 0.43864402, 0.99343824)
-height = 1.867437
-gate_color = Color(0.22, 0.34, 0.52, 1)
-
-[node name="Wall_5600" type="Path3D" parent="Walls/Walls_E2" unique_id=70294813]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -935.17505, -23.405956, 1277.0171)
-curve = SubResource("Curve3D_no6sv")
-script = ExtResource("3_0f1lj")
-color = Color(0.62265587, 0.48614967, 0.38864523, 0.9411495)
-height = 1.9928595
-gate_color = Color(0.22, 0.34, 0.52, 1)
-
-[node name="Wall_5626" type="Path3D" parent="Walls/Walls_E2" unique_id=1540538421]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -849.67505, -23.33116, 957.5171)
-curve = SubResource("Curve3D_xh26m")
-script = ExtResource("3_0f1lj")
-color = Color(0.7093619, 0.47861114, 0.4016942, 0.9099899)
-height = 1.8775064
-gate_color = Color(0.44, 0.3, 0.2, 1)
-
-[node name="Wall_5702" type="Path3D" parent="Walls/Walls_E2" unique_id=1044797868]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -935.17505, -23.405956, 1277.0171)
-curve = SubResource("Curve3D_keowc")
-script = ExtResource("3_0f1lj")
-color = Color(0.81760305, 0.618151, 0.43864402, 0.99343824)
-height = 1.867437
-gate_color = Color(0.22, 0.34, 0.52, 1)
-
-[node name="Wall_5934" type="Path3D" parent="Walls/Walls_E2" unique_id=815783266]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -899.17505, -23.258032, 1299.5171)
-curve = SubResource("Curve3D_2hqfk")
-script = ExtResource("3_0f1lj")
-kind = 1
-color = Color(0.44, 0.3, 0.2, 1)
-height = 2.1539774
-gate_at = 28.997923
-gate_color = Color(0.44, 0.3, 0.2, 1)
-
-[node name="Wall_5935" type="Path3D" parent="Walls/Walls_E2" unique_id=2094799716]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -882.31494, -23.409807, 1234.657)
-curve = SubResource("Curve3D_yb45s")
-script = ExtResource("3_0f1lj")
-color = Color(0.48514166, 0.47540933, 0.47540933, 0.93694735)
-height = 1.808132
-gate_color = Color(0.44, 0.3, 0.2, 1)
-
-[node name="Wall_6150" type="Path3D" parent="Walls/Walls_E2" unique_id=1543510546]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -884.17505, -23.105062, 935.0171)
-curve = SubResource("Curve3D_hs8oc")
-script = ExtResource("3_0f1lj")
-color = Color(0.7339957, 0.4958083, 0.41641247, 0.98196936)
-height = 2.0562372
-gate_at = 7.42912
-gate_color = Color(0.52, 0.24, 0.18, 1)
-
-[node name="Wall_6161" type="Path3D" parent="Walls/Walls_E2" unique_id=1739527929]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -884.17505, -23.105062, 935.0171)
-curve = SubResource("Curve3D_vb0ms")
-script = ExtResource("3_0f1lj")
-color = Color(0.7093619, 0.47861114, 0.4016942, 0.9099899)
-height = 1.8775064
-gate_color = Color(0.44, 0.3, 0.2, 1)
-
-[node name="Wall_6346" type="Path3D" parent="Walls/Walls_E2" unique_id=157514522]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -884.17505, -23.105062, 935.0171)
-curve = SubResource("Curve3D_k8c3v")
-script = ExtResource("3_0f1lj")
-color = Color(0.7093619, 0.47861114, 0.4016942, 0.9099899)
-height = 2.0610912
-gate_at = 32.678196
-gate_color = Color(0.44, 0.3, 0.2, 1)
-
-[node name="Wall_6347" type="Path3D" parent="Walls/Walls_E2" unique_id=420678061]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -900.075, -22.376709, 1006.4171)
-curve = SubResource("Curve3D_xbxdj")
-script = ExtResource("3_0f1lj")
-color = Color(0.7093619, 0.47861114, 0.4016942, 0.9099899)
-height = 1.8775064
-gate_color = Color(0.44, 0.3, 0.2, 1)
-
-[node name="Wall_6668" type="Path3D" parent="Walls/Walls_E2" unique_id=1568760675]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -823.03503, -20.076437, 1556.3772)
-curve = SubResource("Curve3D_skjmq")
-script = ExtResource("3_0f1lj")
-color = Color(0.78185827, 0.59057647, 0.41842273, 0.8985565)
-height = 1.9712251
-gate_color = Color(0.52, 0.24, 0.18, 1)
-
-[node name="Wall_6677" type="Path3D" parent="Walls/Walls_E2" unique_id=1369898133]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -867.67505, -23.166288, 935.0171)
-curve = SubResource("Curve3D_s8tli")
-script = ExtResource("3_0f1lj")
-color = Color(0.7339957, 0.4958083, 0.41641247, 0.98196936)
-height = 1.9586668
-gate_color = Color(0.52, 0.24, 0.18, 1)
 
 [node name="Wall_6854" type="Path3D" parent="Walls/Walls_E2" unique_id=1474852805]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -891.67505, -23.049994, 941.0171)
@@ -139641,56 +138893,6 @@ color = Color(0.58, 0.6, 0.58, 1)
 height = 1.8951713
 gate_color = Color(0.22, 0.34, 0.52, 1)
 
-[node name="Wall_6913" type="Path3D" parent="Walls/Walls_E2" unique_id=1221594416]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -975.67505, -22.448713, 1317.5171)
-curve = SubResource("Curve3D_stuth")
-script = ExtResource("3_0f1lj")
-color = Color(0.62265587, 0.48614967, 0.38864523, 0.9411495)
-height = 1.9928595
-gate_color = Color(0.22, 0.34, 0.52, 1)
-
-[node name="Wall_7038" type="Path3D" parent="Walls/Walls_E2" unique_id=728215017]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -975.67505, -22.448713, 1317.5171)
-curve = SubResource("Curve3D_a0h2q")
-script = ExtResource("3_0f1lj")
-color = Color(0.81760305, 0.618151, 0.43864402, 0.99343824)
-height = 1.867437
-gate_color = Color(0.22, 0.34, 0.52, 1)
-
-[node name="Wall_7039" type="Path3D" parent="Walls/Walls_E2" unique_id=2026858459]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -987.73505, -22.70363, 1314.697)
-curve = SubResource("Curve3D_78v5n")
-script = ExtResource("3_0f1lj")
-color = Color(0.81760305, 0.618151, 0.43864402, 0.99343824)
-height = 2.0080411
-gate_at = 41.76384449005127
-gate_color = Color(0.22, 0.34, 0.52, 1)
-
-[node name="Wall_7040" type="Path3D" parent="Walls/Walls_E2" unique_id=2010078595]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -964.215, -24.251938, 1237.1771)
-curve = SubResource("Curve3D_xfghh")
-script = ExtResource("3_0f1lj")
-color = Color(0.81760305, 0.618151, 0.43864402, 0.99343824)
-height = 1.867437
-gate_color = Color(0.22, 0.34, 0.52, 1)
-
-[node name="Wall_7111" type="Path3D" parent="Walls/Walls_E2" unique_id=2082180408]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -752.17505, -20.283361, 890.0171)
-curve = SubResource("Curve3D_lbnyu")
-script = ExtResource("3_0f1lj")
-color = Color(0.7752191, 0.5854548, 0.41466686, 0.88154256)
-height = 1.9728168
-gate_color = Color(0.52, 0.24, 0.18, 1)
-
-[node name="Wall_7112" type="Path3D" parent="Walls/Walls_E2" unique_id=1279656321]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -779.65497, -20.654312, 876.69714)
-curve = SubResource("Curve3D_uq71u")
-script = ExtResource("3_0f1lj")
-color = Color(0.7752191, 0.5854548, 0.41466686, 0.88154256)
-height = 2.0474875
-gate_at = 35.448483
-gate_color = Color(0.52, 0.24, 0.18, 1)
-
 [node name="Wall_7219" type="Path3D" parent="Walls/Walls_E2" unique_id=638934648]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -806.17505, -23.428907, 1157.0171)
 curve = SubResource("Curve3D_4wtxt")
@@ -139699,34 +138901,9 @@ color = Color(0.47402006, 0.46448815, 0.46448815, 0.8913124)
 height = 1.8981704
 gate_color = Color(0.3, 0.48, 0.52, 1)
 
-[node name="Wall_7230" type="Path3D" parent="Walls/Walls_E2" unique_id=820491508]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -915.67505, -23.888546, 1194.5171)
-curve = SubResource("Curve3D_wos0n")
-script = ExtResource("3_0f1lj")
-color = Color(0.59718174, 0.46580702, 0.3719679, 0.8584623)
-height = 1.8840241
-gate_color = Color(0.3, 0.48, 0.52, 1)
-
-[node name="Wall_7231" type="Path3D" parent="Walls/Walls_E2" unique_id=475348668]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -874.81506, -23.397041, 1205.3772)
-curve = SubResource("Curve3D_kiov6")
-script = ExtResource("3_0f1lj")
-color = Color(0.59718174, 0.46580702, 0.3719679, 0.8584623)
-height = 2.1785169
-gate_at = 37.54793405532837
-gate_color = Color(0.3, 0.48, 0.52, 1)
-
 [node name="Wall_7232" type="Path3D" parent="Walls/Walls_E2" unique_id=187243141]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -855.015, -23.45131, 1135.237)
 curve = SubResource("Curve3D_nl8wv")
-script = ExtResource("3_0f1lj")
-color = Color(0.59718174, 0.46580702, 0.3719679, 0.8584623)
-height = 1.8840241
-gate_color = Color(0.3, 0.48, 0.52, 1)
-
-[node name="Wall_7233" type="Path3D" parent="Walls/Walls_E2" unique_id=1619189475]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -896.17505, -23.120743, 1122.5171)
-curve = SubResource("Curve3D_o8l3c")
 script = ExtResource("3_0f1lj")
 color = Color(0.59718174, 0.46580702, 0.3719679, 0.8584623)
 height = 1.8840241
@@ -139740,24 +138917,6 @@ color = Color(0.7670595, 0.57916015, 0.4100508, 0.8608916)
 height = 1.876963
 gate_color = Color(0.22, 0.34, 0.52, 1)
 
-[node name="Wall_7235" type="Path3D" parent="Walls/Walls_E2" unique_id=1139394739]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -932.53503, -23.328686, 1111.657)
-curve = SubResource("Curve3D_qtl06")
-script = ExtResource("3_0f1lj")
-kind = 1
-color = Color(0.22, 0.34, 0.52, 1)
-height = 2.0036561
-gate_at = 37.003456
-gate_color = Color(0.22, 0.34, 0.52, 1)
-
-[node name="Wall_7236" type="Path3D" parent="Walls/Walls_E2" unique_id=1313378404]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -951.735, -24.741817, 1185.5771)
-curve = SubResource("Curve3D_dj3t2")
-script = ExtResource("3_0f1lj")
-color = Color(0.7670595, 0.57916015, 0.4100508, 0.8608916)
-height = 1.876963
-gate_color = Color(0.22, 0.34, 0.52, 1)
-
 [node name="Wall_7299" type="Path3D" parent="Walls/Walls_E2" unique_id=1025301179]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -845.17505, -22.428936, 896.0171)
 curve = SubResource("Curve3D_r2jk6")
@@ -139765,15 +138924,6 @@ script = ExtResource("3_0f1lj")
 color = Color(0.79389006, 0.5998581, 0.42522928, 0.92987424)
 height = 1.8107517
 gate_color = Color(0.55, 0.56, 0.55, 1)
-
-[node name="Wall_7387" type="Path3D" parent="Walls/Walls_E2" unique_id=54483815]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -891.67505, -23.049994, 941.0171)
-curve = SubResource("Curve3D_umqeh")
-script = ExtResource("3_0f1lj")
-color = Color(0.4651081, 0.45573676, 0.45573676, 0.8556999)
-height = 2.2938452
-gate_at = 40.173447
-gate_color = Color(0.22, 0.34, 0.52, 1)
 
 [node name="Wall_7388" type="Path3D" parent="Walls/Walls_E2" unique_id=295205778]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -915.8551, -22.324236, 1017.2171)
@@ -139783,14 +138933,6 @@ kind = 2
 color = Color(0.58, 0.6, 0.58, 1)
 height = 1.8951713
 gate_color = Color(0.22, 0.34, 0.52, 1)
-
-[node name="Wall_7500" type="Path3D" parent="Walls/Walls_E2" unique_id=1362943936]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -827.17505, -23.376745, 1232.0171)
-curve = SubResource("Curve3D_p7n6f")
-script = ExtResource("3_0f1lj")
-color = Color(0.5980833, 0.46652701, 0.37255818, 0.8613132)
-height = 1.8770393
-gate_color = Color(0.52, 0.24, 0.18, 1)
 
 [node name="Wall_7501" type="Path3D" parent="Walls/Walls_E2" unique_id=247109240]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -795.55505, -23.30543, 1246.4171)
@@ -139807,28 +138949,6 @@ curve = SubResource("Curve3D_3c0ja")
 script = ExtResource("3_0f1lj")
 color = Color(0.5980833, 0.46652701, 0.37255818, 0.8613132)
 height = 1.8770393
-gate_color = Color(0.52, 0.24, 0.18, 1)
-
-[node name="Wall_7513" type="Path3D" parent="Walls/Walls_E2" unique_id=321154452]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -866.17505, -23.3897, 1352.0171)
-curve = SubResource("Curve3D_ej07i")
-script = ExtResource("3_0f1lj")
-color = Color(0.46664685, 0.45724782, 0.45724782, 0.86178845)
-height = 1.9002683
-
-[node name="Wall_7516" type="Path3D" parent="Walls/Walls_E2" unique_id=504518062]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -888.67505, -23.942219, 1424.0171)
-curve = SubResource("Curve3D_x8vjx")
-script = ExtResource("3_0f1lj")
-color = Color(0.6981132, 0.4707583, 0.39497328, 0.87817997)
-height = 1.876822
-
-[node name="Wall_7672" type="Path3D" parent="Walls/Walls_E2" unique_id=1611942914]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -848.17505, -22.507013, 896.0171)
-curve = SubResource("Curve3D_478ps")
-script = ExtResource("3_0f1lj")
-color = Color(0.7339957, 0.4958083, 0.41641247, 0.98196936)
-height = 1.9586668
 gate_color = Color(0.52, 0.24, 0.18, 1)
 
 [node name="Wall_7823" type="Path3D" parent="Walls/Walls_E2" unique_id=1847711500]
@@ -139863,14 +138983,6 @@ script = ExtResource("3_0f1lj")
 color = Color(0.4966784, 0.48673826, 0.48673826, 0.98569643)
 height = 2.2750854
 gate_at = 6.1384144
-gate_color = Color(0.3, 0.48, 0.52, 1)
-
-[node name="Wall_7926" type="Path3D" parent="Walls/Walls_E2" unique_id=1180731685]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -888.975, -23.07137, 1105.597)
-curve = SubResource("Curve3D_dbv3p")
-script = ExtResource("3_0f1lj")
-color = Color(0.4966784, 0.48673826, 0.48673826, 0.98569643)
-height = 1.8334349
 gate_color = Color(0.3, 0.48, 0.52, 1)
 
 [node name="Wall_7927" type="Path3D" parent="Walls/Walls_E2" unique_id=181211436]
@@ -144502,15 +143614,6 @@ curve = SubResource("Curve3D_qbk5e")
 script = ExtResource("3_0f1lj")
 color = Color(0.47578147, 0.46621782, 0.46621782, 0.8984514)
 height = 1.8318124
-gate_color = Color(0.52, 0.24, 0.18, 1)
-
-[node name="Wall_6667" type="Path3D" parent="Walls/Walls_F2" unique_id=1539503906]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -824.17505, -19.823046, 1572.5171)
-curve = SubResource("Curve3D_uhch1")
-script = ExtResource("3_0f1lj")
-color = Color(0.78185827, 0.59057647, 0.41842273, 0.8985565)
-height = 2.0570529
-gate_at = 13.680103
 gate_color = Color(0.52, 0.24, 0.18, 1)
 
 [node name="Wall_6674" type="Path3D" parent="Walls/Walls_F2" unique_id=887069649]
