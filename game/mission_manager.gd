@@ -122,6 +122,43 @@ func show_banner(text: String) -> void:
 	_banner_left = banner_time
 
 
+## Every mission in MISSIONS, built: for the mission select (game/mission_select.gd).
+func catalogue() -> Array[Mission]:
+	var list: Array[Mission] = []
+	for path in MISSIONS:
+		var m: Mission = (load(path) as GDScript).new()
+		m.main = main
+		m.build()
+		list.append(m)
+	return list
+
+
+## For testing: plays MISSIONS[index] as if the ones before it were done and the
+## ones after not. At step `at_step`, straight away (the steps before it are
+## skipped, their "start" not called); -1 from the start, waiting for its
+## start_text like it would in the story.
+func select(index: int, at_step := -1) -> void:
+	var list := catalogue()
+	if index < 0 or index >= list.size():
+		return
+	_completed.clear()
+	for i in index:
+		_completed.append(list[i].id)
+	current = null
+	pending = null
+	step = -1
+	_resume = {}
+	_show_target(null)
+	var m := list[index]
+	if at_step < 0 or m.steps.is_empty():
+		_wait = 0.0
+		_panel.visible = false
+		_save()
+		_start_next()
+		return
+	_begin(m, clampi(at_step, 0, m.steps.size() - 1))
+
+
 ## Forgets every mission done and starts again from the first, `delay` seconds on.
 func reset(delay := 0.5) -> void:
 	_completed.clear()

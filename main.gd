@@ -116,6 +116,14 @@ func _ready() -> void:
 	var locator: CanvasLayer = preload("res://game/locator.gd").new()
 	locator.name = "Locator"
 	add_child(locator)
+	# For testing: F4 teleports you to where you look, F5 through the named places (game/teleport.gd).
+	var teleport: CanvasLayer = preload("res://game/teleport.gd").new()
+	teleport.name = "Teleport"
+	add_child(teleport)
+	# For testing: F6 picks the mission (and step) to play (game/mission_select.gd).
+	var mission_select: CanvasLayer = preload("res://game/mission_select.gd").new()
+	mission_select.name = "MissionSelect"
+	add_child(mission_select)
 
 
 func _show_money(balance: float) -> void:

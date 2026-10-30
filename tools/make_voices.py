@@ -60,6 +60,8 @@ def lines():
         for m in re.finditer(r'const (\w+_LINES) := \[(.*?)\]', src):
             for t in re.findall(r'"((?:[^"\\]|\\.)*)"', m.group(2)):
                 found.append(("Davitik", t, False))
+    # Kokoro cannot say Armenian letters: those lines are recorded by people.
+    found = [f for f in found if not re.search("[԰-֏]", f[1])]
     return list(dict.fromkeys(found))
 
 

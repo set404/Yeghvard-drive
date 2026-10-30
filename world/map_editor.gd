@@ -552,7 +552,8 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 	# F3 is the locator's (game/locator.gd): it copies the spot under the mouse.
-	if key and key.pressed and key.physical_keycode != KEY_F3:
+	# F4 and F5 are the teleport's (game/teleport.gd), F6 the mission select's.
+	if key and key.pressed and not key.physical_keycode in [KEY_F3, KEY_F4, KEY_F5, KEY_F6]:
 		_key(key)
 		get_viewport().set_input_as_handled()
 

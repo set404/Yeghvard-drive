@@ -1,5 +1,5 @@
 extends Mission
-## Act 1, mission 2: "Press the clutch, ara!"
+## Act 1, mission 2: "Սցեպլենիեն սեղմի, ա՛րա"
 ##
 ## Back from Dad's errand, Davitik calls: he is loqsh at the bank's hayat, come
 ## for a coffee and bring the Duets. You buy two at the supermarket, drink them
@@ -40,10 +40,12 @@ const TURN_SECONDS := 4.0
 const ARRIVE := 12.0
 ## Metres you drive off before Davitik is let back in (till then, run Davitik, run).
 const CHASE_DISTANCE := 60.0
+## How much shorter (metres) Davitik is than you.
+const DAVITIK_SHORTER := 0.08
 ## Figures for the uncle whose wall it is (tools/build_npcs.gd), the first there is.
 const UNCLE_FIGURES := ["res://npc/Ch02.scn", "res://npc/Ch07.scn", "res://npc/Ch17.scn", "res://npc/Ch22.scn", "res://npc/Untitled.scn"]
-const CAR_HIT_LINES := ["ARA!!", "I'm fine! Drive carefully ara!", "Why ara?!", "AGAIN?!", "My back ara...", "I'm calling your papa!", "Wait for me ara!"]
-const SLAP_LINES := ["Ayyy!", "Okay okay!", "ARA!", "Enough ara!", "Not the face!"]
+const CAR_HIT_LINES := ["Ա՛ՐԱ!!", "Լավ եմ, լավ եմ! Զգույշ քշի, ա՛րա!", "Ինչի՞, ա՛րա!", "ԷԼԻ՞!", "Մեջքս, ա՛րա...", "Պապայիդ եմ զանգում!", "Սպասի, ա՛րա!"]
+const SLAP_LINES := ["Վա՜յ!", "Լավ, լավ!", "Ա՛ՐԱ!", "Հերի՛ք, ա՛րա!", "Երեսիս չէ՛!"]
 
 var dav: Davitik
 var uncle: Davitik
@@ -99,89 +101,89 @@ class Keys extends Node:
 
 func build() -> void:
 	id = "davitik_lesson"
-	title = "Press the clutch, ara!"
+	title = "Սցեպլենիեն սեղմի, ա՛րա"
 	reward = 0.0
 	var inv: Inventory = main.inventory
 	steps = [
 		{ # 0
-			"text": "Your phone is ringing",
+			"text": "Հեռախոսդ զնգում է",
 			"start": _phone_call,
 			"done": func() -> bool: return _call_done,
 		},
 		{ # 1
-			"text": "Buy two Duets at the supermarket: one for you, one for Davitik",
+			"text": "Սուպերմարկետից երկու Դուետ առ՝ մեկը քեզ, մեկը Դավիթիկին",
 			"target": func() -> Variant: return _shelf(),
 			"done": func() -> bool: return inv.count_of("duet") >= 2,
 		},
 		{ # 2
-			"text": "Go to the bank's hayat: Davitik is waiting",
+			"text": "Գնա բանկի հայաթ, Դավիթիկը սպասում է",
 			"start": _davitik_waits,
 			"target": func() -> Variant: return dav.global_position if _alive(dav) else hayat(),
 			"back_to": func() -> int: return 1 if inv.count_of("duet") < 2 else -1,
-			"back_message": func() -> String: return "You drank Davitik's Duet! Buy another one.",
+			"back_message": func() -> String: return "Դավիթիկի Դուետը խմեցիր! Մի հատ էլ առ։",
 			"done": func() -> bool: return _alive(dav) and main.on_foot and _flat(main.player.global_position, dav.global_position) < 4.0,
 		},
 		{ # 3
-			"text": "Have a coffee with Davitik (E to drink yours)",
+			"text": "Դավիթիկի հետ սուրճ խմի (E՝ քոնը խմելու համար)",
 			"start": _coffee,
 			"back_to": _lost,
 			"done": func() -> bool: return _coffee_done and (inv.count_of("duet") < _duets_left or _duets_left == 0) and not main.player.is_busy(),
 		},
 		{ # 4
-			"text": "Davitik wants to drive. Get in your car and stop by him to let him in",
+			"text": "Դավիթիկը ուզում է քշել։ Նստիր մեքենադ ու կանգնի մոտը, որ նստի",
 			"start": _wait_for_lift,
 			"target": func() -> Variant: return main.car.global_position if main.on_foot else (dav.global_position if _alive(dav) else null),
 			"back_to": _lost,
 			"done": _dav_in_car,
 		},
 		{ # 5
-			"text": "Drive Davitik to a quiet street where he can try",
+			"text": "Դավիթիկին տար մի հանգիստ փողոց, որ փորձի",
 			"start": _off_to_the_lesson,
 			"target": func() -> Variant: return lesson_spot(),
 			"back_to": func() -> int: return _lost() if _lost() >= 0 else (4 if not _alive(dav) or not dav.seated_in(main.car) else -1),
-			"back_message": func() -> String: return "Davitik is not in your car.",
+			"back_message": func() -> String: return "Դավիթիկը մեքենայիդ մեջ չի։",
 			"done": func() -> bool: return _dav_in_car() and _flat(main.car.global_position, lesson_spot()) < ARRIVE and absf(main.car.forward_speed()) < 1.5,
 		},
 		{ # 6
-			"text": "Swap seats: get out and let Davitik take the wheel (F)",
+			"text": "Տեղերով փոխվեք՝ իջիր ու թող Դավիթիկը նստի ղեկին (F)",
 			"start": _at_the_lesson,
 			"back_to": _lost,
 			"done": func() -> bool: return _swapped,
 		},
 		{ # 7
-			"text": "Teach Davitik to drive.  SPACE: tell him to press the clutch!",
+			"text": "Դավիթիկին քշել սովորեցրու։  SPACE՝ ասա, որ սցեպլենիեն սեղմի!",
 			"back_to": _lost,
 			"done": func() -> bool: return _out,
 		},
 		{ # 8
-			"text": "Look what he did: go round to the front of the car",
+			"text": "Տես ինչ արեց՝ գնա մեքենայի առջևի կողմը",
 			"target": func() -> Variant: return _front(),
 			"back_to": _lost,
 			"done": func() -> bool: return _front() != null and _flat(main.player.global_position, _front()) < 3.5,
 		},
 		{ # 9
-			"text": "Slap Davitik (E)",
+			"text": "Մի հատ ապտակ տուր Դավիթիկին (E)",
 			"start": _look_at_damage,
 			"target": func() -> Variant: return dav.global_position if _alive(dav) else null,
 			"back_to": _lost,
 			"done": func() -> bool: return _uncle_done,
 		},
 		{ # 10
-			"text": "Get in the car and get out of here! (Davitik is running after you...)",
+			"text": "Նստիր մեքենան ու փախի էստեղից! (Դավիթիկը հետևիցդ վազում է...)",
 			"start": _run_away,
 			"back_to": _lost,
 			"done": _dav_in_car,
 		},
 		{ # 11
-			"text": "Drive Davitik back to the bank's hayat",
+			"text": "Դավիթիկին հետ տար բանկի հայաթ",
 			"start": _back_in,
 			"target": func() -> Variant: return hayat(),
 			"back_to": func() -> int: return _lost() if _lost() >= 0 else (10 if not dav.seated_in() else -1),
-			"back_message": func() -> String: return "Davitik is not in the car.",
+			"back_message": func() -> String: return "Դավիթիկը մեքենայի մեջ չի։",
 			"done": func() -> bool: return _dav_in_car() and _flat(main.car.global_position, hayat()) < ARRIVE + 4.0 and absf(main.car.forward_speed()) < 1.5,
 		},
 		{ # 12
-			"text": "Let Davitik out",
+			"text": "Դավիթիկին իջեցրու",
 			"start": _the_end,
 			"back_to": _lost,
 			"done": func() -> bool: return _end_done,
@@ -280,7 +282,7 @@ func _chase(_delta: float) -> void:
 	var may := _chase_driven >= CHASE_DISTANCE
 	if may and not _said_stop:
 		_said_stop = true
-		talk.bark("Davitik", "STOP THE CAR ARA, I'M COMING!", 3.0)
+		talk.bark("Davitik", "ԿԱՆԳՆԻ, Ա՛ՐԱ, ԳԱԼԻՍ ԵՄ!", 3.0)
 	dav.get_in_when_caught = may
 
 
@@ -297,14 +299,14 @@ func _phone_call() -> void:
 	talk.play([
 		Dialogue.wait(1.0),
 		Dialogue.ring("Davitik"),
-		Dialogue.say("Vzgo", "Hey gyada", 0.0, "phone"),
-		Dialogue.say("Davitik", "Hey, what's up ara?", 0.0, "", true),
-		Dialogue.say("Vzgo", "Good, you say", 0.0, "phone"),
-		Dialogue.say("Davitik", "Nothing, let's have a coffee, I'm loqsh", 0.0, "", true),
-		Dialogue.say("Vzgo", "Where are you?", 0.0, "phone"),
-		Dialogue.say("Davitik", "At the bank's hayat", 0.0, "", true),
-		Dialogue.say("Vzgo", "Ok, I'm coming", 0.0, "phone"),
-		Dialogue.say("Davitik", "Ok, bring the Duet with you", 0.0, "", true),
+		Dialogue.say("Vzgo", "Ալո, գյադա", 0.0, "phone"),
+		Dialogue.say("Davitik", "Ալո, ո՞նց ես, ա՛րա", 0.0, "", true),
+		Dialogue.say("Vzgo", "Լավ, դու ասա", 0.0, "phone"),
+		Dialogue.say("Davitik", "Ոչինչ, արի մի սուրճ խմենք, լոքշ եմ", 0.0, "", true),
+		Dialogue.say("Vzgo", "Որտե՞ղ ես", 0.0, "phone"),
+		Dialogue.say("Davitik", "Բանկի հայաթում", 0.0, "", true),
+		Dialogue.say("Vzgo", "Լավ, գալիս եմ", 0.0, "phone"),
+		Dialogue.say("Davitik", "Լավ, Դուետն էլ հետդ բեր", 0.0, "", true),
 		Dialogue.run(func() -> void:
 			_call_done = true
 			_vzgo_stop()),
@@ -340,15 +342,15 @@ func _coffee() -> void:
 	dav.hold_cup(true)
 	dav.act("drink")
 	talk.play([
-		Dialogue.say("Davitik", "Gyada jan, you came! Where's my Duet?"),
-		Dialogue.say("Vzgo", "Here, take it. Don't say I never gave you anything"),
-		Dialogue.say("Davitik", "Ahh, cold. Like my life"),
-		Dialogue.say("Vzgo", "What's new?"),
-		Dialogue.say("Davitik", "Nothing ara, loqsh, same as always"),
-		Dialogue.say("Davitik", "Gyada... give me a drive. Let me drive your car a little"),
-		Dialogue.say("Vzgo", "You? Since when do you drive?"),
-		Dialogue.say("Davitik", "Ara, I have my license three years, what are you saying", 0.0, "shrug"),
-		Dialogue.say("Vzgo", "Okay. Get in, I know a quiet street for it", 0.0, "point"),
+		Dialogue.say("Davitik", "Գյադա ջան, եկար! Դուետս ո՞ւր ա"),
+		Dialogue.say("Vzgo", "Ա՛ռ, վերցրու։ Չասես, թե բան չեմ տվել"),
+		Dialogue.say("Davitik", "Ա՜խ, սառն ա։ Կյանքիս պես"),
+		Dialogue.say("Vzgo", "Ի՞նչ կա-չկա"),
+		Dialogue.say("Davitik", "Ոչինչ, ա՛րա, լոքշ, միշտվա պես"),
+		Dialogue.say("Davitik", "Գյադա... մի հատ քշել տուր։ Թող մի քիչ մեքենադ քշեմ"),
+		Dialogue.say("Vzgo", "Դո՞ւ։ Էդ երբվանի՞ց ես քշում"),
+		Dialogue.say("Davitik", "Ա՛րա, երեք տարի ա իրավունք ունեմ, ի՞նչ ես խոսում", 0.0, "shrug"),
+		Dialogue.say("Vzgo", "Լավ։ Նստի, մի հանգիստ փողոց գիտեմ դրա համար", 0.0, "point"),
 		Dialogue.run(func() -> void:
 			_coffee_done = true
 			dav.hold_cup(false)
@@ -368,8 +370,8 @@ func _off_to_the_lesson() -> void:
 	_ensure()
 	talk.play([
 		Dialogue.wait(1.0),
-		Dialogue.say("Davitik", "Where are we going?"),
-		Dialogue.say("Vzgo", "You'll see"),
+		Dialogue.say("Davitik", "Ո՞ւր ենք գնում"),
+		Dialogue.say("Vzgo", "Կտեսնես"),
 	])
 
 
@@ -381,8 +383,8 @@ func _at_the_lesson() -> void:
 	_lesson_car = dav.car if dav.seated_in() else main.car
 	_swapped = false
 	talk.play([
-		Dialogue.say("Vzgo", "Here. Come on, sit at the wheel", 0.0, "point"),
-		Dialogue.say("Davitik", "Finally!"),
+		Dialogue.say("Vzgo", "Էստեղ։ Դե արի, նստի ղեկին", 0.0, "point"),
+		Dialogue.say("Davitik", "Վերջապե՜ս!"),
 	])
 	_watch_for_swap()
 
@@ -444,7 +446,7 @@ func _clutch_lesson() -> void:
 	var car := _lesson_car
 	talk.play([
 		Dialogue.wait(0.6),
-		Dialogue.say("Vzgo", "Now start the car"),
+		Dialogue.say("Vzgo", "Հիմա մեքենան միացրու"),
 		Dialogue.run(func() -> void:
 			car.engine_running = false
 			car.call("_crank")),
@@ -454,24 +456,24 @@ func _clutch_lesson() -> void:
 			car.cranking = false
 			car.start_failed = false
 			car.engine_running = true),
-		Dialogue.say("Davitik", "Okaaay, done!!"),
-		Dialogue.say("Vzgo", "Don't fasten the seatbelt, you're not a girl ara"),
-		Dialogue.say("", "*Davitik agreed*", 1.6),
+		Dialogue.say("Davitik", "Օքե՜յ, արեցի!!"),
+		Dialogue.say("Vzgo", "Ամրագոտին մի կապի, աղջիկ չես, ա՛րա"),
+		Dialogue.say("", "*Դավիթիկը համաձայնեց*", 1.6),
 		Dialogue.run(func() -> void:
 			_clutch_on = true
 			_show_score()),
-		Dialogue.say("Vzgo", "Now press the clutch"),
-		Dialogue.say("Davitik", "Where is the clutch?"),
-		Dialogue.say("Vzgo", "Over there, press the clutch!"),
-		Dialogue.say("Davitik", "Where is it, I can't find it"),
-		Dialogue.say("Vzgo", "The left from the brake araaa"),
-		Dialogue.say("Davitik", "There is no clutch, where is it? I don't see it"),
-		Dialogue.run(func() -> void: main.missions.show_banner("The car was AUTOMATIC.")),
-		Dialogue.say("Vzgo", "It's automatic transmission ara HA HA HA HA"),
+		Dialogue.say("Vzgo", "Հիմա սցեպլենիեն սեղմի"),
+		Dialogue.say("Davitik", "Սցեպլենիեն ո՞րն ա"),
+		Dialogue.say("Vzgo", "Էնտեղ ա, սեղմի սցեպլենիեն!"),
+		Dialogue.say("Davitik", "Ո՞ւր ա, չեմ գտնում"),
+		Dialogue.say("Vzgo", "Արգելակից ձախ, ա՛րաաա"),
+		Dialogue.say("Davitik", "Սցեպլենիե չկա, ո՞ւր ա։ Չեմ տեսնում"),
+		Dialogue.run(func() -> void: main.missions.show_banner("Մեքենան ԱՎՏՈՄԱՏ էր։")),
+		Dialogue.say("Vzgo", "Ավտոմատ ա, ա՛րա, ՀԱ ՀԱ ՀԱ ՀԱ"),
 		Dialogue.run(func() -> void: _clutch_on = false),
-		Dialogue.say("Davitik", "You piece of shit ara, I'm in panic ara, what are you opening your mouth ara"),
-		Dialogue.say("Vzgo", "*still laughing* You're stupid as a donkey. Okay, now drive. Carefully"),
-		Dialogue.say("Davitik", "Bitch"),
+		Dialogue.say("Davitik", "Շան տղա, ա՛րա, պանիկա եմ ընկել, ա՛րա, ի՞նչ ես բերանդ բացում, ա՛րա"),
+		Dialogue.say("Vzgo", "*դեռ ծիծաղում է* Էշի պես հիմար ես։ Լավ, հիմա քշի։ Զգույշ"),
+		Dialogue.say("Davitik", "Անասուն"),
 		Dialogue.run(func() -> void:
 			_driving = true
 			_drive_t = 0.0
@@ -495,7 +497,7 @@ func _drive(delta: float) -> void:
 	else:
 		if not _said_turn:
 			_said_turn = true
-			talk.bark("Vzgo", "Turn left here, slowly... SLOWLY ARA!", 2.0)
+			talk.bark("Vzgo", "Էստեղ ձախ թեքվի, կամաց... ԿԱՄԱ՜Ց, Ա՛ՐԱ!", 2.0)
 		car.ai_gas = TURN_GAS
 		car.ai_steer = float(car.get("max_steer"))
 	# Into something: the car loses most of its speed at once.
@@ -520,10 +522,10 @@ func _crash() -> void:
 	talk.stop()
 	talk.play([
 		Dialogue.wait(1.6),
-		Dialogue.say("Davitik", "Ara... the wall came by itself."),
-		Dialogue.say("Vzgo", "THE WALL CAME?? WHAT CAME ARA, YOU CAME TO THE WALL!"),
-		Dialogue.say("Davitik", "The car turned too fast, it's this automatic, it's not normal."),
-		Dialogue.say("Vzgo", "Get out. Get out of the car right now."),
+		Dialogue.say("Davitik", "Ա՛րա... պատն ինքը եկավ։"),
+		Dialogue.say("Vzgo", "ՊԱՏԸ ԵԿԱ՞Վ։ Ի՞ՆՉԸ ԵԿԱՎ, Ա՛ՐԱ, ԴՈՒ ԵՍ ՊԱՏԻՆ ԵԿԵԼ!"),
+		Dialogue.say("Davitik", "Մեքենան շատ արագ թեքվեց, էս ավտոմատն ա, նորմալ չի։"),
+		Dialogue.say("Vzgo", "Իջի։ Հենց հիմա իջի մեքենայից։"),
 		Dialogue.run(_everyone_out),
 	])
 
@@ -559,8 +561,8 @@ func _look_at_damage() -> void:
 	side.y = 0.0
 	dav.go_to(me + (side.normalized() if side.length() > 0.1 else Vector3.FORWARD) * 1.4)
 	talk.play([
-		Dialogue.say("Vzgo", "Look at this. LOOK AT THIS ARA.", 0.0, "angry"),
-		Dialogue.say("Davitik", "It's small, nobody will see it... you can put a sticker.", 0.0, "shrug"),
+		Dialogue.say("Vzgo", "Նայի սրան։ ՆԱՅԻ ՍՐԱՆ, Ա՛ՐԱ։", 0.0, "angry"),
+		Dialogue.say("Davitik", "Պուճուր ա, ոչ մեկ չի տեսնի... մի հատ նակլեյկա կխփես։", 0.0, "shrug"),
 		Dialogue.run(func() -> void: _slap_ok = true),
 	])
 
@@ -591,20 +593,20 @@ func _slap() -> void:
 ## The uncle whose wall it was.
 func _uncle_scene() -> void:
 	talk.play([
-		Dialogue.say("Davitik", "Ayyy! Okay okay, I'll pay!"),
-		Dialogue.say("Vzgo", "You'll pay? With what, with the Duets?"),
+		Dialogue.say("Davitik", "Վա՜յ! Լավ, լավ, կվճարեմ!"),
+		Dialogue.say("Vzgo", "Կվճարե՞ս։ Ինչո՞վ, Դուետներո՞վ"),
 		Dialogue.run(_uncle_comes),
 		Dialogue.until(func() -> bool: return not _alive(uncle) or uncle.arrived(), 10.0),
-		Dialogue.say("Uncle", "Who did this to my wall?", 0.0, "angry"),
+		Dialogue.say("Uncle", "Իմ պատին էս ո՞վ արեց", 0.0, "angry"),
 		Dialogue.run(_point_at_each_other),
-		Dialogue.say("", "*Vzgo and Davitik point at each other*", 2.2),
-		Dialogue.say("Uncle", "Which one of you was driving?", 0.0, "angry"),
-		Dialogue.say("Davitik", "The clutch didn't work, uncle jan.", 0.0, "shrug"),
-		Dialogue.say("Uncle", "...It's automatic, tgha.", 0.0, "no"),
-		Dialogue.say("Vzgo", "HA HA HA HA HA", 0.0, "laugh"),
+		Dialogue.say("", "*Վզգոն ու Դավիթիկը իրար են ցույց տալիս*", 2.2),
+		Dialogue.say("Uncle", "Ձեզնից ո՞վ էր ղեկին", 0.0, "angry"),
+		Dialogue.say("Davitik", "Սցեպլենիեն չաշխատեց, քեռի ջան։", 0.0, "shrug"),
+		Dialogue.say("Uncle", "...Ավտոմատ ա, տղա։", 0.0, "no"),
+		Dialogue.say("Vzgo", "ՀԱ ՀԱ ՀԱ ՀԱ ՀԱ", 0.0, "laugh"),
 		Dialogue.run(_throw_slipper),
-		Dialogue.say("", "*Uncle throws his slipper at Davitik*", 2.0),
-		Dialogue.say("Vzgo", "Davitik... run.", 0.0, "point"),
+		Dialogue.say("", "*Քեռին հողաթափը շպրտում է Դավիթիկի վրա*", 2.0),
+		Dialogue.say("Vzgo", "Դավիթիկ... փախի։", 0.0, "point"),
 		Dialogue.run(func() -> void: _uncle_done = true),
 	])
 
@@ -641,7 +643,7 @@ func _run_away() -> void:
 	_said_stop = false
 	dav.get_in_when_caught = false
 	dav.follow_car(_lesson_car, true)
-	talk.bark("Davitik", "WAIT FOR ME ARA!", 2.5)
+	talk.bark("Davitik", "ՍՊԱՍԻ ԻՆՁ, Ա՛ՐԱ!", 2.5)
 
 
 ## Step 11: he made it in.
@@ -649,12 +651,12 @@ func _back_in() -> void:
 	_ensure()
 	talk.play([
 		Dialogue.wait(0.5),
-		Dialogue.say("Davitik", "You left me ara... you left your brother."),
-		Dialogue.say("Vzgo", "You hit my car into a wall and you're talking about brother?"),
-		Dialogue.say("Davitik", "...Can I drive back?"),
-		Dialogue.say("Vzgo", "Fasten your seatbelt."),
-		Dialogue.say("Davitik", "You said I'm not a girl."),
-		Dialogue.say("Vzgo", "Now you're a girl. Fasten it."),
+		Dialogue.say("Davitik", "Թողիր գնացիր, ա՛րա... ախպորդ թողիր։"),
+		Dialogue.say("Vzgo", "Մեքենաս պատին խփեցիր, հլը ախպերությունից ես խոսո՞ւմ"),
+		Dialogue.say("Davitik", "...Հետ գնալիս ես քշե՞մ"),
+		Dialogue.say("Vzgo", "Ամրագոտիդ կապի։"),
+		Dialogue.say("Davitik", "Բա ասում էիր՝ աղջիկ չեմ։"),
+		Dialogue.say("Vzgo", "Հիմա աղջիկ ես։ Կապի։"),
 	])
 
 
@@ -668,11 +670,11 @@ func _the_end() -> void:
 	dav.look(you())
 	var away := hayat() + (dav.global_position - you()).normalized() * 30.0
 	talk.play([
-		Dialogue.say("Davitik", "Next time give me a normal car. With a clutch.", 0.0, "angry"),
-		Dialogue.say("Vzgo", "Next time you're walking.", 0.0, "point"),
+		Dialogue.say("Davitik", "Հաջորդ անգամ նորմալ մեքենա տուր։ Սցեպլենիեով։", 0.0, "angry"),
+		Dialogue.say("Vzgo", "Հաջորդ անգամ ոտքով ես գալու։", 0.0, "point"),
 		Dialogue.wait(0.8),
 		Dialogue.ring("Papa"),
-		Dialogue.say("Vzgo", "...Davitik, come back here.", 3.0, "phone"),
+		Dialogue.say("Vzgo", "...Դավիթիկ, արի էստեղ։", 3.0, "phone"),
 		Dialogue.run(func() -> void:
 			dav.go_to(away, true)
 			_end_done = true),
@@ -681,9 +683,9 @@ func _the_end() -> void:
 
 func finish() -> void:
 	success = "\n".join(PackedStringArray([
-		"\"PRESS THE CLUTCH ARA!\" screamed: %d" % _clutch,
-		"Slaps: %d     Davitik hit by the car: %d     Walls: 1" % [_slaps, dav.car_hits if _alive(dav) else 0],
-		"Rank: Davitik, Certified Automatic Clutch Searcher",
+		"«ՍՑԵՊԼԵՆԻԵՆ ՍԵՂՄԻ, Ա՛ՐԱ!» գոռացիր՝ %d անգամ" % _clutch,
+		"Ապտակներ՝ %d     Դավիթիկին մեքենան խփեց՝ %d     Պատեր՝ 1" % [_slaps, dav.car_hits if _alive(dav) else 0],
+		"Կոչում՝ Դավիթիկ, ավտոմատի սցեպլենիե փնտրող դիպլոմավոր մասնագետ",
 	]))
 	_vzgo_stop()
 	if talk:
@@ -713,7 +715,7 @@ func _on_key(key: InputEventKey) -> bool:
 		if code == KEY_SPACE:
 			if _clutch_on:
 				_clutch += 1
-				talk.bark("Vzgo", "PRESS THE CLUTCH ARA!!", 0.9)
+				talk.bark("Vzgo", "ՍՑԵՊԼԵՆԻԵՆ ՍԵՂՄԻ, Ա՛ՐԱ!!", 0.9)
 				_show_score()
 			return true
 		return code in [KEY_F, KEY_E, KEY_P, KEY_G, KEY_T, KEY_Y, KEY_R] or (code >= KEY_0 and code <= KEY_9)
@@ -726,9 +728,9 @@ func _on_key(key: InputEventKey) -> bool:
 
 # --- what they do while they talk ----------------------------------------------
 
-## A line starts: the speaker does what it says (anim), or talks (laughs, for "HA HA").
+## A line starts: the speaker does what it says (anim), or talks (laughs, for "ՀԱ ՀԱ").
 func _on_line(who: String, text: String, seconds: float, anim: String) -> void:
-	var laughing := text.to_upper().contains("HA HA") or text.begins_with("*still laughing")
+	var laughing := text.contains("ՀԱ ՀԱ") or text.begins_with("*դեռ ծիծաղում")
 	var what := anim if anim != "" else ("laugh" if laughing else "talk")
 	match who:
 		"Vzgo":
@@ -802,7 +804,7 @@ func _give_animations() -> void:
 			_animated[anims.get_instance_id()] = true
 
 
-## "*Vzgo and Davitik point at each other*"
+## "*Վզգոն ու Դավիթիկը իրար են ցույց տալիս*"
 func _point_at_each_other() -> void:
 	if not _alive(dav):
 		return
@@ -875,6 +877,8 @@ func _spawn_davitik() -> void:
 		return
 	dav = Davitik.new()
 	dav.name = "Davitik"
+	# He is 8 cm shorter than you.
+	dav.height = float(main.player.get("height")) - DAVITIK_SHORTER
 	main.add_child(dav)
 	dav.setup(main)
 	dav.hit_by_car.connect(func(_times: int) -> void:
@@ -894,7 +898,7 @@ func _hold(item_id: String) -> void:
 
 
 func _show_score() -> void:
-	talk.show_counter("\"Press the clutch!\" x%d\nSlaps: %d\nDavitik hit by the car: %d" % [_clutch, _slaps, dav.car_hits if _alive(dav) else 0])
+	talk.show_counter("«Սցեպլենիեն սեղմի!» x%d\nԱպտակներ՝ %d\nԴավիթիկին մեքենան խփեց՝ %d" % [_clutch, _slaps, dav.car_hits if _alive(dav) else 0])
 
 
 ## Shakes the camera for `seconds`, hardest at first.

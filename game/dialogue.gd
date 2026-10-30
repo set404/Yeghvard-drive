@@ -33,6 +33,14 @@ const COLORS := {
 	"Uncle": Color(0.72, 0.95, 0.6),
 	"Papa": Color(1.0, 0.6, 0.55),
 }
+## The speakers' names as the subtitles show them; the keys stay as they are
+## for COLORS, the voices (voice_path()) and the missions' speaker checks.
+const NAMES := {
+	"Davitik": "Դավիթիկ",
+	"Vzgo": "Վզգո",
+	"Uncle": "Քեռի",
+	"Papa": "Պապա",
+}
 ## Seconds a line stays up: this, and so much for each letter.
 const LINE_BASE := 1.3
 const LINE_PER_CHAR := 0.055
@@ -51,12 +59,15 @@ var _bark_left := 0.0
 var _counter: Label
 var _fade: ColorRect
 ## The line typing out: how far (seconds), how long it takes, the voice speaking
-## it, seconds to the next syllable, and whether it is laughter.
+## it, its syllables (Mumble.syllables_of()) and the next one to say, whether it
+## asks something and whether it is laughter.
 var _typed := 0.0
 var _type_time := 0.0
 var _voice := ""
 var _voice_phone := false
-var _syllable_wait := 0.0
+var _syllables := []
+var _syllable := 0
+var _question := false
 var _laughing := false
 var _shouting := false
 var _speech: AudioStreamPlayer
@@ -195,10 +206,19 @@ func stop() -> void:
 
 ## A quick shout in the middle of the screen, over everything (for `seconds`).
 ## The recording of `who` saying `text` (over the phone: `phone`), as
-## tools/make_voices.py names it, or "".
+## tools/make_voices.py names it (.ogg), or a recording by people of an
+## Armenian line under the same name (.wav or .mp3); "" if there is none.
 static func voice_path(who: String, text: String, phone := false) -> String:
-	var path := "%s%s_%s%s.ogg" % [VOICE_DIR, who.to_lower(), ("%s|%s" % [who, text]).md5_text().substr(0, 10), "_phone" if phone else ""]
-	return path if ResourceLoader.exists(path) or FileAccess.file_exists(path) else ""
+	var base := voice_base(who, text, phone)
+	for ext in [".ogg", ".wav", ".mp3"]:
+		if ResourceLoader.exists(base + ext) or FileAccess.file_exists(base + ext):
+			return base + ext
+	return ""
+
+
+## Where the recording of `who` saying `text` goes, without its extension.
+static func voice_base(who: String, text: String, phone := false) -> String:
+	return "%s%s_%s%s" % [VOICE_DIR, who.to_lower(), ("%s|%s" % [who, text]).md5_text().substr(0, 10), "_phone" if phone else ""]
 
 
 ## The recording at `path` (imported by the editor, or read straight from the file).
@@ -207,6 +227,10 @@ static func load_voice(path: String) -> AudioStream:
 		return null
 	if ResourceLoader.exists(path):
 		return load(path) as AudioStream
+	if path.ends_with(".wav"):
+		return AudioStreamWAV.load_from_file(path)
+	if path.ends_with(".mp3"):
+		return AudioStreamMP3.load_from_file(path)
 	return AudioStreamOggVorbis.load_from_file(path)
 
 
@@ -216,7 +240,7 @@ func bark(who: String, text: String, seconds := 2.2) -> void:
 		_bark_player.stream = recording
 		_bark_player.play()
 		seconds = maxf(seconds, recording.get_length() + 0.3)
-	_bark.text = ("%s: \"%s\"" % [who, text]) if who != "" else text
+	_bark.text = ("%s՝ «%s»" % [NAMES.get(who, who), text]) if who != "" else text
 	_bark.add_theme_color_override("font_color", COLORS.get(who, Color(1.0, 0.95, 0.4)))
 	_bark_left = seconds
 	_bark.visible = true
@@ -272,8 +296,8 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
-## Types the line out, a syllable of the speaker's voice every so often (none
-## at the gaps between words), laughter in quick high bursts.
+## Types the line out, saying each syllable in the speaker's voice as the
+## typing reaches its vowel (so the gaps between words are quiet).
 func _type(delta: float) -> void:
 	if _typed >= _type_time:
 		return
@@ -281,27 +305,40 @@ func _type(delta: float) -> void:
 	_text.visible_ratio = clampf(_typed / _type_time, 0.0, 1.0) if _type_time > 0.0 else 1.0
 	if _voice == "":
 		return
-	_syllable_wait -= delta
-	if _syllable_wait > 0.0:
-		return
-	var gap := Mumble.syllable_gap(_voice)
-	_syllable_wait = gap * (0.7 if _laughing else randf_range(0.85, 1.2))
-	# Between words, now and then a short pause instead of a syllable.
-	var at := clampi(_text.visible_characters, 0, maxi(_text.text.length() - 1, 0))
-	if not _laughing and _text.text.length() > 0 and _text.text[at] in [" ", ",", ".", "?"] and randf() < 0.6:
-		return
-	var syllables: Array = Mumble.syllables(_voice, _voice_phone)
-	var pitch := randf_range(0.93, 1.08)
+	var shown := int(_text.visible_ratio * _text.text.length())
+	# After a slow frame, only the latest of the syllables passed meanwhile.
+	var due := -1
+	while _syllable < _syllables.size() and int(_syllables[_syllable]["at"]) <= shown:
+		due = _syllable
+		_syllable += 1
+	if due >= 0:
+		_say(due)
+
+
+## Says syllable `index` of the line: the pitch falling a little over the line
+## as speech does, up on a word's last syllable (where Armenian stresses it)
+## and at the end of a question; laughter in high bursts.
+func _say(index: int) -> void:
+	var s: Dictionary = _syllables[index]
+	var through := float(index) / maxf(_syllables.size() - 1, 1.0)
+	var pitch := 1.06 - 0.12 * through + randf_range(-0.025, 0.025)
+	var louder := 0.0
+	if s["stress"]:
+		pitch += 0.045
+		louder = 1.0
+	if _question and index >= _syllables.size() - 2:
+		pitch += 0.12
 	if _laughing:
-		pitch = 1.3 if int(_typed / gap) % 2 == 0 else 1.45
+		pitch = 1.3 if index % 2 == 0 else 1.45
 	elif _shouting:
 		pitch *= 1.12
-	var playback := _speech.get_stream_playback() as AudioStreamPlaybackPolyphonic
-	if not _speech.playing or playback == null:
+	var playback := _speech.get_stream_playback() as AudioStreamPlaybackPolyphonic if _speech.playing else null
+	if playback == null:
 		_speech.play()
 		playback = _speech.get_stream_playback() as AudioStreamPlaybackPolyphonic
 	if playback:
-		playback.play_stream(syllables.pick_random(), 0.0, 2.0 if _shouting or _laughing else -2.0, pitch)
+		var sound := Mumble.sound(_voice, s["cons"], s["vowel"], _voice_phone)
+		playback.play_stream(sound, 0.0, (2.0 if _shouting or _laughing else -2.0) + louder, pitch)
 
 
 func _next() -> void:
@@ -315,11 +352,11 @@ func _next() -> void:
 		_current = entry
 		if entry.has("text"):
 			var who: String = entry["who"]
-			_who.text = who
+			_who.text = NAMES.get(who, who)
 			_who.visible = who != ""
 			_who.add_theme_color_override("font_color", COLORS.get(who, Color(0.85, 0.85, 0.85)))
 			var text: String = entry["text"]
-			_text.text = text if who == "" or (text.begins_with("*") and text.ends_with("*")) else "\"%s\"" % text
+			_text.text = text if who == "" or (text.begins_with("*") and text.ends_with("*")) else "«%s»" % text
 			_box.visible = true
 			var seconds := float(entry["seconds"])
 			_left = seconds if seconds > 0.0 else LINE_BASE + LINE_PER_CHAR * text.length()
@@ -335,20 +372,24 @@ func _next() -> void:
 				_voice_player.play()
 				var length := recording.get_length()
 				_left = maxf(_left if seconds > 0.0 else 0.0, length + 0.45)
-			_laughing = text.to_upper().contains("HA HA")
+			_laughing = text.to_upper().contains("HA HA") or text.contains("ՀԱ ՀԱ")
 			_shouting = text.contains("!") or (text.to_upper() == text and text.length() > 4)
-			_type_time = minf(_left * 0.8, text.length() * 0.05) if spoken else 0.0
+			_question = text.contains("?") or text.contains("՞")
+			# About six syllables a second, at the speaker's pace.
+			var per_char := 0.06 / float(Mumble.voice(who)["pace"])
+			_type_time = minf(_left * 0.8, text.length() * per_char) if spoken else 0.0
 			if recording:
 				_type_time = recording.get_length() * 0.9
 				_voice = ""
+			_syllables = Mumble.syllables_of(_text.text) if _voice != "" else []
+			_syllable = 0
 			_typed = 0.0
-			_syllable_wait = 0.0
 			_text.visible_ratio = 0.0 if _type_time > 0.0 else 1.0
 			line_started.emit(who, text, _left, String(entry.get("anim", "")))
 		elif entry.has("wait"):
 			_left = float(entry["wait"])
 		elif entry.has("ring"):
-			_call.text = "%s is calling...  (phone ringing)" % entry["ring"]
+			_call.text = "Զանգում է՝ %s...  (հեռախոսը զնգում է)" % NAMES.get(entry["ring"], entry["ring"])
 			_call.visible = true
 			Sfx.play_flat(self, Sfx.ring(), -8.0)
 			_left = float(entry["seconds"])
